@@ -12,7 +12,7 @@ use signal_core::{
 };
 use signal_persona_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
-    ActivitySubmission, ClaimAcceptance, ClaimEntry, ClaimRejection, HandoffAcceptance,
+    ActivitySubmission, ClaimAcceptance, ClaimEntry, ClaimRejection, Error, HandoffAcceptance,
     HandoffRejection, HandoffRejectionReason, OrchestrateFrame, OrchestrateFrameBody,
     OrchestrateOperationKind, OrchestrateReply, OrchestrateRequest, ReleaseAcknowledgment,
     RoleClaim, RoleHandoff, RoleName, RoleObservation, RoleRelease, RoleSnapshot, RoleStatus,
@@ -70,15 +70,18 @@ fn round_trip_reply(reply: OrchestrateReply) -> OrchestrateReply {
 }
 
 fn sample_path() -> WirePath {
-    WirePath::new("/git/github.com/LiGoldragon/signal-persona-orchestrate/src/lib.rs")
+    WirePath::from_absolute_path(
+        "/git/github.com/LiGoldragon/signal-persona-orchestrate/src/lib.rs",
+    )
+    .expect("sample path")
 }
 
 fn sample_task() -> TaskToken {
-    TaskToken::new("primary-f99")
+    TaskToken::from_wire_token("primary-f99").expect("sample task token")
 }
 
 fn sample_reason() -> ScopeReason {
-    ScopeReason::new("design-cascade per /93")
+    ScopeReason::from_text("design-cascade per /93").expect("sample reason")
 }
 
 fn sample_path_scope() -> ScopeReference {
@@ -117,7 +120,7 @@ fn role_handoff_round_trips() {
         from: RoleName::Designer,
         to: RoleName::Operator,
         scopes: vec![sample_path_scope()],
-        reason: ScopeReason::new("router migration handoff"),
+        reason: ScopeReason::from_text("router migration handoff").expect("sample reason"),
     });
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
@@ -135,7 +138,8 @@ fn activity_submission_round_trips() {
     let request = OrchestrateRequest::ActivitySubmission(ActivitySubmission {
         role: RoleName::OperatorAssistant,
         scope: sample_path_scope(),
-        reason: ScopeReason::new("audit signal-persona-system integration"),
+        reason: ScopeReason::from_text("audit signal-persona-system integration")
+            .expect("sample reason"),
     });
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
@@ -165,9 +169,10 @@ fn activity_query_with_role_filter_round_trips() {
 fn activity_query_with_path_prefix_round_trips() {
     let request = OrchestrateRequest::ActivityQuery(ActivityQuery {
         limit: 10,
-        filters: vec![ActivityFilter::PathPrefix(WirePath::new(
-            "/git/github.com/LiGoldragon/persona-router",
-        ))],
+        filters: vec![ActivityFilter::PathPrefix(
+            WirePath::from_absolute_path("/git/github.com/LiGoldragon/persona-router")
+                .expect("sample path"),
+        )],
     });
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
@@ -202,7 +207,7 @@ fn claim_rejection_round_trips() {
         conflicts: vec![ScopeConflict {
             scope: sample_path_scope(),
             held_by: RoleName::Operator,
-            held_reason: ScopeReason::new("Persona-prefix sweep"),
+            held_reason: ScopeReason::from_text("Persona-prefix sweep").expect("sample reason"),
         }],
     });
     let decoded = round_trip_reply(reply.clone());
@@ -249,7 +254,7 @@ fn handoff_rejection_target_conflict_round_trips() {
         reason: HandoffRejectionReason::TargetRoleConflict(vec![ScopeConflict {
             scope: sample_path_scope(),
             held_by: RoleName::OperatorAssistant,
-            held_reason: ScopeReason::new("audit pass"),
+            held_reason: ScopeReason::from_text("audit pass").expect("sample reason"),
         }]),
     });
     let decoded = round_trip_reply(reply.clone());
@@ -297,13 +302,13 @@ fn activity_list_round_trips() {
             Activity {
                 role: RoleName::Designer,
                 scope: sample_path_scope(),
-                reason: ScopeReason::new("rescope per /91 §3.1"),
+                reason: ScopeReason::from_text("rescope per /91 §3.1").expect("sample reason"),
                 stamped_at: TimestampNanos::new(1_730_000_000_000_000_000),
             },
             Activity {
                 role: RoleName::Operator,
                 scope: sample_task_scope(),
-                reason: ScopeReason::new("ractor adoption"),
+                reason: ScopeReason::from_text("ractor adoption").expect("sample reason"),
                 stamped_at: TimestampNanos::new(1_730_000_001_000_000_000),
             },
         ],
@@ -423,4 +428,20 @@ fn orchestrate_request_variants_do_not_silently_default_to_assert() {
         assert_eq!(request.signal_verb(), verb);
         assert_ne!(request.signal_verb(), SignalVerb::Assert);
     }
+}
+
+#[test]
+fn scope_primitives_reject_invalid_values() {
+    assert!(matches!(
+        WirePath::from_absolute_path("relative/path"),
+        Err(Error::InvalidWirePath { .. })
+    ));
+    assert!(matches!(
+        TaskToken::from_wire_token("primary hrhz"),
+        Err(Error::InvalidTaskToken { .. })
+    ));
+    assert!(matches!(
+        ScopeReason::from_text(""),
+        Err(Error::InvalidScopeReason { .. })
+    ));
 }
