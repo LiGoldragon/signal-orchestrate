@@ -1,37 +1,35 @@
-# ARCHITECTURE — signal-persona-orchestrate
+# signal-persona-orchestrate — architecture
 
-The Signal contract between **`orchestrate`** (the CLI client
-agents invoke per call) and **`persona-orchestrate`** (the
-typed orchestration state actor that owns
-`orchestrate.redb`). The whole channel is one
-`signal_channel!` invocation in `src/lib.rs`.
+*The ordinary Signal contract for Persona orchestration: role claims,
+claim release/handoff/observation, and activity log requests.*
 
-## Channel
+---
+
+## 0 · TL;DR
+
+`signal-persona-orchestrate` is a contract crate. It owns the typed
+wire vocabulary for the ordinary `persona-orchestrate` surface and
+contains no daemon, actor, database, CLI parser, or transport policy.
+
+The channel is declared by one `signal_channel!` invocation in
+`src/lib.rs`. Each request variant declares its `SignalVerb` in the
+contract, so consumers do not infer verbs by string matching.
+
+## 1 · Channel
 
 | Side | Component |
 |---|---|
-| Request side | `orchestrate` CLI (one Nota record per agent invocation; constructed inside the binary's argv parser) |
-| Reply side | `persona-orchestrate` state actor |
+| Request producer | `persona-orchestrate` CLI, transitional workspace helpers, or peers speaking the ordinary orchestration surface. |
+| Request consumer | `persona-orchestrate` daemon. |
+| Wire type | `OrchestrateFrame` / `OrchestrateRequest` / `OrchestrateReply`. |
 
-The CLI opens the database, runs one operation, prints one
-reply, exits. Concurrent invocations serialize at the redb
-level; multiple readers run in parallel.
+The channel is request/reply. Activity timestamps are not accepted
+from callers; the daemon store supplies them when committing
+`ActivitySubmission`.
 
-## Record source
+## 2 · Requests And Replies
 
-This contract defines its records locally (`RoleName`,
-`ScopeReference`, `WirePath`, `TaskToken`, `ScopeReason`,
-`TimestampNanos`, etc.) because they're the channel's
-vocabulary, not records that travel beyond.
-
-If a future channel needs `RoleName` (a workspace-coordination
-broadcast channel, for instance), lift it to a shared
-contract or to `signal-persona`'s umbrella records. For now,
-local.
-
-## Messages
-
-```
+```text
 OrchestrateRequest                 OrchestrateReply
 ├─ RoleClaim                       ├─ ClaimAcceptance
 ├─ RoleRelease                     ├─ ClaimRejection
@@ -43,114 +41,75 @@ OrchestrateRequest                 OrchestrateReply
                                    └─ ActivityList
 ```
 
-Closed enums; no `Unknown` variant. Conflicts and rejections
-carry typed reasons (`ScopeConflict`, `HandoffRejectionReason`)
-so callers pattern-match on them rather than parsing strings.
+Closed enums have no `Unknown` variant. Conflicts and rejections
+carry typed records (`ScopeConflict`, `HandoffRejectionReason`) so
+callers pattern-match instead of parsing strings.
 
-## Versioning
+## 3 · Typed Values
 
-`signal_core::Frame` carries the protocol version. Schema-level
-changes (adding/removing variants, adding fields) are breaking
-and require a coordinated upgrade of both `orchestrate` clients
-and `persona-orchestrate`.
+This contract owns:
 
-## Examples
+- `RoleName`
+- `ScopeReference`
+- `WirePath`
+- `TaskToken`
+- `ScopeReason`
+- `TimestampNanos`
+
+`WirePath`, `TaskToken`, and `ScopeReason` are validated newtypes.
+Construct them through `from_absolute_path`, `from_wire_token`, and
+`from_text` respectively. Invalid values are rejected at the contract
+boundary and also during NOTA decode.
+
+## 4 · Verb Map
+
+| Request | Verb |
+|---|---|
+| `RoleClaim` | `Assert` |
+| `RoleRelease` | `Retract` |
+| `RoleHandoff` | `Mutate` |
+| `RoleObservation` | `Match` |
+| `ActivitySubmission` | `Assert` |
+| `ActivityQuery` | `Match` |
+
+`OrchestrateRequest::operation_kind()` exposes the domain operation
+without asking consumers to match on verb roots.
+
+## 5 · Non-Ownership
+
+This crate does not own:
+
+- daemon actors or request handlers;
+- the `persona-orchestrate.redb` database;
+- lock-file projections;
+- CLI argv parsing or NOTA rendering policy;
+- socket paths, reconnect policy, or transport lifecycle;
+- owner-only orchestration orders.
+
+Owner-only orders belong in an `owner-signal-persona-orchestrate`
+contract. This ordinary contract is the peer/CLI surface.
+
+## 6 · Witness Tests
+
+`tests/round_trip.rs` proves:
+
+- every request variant round-trips through an `OrchestrateFrame`;
+- every reply variant round-trips through an `OrchestrateFrame`;
+- every request variant maps to its declared `SignalVerb`;
+- invalid scope primitives are rejected.
+
+## Code Map
 
 ```text
-;; agent claims paths + task scope
-OrchestrateRequest::RoleClaim(RoleClaim {
-    role: RoleName::Designer,
-    scopes: vec![
-        ScopeReference::Path(WirePath::new("/git/.../signal/ARCHITECTURE.md")),
-        ScopeReference::Task(TaskToken::new("primary-f99")),
-    ],
-    reason: ScopeReason::new("rescope per /91 §3.1"),
-})
-
-;; on success
-OrchestrateReply::ClaimAcceptance(ClaimAcceptance {
-    role: RoleName::Designer,
-    scopes: vec![/* echoed */],
-})
-
-;; on conflict
-OrchestrateReply::ClaimRejection(ClaimRejection {
-    role: RoleName::Designer,
-    conflicts: vec![ScopeConflict {
-        scope: ScopeReference::Path(WirePath::new("/git/.../signal/ARCHITECTURE.md")),
-        held_by: RoleName::Operator,
-        held_reason: ScopeReason::new("Persona-prefix sweep"),
-    }],
-})
-
-;; agent files an activity entry
-OrchestrateRequest::ActivitySubmission(ActivitySubmission {
-    role: RoleName::Operator,
-    scope: ScopeReference::Path(WirePath::new("/git/.../persona-router/src/router.rs")),
-    reason: ScopeReason::new("RouterActor consumes signal-persona-system Frame"),
-})
-
-;; reply
-OrchestrateReply::ActivityAcknowledgment(ActivityAcknowledgment { slot: 1024 })
+src/lib.rs            payloads, validation newtypes, signal_channel!
+tests/round_trip.rs   frame round trips and verb witnesses
 ```
 
-## Round trips
+## See Also
 
-Per-variant round-trip tests in `tests/round_trip.rs` covering
-all 6 request variants + all 8 reply variants + both
-ScopeReference variants + handoff rejection sub-variants.
-
-Architectural-truth tests fire when:
-
-- A new variant is added without a round-trip test.
-- The Frame's encode/decode bytes don't match.
-- A consumer tries to dispatch on a variant that isn't in
-  the closed enum.
-
-## Non-ownership
-
-- No state actor — that's `persona-orchestrate`.
-- No CLI binary — that's `persona-orchestrate`'s
-  `orchestrate` bin target.
-- No database — the typed records persist in
-  `persona-orchestrate`'s `orchestrate.redb`, opened
-  through `persona-sema` (which uses the workspace's `sema`
-  database library underneath).
-- No transport (UDS path, reconnect, timeouts) — per
-  consumer, though for v1 the CLI invokes the state actor
-  in-process (no transport layer at all).
-- Time supply — `Activity::stamped_at` is store-supplied;
-  the `ActivitySubmission` request does not carry it (per
-  ESSENCE infrastructure-mints rule).
-- Lock-file projections — the state actor writes
-  `<role>.lock` files for backward compatibility; this
-  contract doesn't describe the projection format.
-
-## Code map
-
-```
-src/
-└── lib.rs    — payloads + signal_channel! invocation
-tests/
-└── round_trip.rs — per-variant wire-form round trips
-```
-
-## See also
-
-- `~/primary/reports/designer/93-persona-orchestrate-rust-rewrite-and-activity-log.md`
-  — the design report grounding this contract.
-- `~/primary/reports/designer/4-persona-messaging-design.md`
-  — the original Persona messaging design naming the
-  orchestration ops.
-- `~/primary/reports/designer/81-three-agent-orchestration-with-assistant-role.md`
-  — the orchestration-pair model.
-- `~/primary/skills/contract-repo.md` — contract-repo
-  discipline this crate follows.
-- `~/primary/skills/architectural-truth-tests.md` — the
-  witness-test pattern.
-- `~/primary/protocols/orchestration.md` — the current
-  protocol; updated post-Rust-impl.
-- `signal-core/src/channel.rs` — the `signal_channel!`
-  macro this contract uses.
-- `signal-persona-system/ARCHITECTURE.md` — peer channel;
-  same shape.
+- `../persona-orchestrate/ARCHITECTURE.md` — runtime consumer and
+  state owner.
+- `../signal-core/ARCHITECTURE.md` — Signal frame kernel.
+- `~/primary/skills/contract-repo.md` — contract-repo discipline.
+- `~/primary/skills/architectural-truth-tests.md` — witness-test
+  discipline.
