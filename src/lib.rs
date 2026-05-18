@@ -72,22 +72,28 @@ pub enum Error {
 pub enum RoleName {
     Operator,
     OperatorAssistant,
+    SecondOperatorAssistant,
     Designer,
     DesignerAssistant,
+    SecondDesignerAssistant,
     SystemSpecialist,
     SystemAssistant,
+    SecondSystemAssistant,
     Poet,
     PoetAssistant,
 }
 
 impl RoleName {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 11] = [
         Self::Operator,
         Self::OperatorAssistant,
+        Self::SecondOperatorAssistant,
         Self::Designer,
         Self::DesignerAssistant,
+        Self::SecondDesignerAssistant,
         Self::SystemSpecialist,
         Self::SystemAssistant,
+        Self::SecondSystemAssistant,
         Self::Poet,
         Self::PoetAssistant,
     ];
@@ -96,10 +102,13 @@ impl RoleName {
         match self {
             Self::Operator => "operator",
             Self::OperatorAssistant => "operator-assistant",
+            Self::SecondOperatorAssistant => "second-operator-assistant",
             Self::Designer => "designer",
             Self::DesignerAssistant => "designer-assistant",
+            Self::SecondDesignerAssistant => "second-designer-assistant",
             Self::SystemSpecialist => "system-specialist",
             Self::SystemAssistant => "system-assistant",
+            Self::SecondSystemAssistant => "second-system-assistant",
             Self::Poet => "poet",
             Self::PoetAssistant => "poet-assistant",
         }
@@ -110,10 +119,13 @@ impl RoleName {
         match role.as_str() {
             "operator" => Ok(Self::Operator),
             "operator-assistant" => Ok(Self::OperatorAssistant),
+            "second-operator-assistant" => Ok(Self::SecondOperatorAssistant),
             "designer" => Ok(Self::Designer),
             "designer-assistant" => Ok(Self::DesignerAssistant),
+            "second-designer-assistant" => Ok(Self::SecondDesignerAssistant),
             "system-specialist" => Ok(Self::SystemSpecialist),
             "system-assistant" => Ok(Self::SystemAssistant),
+            "second-system-assistant" => Ok(Self::SecondSystemAssistant),
             "poet" => Ok(Self::Poet),
             "poet-assistant" => Ok(Self::PoetAssistant),
             _ => Err(Error::UnknownRoleName { role }),

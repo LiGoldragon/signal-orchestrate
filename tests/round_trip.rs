@@ -320,6 +320,37 @@ fn activity_list_round_trips() {
 // ─── Scope-reference variants ─────────────────────────────
 
 #[test]
+fn role_name_parses_workspace_coordination_tokens() {
+    let cases = [
+        ("operator", RoleName::Operator),
+        ("operator-assistant", RoleName::OperatorAssistant),
+        (
+            "second-operator-assistant",
+            RoleName::SecondOperatorAssistant,
+        ),
+        ("designer", RoleName::Designer),
+        ("designer-assistant", RoleName::DesignerAssistant),
+        (
+            "second-designer-assistant",
+            RoleName::SecondDesignerAssistant,
+        ),
+        ("system-specialist", RoleName::SystemSpecialist),
+        ("system-assistant", RoleName::SystemAssistant),
+        ("second-system-assistant", RoleName::SecondSystemAssistant),
+        ("poet", RoleName::Poet),
+        ("poet-assistant", RoleName::PoetAssistant),
+    ];
+
+    assert_eq!(RoleName::ALL.len(), cases.len());
+    for (token, role) in cases {
+        assert_eq!(RoleName::from_wire_token(token), Ok(role));
+        assert_eq!(token.parse::<RoleName>(), Ok(role));
+        assert_eq!(role.as_wire_token(), token);
+        assert_eq!(role.to_string(), token);
+    }
+}
+
+#[test]
 fn path_scope_round_trips() {
     let request = OrchestrateRequest::RoleClaim(RoleClaim {
         role: RoleName::Designer,

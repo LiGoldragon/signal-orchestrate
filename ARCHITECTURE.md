@@ -49,7 +49,10 @@ callers pattern-match instead of parsing strings.
 
 This contract owns:
 
-- `RoleName`
+- `RoleName`: operator, operator-assistant,
+  second-operator-assistant, designer, designer-assistant,
+  second-designer-assistant, system-specialist, system-assistant,
+  second-system-assistant, poet, poet-assistant
 - `ScopeReference`
 - `WirePath`
 - `TaskToken`
