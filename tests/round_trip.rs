@@ -14,8 +14,8 @@ use signal_persona_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
     ActivitySubmission, ClaimAcceptance, ClaimEntry, ClaimRejection, HandoffAcceptance,
     HandoffRejection, HandoffRejectionReason, OrchestrateFrame, OrchestrateFrameBody,
-    OrchestrateOperationKind, OrchestrateReply, OrchestrateRequest, RoleClaim, RoleHandoff,
-    RoleName, RoleObservation, RoleRelease, RoleSnapshot, RoleStatus, ReleaseAcknowledgment,
+    OrchestrateOperationKind, OrchestrateReply, OrchestrateRequest, ReleaseAcknowledgment,
+    RoleClaim, RoleHandoff, RoleName, RoleObservation, RoleRelease, RoleSnapshot, RoleStatus,
     ScopeConflict, ScopeReason, ScopeReference, TaskToken, TimestampNanos, WirePath,
 };
 

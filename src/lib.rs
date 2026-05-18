@@ -25,9 +25,7 @@
 //! boundaries; `~/primary/skills/contract-repo.md` for the
 //! contract-repo discipline this crate follows.
 
-use nota_codec::{
-    Decoder, Encoder, NotaDecode, NotaEncode, NotaEnum, NotaRecord, NotaTransparent,
-};
+use nota_codec::{Decoder, Encoder, NotaDecode, NotaEncode, NotaEnum, NotaRecord, NotaTransparent};
 use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 use signal_core::signal_channel;
 
@@ -37,7 +35,16 @@ use signal_core::signal_channel;
 /// coordinated schema change — every consumer of this
 /// contract recompiles together.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
     Ord,
     NotaEnum,
 )]
@@ -186,7 +193,16 @@ impl AsRef<str> for ScopeReason {
 /// Nanoseconds since the UNIX epoch. Store-supplied at
 /// commit time; never agent-supplied.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
     Ord,
     NotaTransparent,
 )]
