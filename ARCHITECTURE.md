@@ -44,22 +44,24 @@ events for introspection.
 | Request consumer | `persona-orchestrate` daemon. |
 | Wire type | `OrchestrateFrame` / `OrchestrateRequest` / `OrchestrateReply`. |
 
-The channel is request/reply. Activity timestamps are not accepted
-from callers; the daemon store supplies them when committing
-`ActivitySubmission`.
+The channel is request/reply for ordinary operations and stream-capable
+for observation. Activity timestamps are not accepted from callers; the
+daemon store supplies them when committing `ActivitySubmission`.
 
 ## 2 · Requests And Replies
 
 ```text
 OrchestrateRequest                 OrchestrateReply
-├─ RoleClaim                       ├─ ClaimAcceptance
-├─ RoleRelease                     ├─ ClaimRejection
-├─ RoleHandoff                     ├─ ReleaseAcknowledgment
-├─ RoleObservation                 ├─ HandoffAcceptance
-├─ ActivitySubmission              ├─ HandoffRejection
-└─ ActivityQuery                   ├─ RoleSnapshot
-                                   ├─ ActivityAcknowledgment
-                                   └─ ActivityList
+├─ Claim(RoleClaim)                ├─ ClaimAcceptance
+├─ Release(RoleRelease)            ├─ ClaimRejection
+├─ Handoff(RoleHandoff)            ├─ ReleaseAcknowledgment
+├─ Observe(RoleObservation)        ├─ HandoffAcceptance
+├─ Submit(ActivitySubmission)      ├─ HandoffRejection
+├─ Query(ActivityQuery)            ├─ RoleSnapshot
+├─ Watch(ObservationSubscription)  ├─ ActivityAcknowledgment
+└─ Unwatch(ObservationToken)       ├─ ActivityList
+                                   ├─ ObservationOpened
+                                   └─ ObservationClosed
 ```
 
 Closed enums have no `Unknown` variant. Conflicts and rejections

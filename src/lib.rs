@@ -17,9 +17,10 @@
 //! - **Activity query** — read recent activity records,
 //!   optionally filtered by role or scope.
 //!
-//! The channel is **request/reply** (every operation has a
-//! typed reply). Subscription mode is a future extension —
-//! see designer/93 §7.5.
+//! The channel is mostly request/reply: ordinary operations
+//! get typed replies, while `Watch` opens the observation
+//! stream and `Unwatch` closes it. Observation events carry
+//! inbound operation kinds and daemon-lowered Sema effects.
 //!
 //! See `ARCHITECTURE.md` for the channel's role and
 //! boundaries; `~/primary/skills/contract-repo.md` for the
