@@ -17,25 +17,28 @@ contract, so consumers do not infer verbs by string matching.
 
 ## MUST IMPLEMENT — signal architecture migration
 
-This contract is migrating to contract-local verbs per
+This contract is pending the signal architecture migration named in
 `primary/reports/designer/238-signal-architecture-redirection-contract-local-verbs.md`
-and `primary/reports/designer/239-signal-architecture-migration-plan.md`.
-
-Drop the SignalVerb prefixes on every request variant. The
-canonical contract-local verbs for orchestration are `Claim`
-(payload `RoleClaim` becomes the noun the verb acts on), `Release`
-(for `RoleRelease`), `Handoff` (for `RoleHandoff`), `Observe`
-(for `RoleObservation`, payload names the query target), `Submit`
-(for `ActivitySubmission`, payload `Activity`), and `Query`
-(for `ActivityQuery`, payload names the filter shape). `Mutate`
-on `RoleHandoff` is grammatically wrong — `Handoff` IS the verb;
-the move below daemon. Move the verb-to-Sema lowering
-(`Claim` → `Assert`, `Release` → `Retract`, `Handoff` → `Mutate`,
-`Observe` / `Query` → `Match`, `Submit` → `Assert`) into the
-runtime executor.
-
-References: `primary/reports/designer/238-signal-architecture-redirection-contract-local-verbs.md`,
+and implemented by
 `primary/reports/designer/239-signal-architecture-migration-plan.md`.
+The current `SignalVerb` mapping is temporary.
+
+Required refactor after `signal-frame` and the updated
+`signal_channel!` macro are available:
+
+- replace the `signal-core` dependency with `signal-frame`;
+- drop the `SignalVerb` prefixes on every request variant;
+- expose contract-local operation roots in verb form;
+- add the public observer hook for inbound contract operations and
+  outbound Sema effects;
+- move verb-to-Sema lowering into the `persona-orchestrate` runtime
+  executor.
+
+The expected ordinary operation roots are `Claim`, `Release`,
+`Handoff`, `Observe`, `Submit`, and `Query`. The lower Sema effects
+remain runtime work: `Claim` lowers to an assertion, `Release` to a
+retraction, `Handoff` to a mutation, `Observe` and `Query` to
+matches, and `Submit` to an assertion when accepted.
 
 **Note to remover:** when the refactor lands, remove this section and
 add a `## Migration history — contract-local verbs (2026-05-XX)`
