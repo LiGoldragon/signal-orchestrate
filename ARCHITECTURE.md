@@ -49,20 +49,22 @@ callers pattern-match instead of parsing strings.
 
 This contract owns:
 
-- `RoleName`: operator, operator-assistant,
-  second-operator-assistant, designer, designer-assistant,
-  second-designer-assistant, system-specialist, system-assistant,
-  second-system-assistant, poet, poet-assistant
+- `RoleIdentifier` / `RoleName`: validated dynamic role token. The
+  `RoleName` name remains as a compatibility alias while callers move
+  off the old fixed-role enum shape.
+- `HarnessKind`: Codex or Claude, carried as data in role status
+  instead of being hidden in the role string.
 - `ScopeReference`
 - `WirePath`
 - `TaskToken`
 - `ScopeReason`
 - `TimestampNanos`
 
-`WirePath`, `TaskToken`, and `ScopeReason` are validated newtypes.
-Construct them through `from_absolute_path`, `from_wire_token`, and
-`from_text` respectively. Invalid values are rejected at the contract
-boundary and also during NOTA decode.
+`RoleIdentifier`, `WirePath`, `TaskToken`, and `ScopeReason` are
+validated newtypes. Construct them through `from_wire_token`,
+`from_absolute_path`, `from_wire_token`, and `from_text` respectively.
+Invalid values are rejected at the contract boundary and also during
+NOTA decode.
 
 ## 4 · Verb Map
 
@@ -99,6 +101,7 @@ contract. This ordinary contract is the peer/CLI surface.
 - every request variant round-trips through an `OrchestrateFrame`;
 - every reply variant round-trips through an `OrchestrateFrame`;
 - every request variant maps to its declared `SignalVerb`;
+- dynamic role identifiers round-trip as ordinary payload data;
 - invalid scope primitives are rejected.
 
 ## Code Map

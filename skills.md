@@ -23,10 +23,9 @@ If your change adds a new request or reply variant, edit
 
 ## What this repo owns
 
-- `RoleName` (closed enum: Operator, OperatorAssistant,
-  SecondOperatorAssistant, Designer, DesignerAssistant,
-  SecondDesignerAssistant, SystemSpecialist, SystemAssistant,
-  SecondSystemAssistant, Poet, PoetAssistant).
+- `RoleIdentifier` / `RoleName` compatibility alias (validated
+  dynamic role token).
+- `HarnessKind` (Codex or Claude).
 - `ScopeReference` (closed enum: Path | Task) plus
   `WirePath` and `TaskToken` newtypes.
 - `ScopeReason` (provisional `String` newtype).

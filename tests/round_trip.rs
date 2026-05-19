@@ -13,7 +13,7 @@ use signal_core::{
 use signal_persona_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
     ActivitySubmission, ClaimAcceptance, ClaimEntry, ClaimRejection, Error, HandoffAcceptance,
-    HandoffRejection, HandoffRejectionReason, OrchestrateFrame, OrchestrateFrameBody,
+    HandoffRejection, HandoffRejectionReason, HarnessKind, OrchestrateFrame, OrchestrateFrameBody,
     OrchestrateOperationKind, OrchestrateReply, OrchestrateRequest, ReleaseAcknowledgment,
     RoleClaim, RoleHandoff, RoleName, RoleObservation, RoleRelease, RoleSnapshot, RoleStatus,
     ScopeConflict, ScopeReason, ScopeReference, TaskToken, TimestampNanos, WirePath,
@@ -84,6 +84,54 @@ fn sample_reason() -> ScopeReason {
     ScopeReason::from_text("design-cascade per /93").expect("sample reason")
 }
 
+fn role(token: &str) -> RoleName {
+    RoleName::from_wire_token(token).expect("role")
+}
+
+fn operator() -> RoleName {
+    role("operator")
+}
+
+fn operator_assistant() -> RoleName {
+    role("operator-assistant")
+}
+
+fn second_operator_assistant() -> RoleName {
+    role("second-operator-assistant")
+}
+
+fn designer() -> RoleName {
+    role("designer")
+}
+
+fn designer_assistant() -> RoleName {
+    role("designer-assistant")
+}
+
+fn second_designer_assistant() -> RoleName {
+    role("second-designer-assistant")
+}
+
+fn system_specialist() -> RoleName {
+    role("system-specialist")
+}
+
+fn system_assistant() -> RoleName {
+    role("system-assistant")
+}
+
+fn second_system_assistant() -> RoleName {
+    role("second-system-assistant")
+}
+
+fn poet() -> RoleName {
+    role("poet")
+}
+
+fn poet_assistant() -> RoleName {
+    role("poet-assistant")
+}
+
 fn sample_path_scope() -> ScopeReference {
     ScopeReference::Path(sample_path())
 }
@@ -97,7 +145,7 @@ fn sample_task_scope() -> ScopeReference {
 #[test]
 fn role_claim_with_paths_round_trips() {
     let request = OrchestrateRequest::RoleClaim(RoleClaim {
-        role: RoleName::Designer,
+        role: designer(),
         scopes: vec![sample_path_scope(), sample_task_scope()],
         reason: sample_reason(),
     });
@@ -107,9 +155,7 @@ fn role_claim_with_paths_round_trips() {
 
 #[test]
 fn role_release_round_trips() {
-    let request = OrchestrateRequest::RoleRelease(RoleRelease {
-        role: RoleName::Operator,
-    });
+    let request = OrchestrateRequest::RoleRelease(RoleRelease { role: operator() });
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
 }
@@ -117,8 +163,8 @@ fn role_release_round_trips() {
 #[test]
 fn role_handoff_round_trips() {
     let request = OrchestrateRequest::RoleHandoff(RoleHandoff {
-        from: RoleName::Designer,
-        to: RoleName::Operator,
+        from: designer(),
+        to: operator(),
         scopes: vec![sample_path_scope()],
         reason: ScopeReason::from_text("router migration handoff").expect("sample reason"),
     });
@@ -136,7 +182,7 @@ fn role_observation_round_trips() {
 #[test]
 fn activity_submission_round_trips() {
     let request = OrchestrateRequest::ActivitySubmission(ActivitySubmission {
-        role: RoleName::OperatorAssistant,
+        role: operator_assistant(),
         scope: sample_path_scope(),
         reason: ScopeReason::from_text("audit signal-persona-system integration")
             .expect("sample reason"),
@@ -159,7 +205,7 @@ fn activity_query_unfiltered_round_trips() {
 fn activity_query_with_role_filter_round_trips() {
     let request = OrchestrateRequest::ActivityQuery(ActivityQuery {
         limit: 50,
-        filters: vec![ActivityFilter::RoleFilter(RoleName::Operator)],
+        filters: vec![ActivityFilter::RoleFilter(operator())],
     });
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
@@ -193,7 +239,7 @@ fn activity_query_with_task_filter_round_trips() {
 #[test]
 fn claim_acceptance_round_trips() {
     let reply = OrchestrateReply::ClaimAcceptance(ClaimAcceptance {
-        role: RoleName::Designer,
+        role: designer(),
         scopes: vec![sample_path_scope()],
     });
     let decoded = round_trip_reply(reply.clone());
@@ -203,10 +249,10 @@ fn claim_acceptance_round_trips() {
 #[test]
 fn claim_rejection_round_trips() {
     let reply = OrchestrateReply::ClaimRejection(ClaimRejection {
-        role: RoleName::Designer,
+        role: designer(),
         conflicts: vec![ScopeConflict {
             scope: sample_path_scope(),
-            held_by: RoleName::Operator,
+            held_by: operator(),
             held_reason: ScopeReason::from_text("Persona-prefix sweep").expect("sample reason"),
         }],
     });
@@ -217,7 +263,7 @@ fn claim_rejection_round_trips() {
 #[test]
 fn release_acknowledgment_round_trips() {
     let reply = OrchestrateReply::ReleaseAcknowledgment(ReleaseAcknowledgment {
-        role: RoleName::Designer,
+        role: designer(),
         released_scopes: vec![sample_path_scope(), sample_task_scope()],
     });
     let decoded = round_trip_reply(reply.clone());
@@ -227,8 +273,8 @@ fn release_acknowledgment_round_trips() {
 #[test]
 fn handoff_acceptance_round_trips() {
     let reply = OrchestrateReply::HandoffAcceptance(HandoffAcceptance {
-        from: RoleName::Designer,
-        to: RoleName::Operator,
+        from: designer(),
+        to: operator(),
         scopes: vec![sample_path_scope()],
     });
     let decoded = round_trip_reply(reply.clone());
@@ -238,8 +284,8 @@ fn handoff_acceptance_round_trips() {
 #[test]
 fn handoff_rejection_source_does_not_hold_round_trips() {
     let reply = OrchestrateReply::HandoffRejection(HandoffRejection {
-        from: RoleName::Designer,
-        to: RoleName::Operator,
+        from: designer(),
+        to: operator(),
         reason: HandoffRejectionReason::SourceRoleDoesNotHold,
     });
     let decoded = round_trip_reply(reply.clone());
@@ -249,11 +295,11 @@ fn handoff_rejection_source_does_not_hold_round_trips() {
 #[test]
 fn handoff_rejection_target_conflict_round_trips() {
     let reply = OrchestrateReply::HandoffRejection(HandoffRejection {
-        from: RoleName::Designer,
-        to: RoleName::Operator,
+        from: designer(),
+        to: operator(),
         reason: HandoffRejectionReason::TargetRoleConflict(vec![ScopeConflict {
             scope: sample_path_scope(),
-            held_by: RoleName::OperatorAssistant,
+            held_by: operator_assistant(),
             held_reason: ScopeReason::from_text("audit pass").expect("sample reason"),
         }]),
     });
@@ -266,19 +312,21 @@ fn role_snapshot_round_trips() {
     let reply = OrchestrateReply::RoleSnapshot(RoleSnapshot {
         roles: vec![
             RoleStatus {
-                role: RoleName::Designer,
+                role: designer(),
+                harness: HarnessKind::Claude,
                 claims: vec![ClaimEntry {
                     scope: sample_path_scope(),
                     reason: sample_reason(),
                 }],
             },
             RoleStatus {
-                role: RoleName::Operator,
+                role: operator(),
+                harness: HarnessKind::Codex,
                 claims: vec![],
             },
         ],
         recent_activity: vec![Activity {
-            role: RoleName::Designer,
+            role: designer(),
             scope: sample_path_scope(),
             reason: sample_reason(),
             stamped_at: TimestampNanos::new(1_730_000_000_000_000_000),
@@ -300,13 +348,13 @@ fn activity_list_round_trips() {
     let reply = OrchestrateReply::ActivityList(ActivityList {
         records: vec![
             Activity {
-                role: RoleName::Designer,
+                role: designer(),
                 scope: sample_path_scope(),
                 reason: ScopeReason::from_text("rescope per /91 §3.1").expect("sample reason"),
                 stamped_at: TimestampNanos::new(1_730_000_000_000_000_000),
             },
             Activity {
-                role: RoleName::Operator,
+                role: operator(),
                 scope: sample_task_scope(),
                 reason: ScopeReason::from_text("ractor adoption").expect("sample reason"),
                 stamped_at: TimestampNanos::new(1_730_000_001_000_000_000),
@@ -322,29 +370,23 @@ fn activity_list_round_trips() {
 #[test]
 fn role_name_parses_workspace_coordination_tokens() {
     let cases = [
-        ("operator", RoleName::Operator),
-        ("operator-assistant", RoleName::OperatorAssistant),
-        (
-            "second-operator-assistant",
-            RoleName::SecondOperatorAssistant,
-        ),
-        ("designer", RoleName::Designer),
-        ("designer-assistant", RoleName::DesignerAssistant),
-        (
-            "second-designer-assistant",
-            RoleName::SecondDesignerAssistant,
-        ),
-        ("system-specialist", RoleName::SystemSpecialist),
-        ("system-assistant", RoleName::SystemAssistant),
-        ("second-system-assistant", RoleName::SecondSystemAssistant),
-        ("poet", RoleName::Poet),
-        ("poet-assistant", RoleName::PoetAssistant),
+        ("operator", operator()),
+        ("operator-assistant", operator_assistant()),
+        ("second-operator-assistant", second_operator_assistant()),
+        ("designer", designer()),
+        ("designer-assistant", designer_assistant()),
+        ("second-designer-assistant", second_designer_assistant()),
+        ("system-specialist", system_specialist()),
+        ("system-assistant", system_assistant()),
+        ("second-system-assistant", second_system_assistant()),
+        ("poet", poet()),
+        ("poet-assistant", poet_assistant()),
     ];
 
-    assert_eq!(RoleName::ALL.len(), cases.len());
+    assert_eq!(RoleName::CURRENT_WORKSPACE_ROLE_TOKENS.len(), cases.len());
     for (token, role) in cases {
-        assert_eq!(RoleName::from_wire_token(token), Ok(role));
-        assert_eq!(token.parse::<RoleName>(), Ok(role));
+        assert_eq!(RoleName::from_wire_token(token), Ok(role.clone()));
+        assert_eq!(token.parse::<RoleName>(), Ok(role.clone()));
         assert_eq!(role.as_wire_token(), token);
         assert_eq!(role.to_string(), token);
     }
@@ -353,7 +395,7 @@ fn role_name_parses_workspace_coordination_tokens() {
 #[test]
 fn path_scope_round_trips() {
     let request = OrchestrateRequest::RoleClaim(RoleClaim {
-        role: RoleName::Designer,
+        role: designer(),
         scopes: vec![ScopeReference::Path(sample_path())],
         reason: sample_reason(),
     });
@@ -364,7 +406,7 @@ fn path_scope_round_trips() {
 #[test]
 fn task_scope_round_trips() {
     let request = OrchestrateRequest::RoleClaim(RoleClaim {
-        role: RoleName::Designer,
+        role: designer(),
         scopes: vec![ScopeReference::Task(sample_task())],
         reason: sample_reason(),
     });
@@ -377,22 +419,20 @@ fn orchestrate_request_exposes_contract_owned_operation_kind() {
     let cases = vec![
         (
             OrchestrateRequest::RoleClaim(RoleClaim {
-                role: RoleName::Designer,
+                role: designer(),
                 scopes: vec![sample_path_scope()],
                 reason: sample_reason(),
             }),
             OrchestrateOperationKind::RoleClaim,
         ),
         (
-            OrchestrateRequest::RoleRelease(RoleRelease {
-                role: RoleName::Operator,
-            }),
+            OrchestrateRequest::RoleRelease(RoleRelease { role: operator() }),
             OrchestrateOperationKind::RoleRelease,
         ),
         (
             OrchestrateRequest::RoleHandoff(RoleHandoff {
-                from: RoleName::Designer,
-                to: RoleName::Operator,
+                from: designer(),
+                to: operator(),
                 scopes: vec![sample_path_scope()],
                 reason: sample_reason(),
             }),
@@ -404,7 +444,7 @@ fn orchestrate_request_exposes_contract_owned_operation_kind() {
         ),
         (
             OrchestrateRequest::ActivitySubmission(ActivitySubmission {
-                role: RoleName::Operator,
+                role: operator(),
                 scope: sample_path_scope(),
                 reason: sample_reason(),
             }),
@@ -413,7 +453,7 @@ fn orchestrate_request_exposes_contract_owned_operation_kind() {
         (
             OrchestrateRequest::ActivityQuery(ActivityQuery {
                 limit: 10,
-                filters: vec![ActivityFilter::RoleFilter(RoleName::Operator)],
+                filters: vec![ActivityFilter::RoleFilter(operator())],
             }),
             OrchestrateOperationKind::ActivityQuery,
         ),
@@ -428,15 +468,13 @@ fn orchestrate_request_exposes_contract_owned_operation_kind() {
 fn orchestrate_request_variants_do_not_silently_default_to_assert() {
     let cases = vec![
         (
-            OrchestrateRequest::RoleRelease(RoleRelease {
-                role: RoleName::Operator,
-            }),
+            OrchestrateRequest::RoleRelease(RoleRelease { role: operator() }),
             SignalVerb::Retract,
         ),
         (
             OrchestrateRequest::RoleHandoff(RoleHandoff {
-                from: RoleName::Designer,
-                to: RoleName::Operator,
+                from: designer(),
+                to: operator(),
                 scopes: vec![sample_path_scope()],
                 reason: sample_reason(),
             }),
@@ -449,7 +487,7 @@ fn orchestrate_request_variants_do_not_silently_default_to_assert() {
         (
             OrchestrateRequest::ActivityQuery(ActivityQuery {
                 limit: 8,
-                filters: vec![ActivityFilter::RoleFilter(RoleName::Operator)],
+                filters: vec![ActivityFilter::RoleFilter(operator())],
             }),
             SignalVerb::Match,
         ),
@@ -474,5 +512,9 @@ fn scope_primitives_reject_invalid_values() {
     assert!(matches!(
         ScopeReason::from_text(""),
         Err(Error::InvalidScopeReason { .. })
+    ));
+    assert!(matches!(
+        RoleName::from_wire_token("bad role"),
+        Err(Error::InvalidRoleIdentifier { .. })
     ));
 }

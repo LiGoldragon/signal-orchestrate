@@ -22,7 +22,7 @@ use signal_persona_orchestrate::{
 
 // Designer claims a path and a task scope
 let request = OrchestrateRequest::RoleClaim(RoleClaim {
-    role: RoleName::Designer,
+    role: RoleName::from_wire_token("design-system-refresh")?,
     scopes: vec![
         ScopeReference::Path(
             WirePath::from_absolute_path("/git/.../signal/ARCHITECTURE.md")?

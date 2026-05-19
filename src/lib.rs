@@ -46,100 +46,85 @@ pub enum Error {
     InvalidTaskToken { token: String },
     #[error("scope reason must be non-empty and single-line: {reason}")]
     InvalidScopeReason { reason: String },
-    #[error("unknown workspace role token: {role}")]
-    UnknownRoleName { role: String },
+    #[error(
+        "role identifier must be non-empty, unbracketed, and contain no whitespace or path separators: {role}"
+    )]
+    InvalidRoleIdentifier { role: String },
 }
 
 // ─── Identity ─────────────────────────────────────────────
 
-/// The closed set of workspace roles. Adding a role is a
-/// coordinated schema change — every consumer of this
-/// contract recompiles together.
+/// A dynamic workspace role identifier.
+///
+/// Roles are data now, not enum variants. A role is named by
+/// the work context it owns, and new roles can be created at
+/// runtime through the owner orchestration surface.
 #[derive(
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
     Debug,
     Clone,
-    Copy,
     PartialEq,
     Eq,
     Hash,
     PartialOrd,
     Ord,
-    NotaEnum,
+    NotaTryTransparent,
 )]
-pub enum RoleName {
-    Operator,
-    OperatorAssistant,
-    SecondOperatorAssistant,
-    Designer,
-    DesignerAssistant,
-    SecondDesignerAssistant,
-    SystemSpecialist,
-    SystemAssistant,
-    SecondSystemAssistant,
-    Poet,
-    PoetAssistant,
-}
+pub struct RoleIdentifier(String);
 
-impl RoleName {
-    pub const ALL: [Self; 11] = [
-        Self::Operator,
-        Self::OperatorAssistant,
-        Self::SecondOperatorAssistant,
-        Self::Designer,
-        Self::DesignerAssistant,
-        Self::SecondDesignerAssistant,
-        Self::SystemSpecialist,
-        Self::SystemAssistant,
-        Self::SecondSystemAssistant,
-        Self::Poet,
-        Self::PoetAssistant,
+pub type RoleName = RoleIdentifier;
+
+impl RoleIdentifier {
+    pub const CURRENT_WORKSPACE_ROLE_TOKENS: [&'static str; 11] = [
+        "operator",
+        "operator-assistant",
+        "second-operator-assistant",
+        "designer",
+        "designer-assistant",
+        "second-designer-assistant",
+        "system-specialist",
+        "system-assistant",
+        "second-system-assistant",
+        "poet",
+        "poet-assistant",
     ];
 
-    pub const fn as_wire_token(self) -> &'static str {
-        match self {
-            Self::Operator => "operator",
-            Self::OperatorAssistant => "operator-assistant",
-            Self::SecondOperatorAssistant => "second-operator-assistant",
-            Self::Designer => "designer",
-            Self::DesignerAssistant => "designer-assistant",
-            Self::SecondDesignerAssistant => "second-designer-assistant",
-            Self::SystemSpecialist => "system-specialist",
-            Self::SystemAssistant => "system-assistant",
-            Self::SecondSystemAssistant => "second-system-assistant",
-            Self::Poet => "poet",
-            Self::PoetAssistant => "poet-assistant",
-        }
+    pub fn try_new(role: String) -> Result<Self> {
+        Self::from_wire_token(role)
     }
 
     pub fn from_wire_token(role: impl Into<String>) -> Result<Self> {
         let role = role.into();
-        match role.as_str() {
-            "operator" => Ok(Self::Operator),
-            "operator-assistant" => Ok(Self::OperatorAssistant),
-            "second-operator-assistant" => Ok(Self::SecondOperatorAssistant),
-            "designer" => Ok(Self::Designer),
-            "designer-assistant" => Ok(Self::DesignerAssistant),
-            "second-designer-assistant" => Ok(Self::SecondDesignerAssistant),
-            "system-specialist" => Ok(Self::SystemSpecialist),
-            "system-assistant" => Ok(Self::SystemAssistant),
-            "second-system-assistant" => Ok(Self::SecondSystemAssistant),
-            "poet" => Ok(Self::Poet),
-            "poet-assistant" => Ok(Self::PoetAssistant),
-            _ => Err(Error::UnknownRoleName { role }),
+        if role.is_empty()
+            || role.chars().any(char::is_whitespace)
+            || role.contains('/')
+            || role.contains('\\')
+            || role.contains('[')
+            || role.contains(']')
+        {
+            return Err(Error::InvalidRoleIdentifier { role });
         }
+        Ok(Self(role))
+    }
+
+    pub fn as_wire_token(&self) -> &str {
+        &self.0
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
-impl fmt::Display for RoleName {
+impl fmt::Display for RoleIdentifier {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str(self.as_wire_token())
     }
 }
 
-impl FromStr for RoleName {
+impl FromStr for RoleIdentifier {
     type Err = Error;
 
     fn from_str(role: &str) -> Result<Self> {
@@ -147,7 +132,7 @@ impl FromStr for RoleName {
     }
 }
 
-impl TryFrom<String> for RoleName {
+impl TryFrom<String> for RoleIdentifier {
     type Error = Error;
 
     fn try_from(role: String) -> Result<Self> {
@@ -155,11 +140,49 @@ impl TryFrom<String> for RoleName {
     }
 }
 
-impl TryFrom<&str> for RoleName {
+impl TryFrom<&str> for RoleIdentifier {
     type Error = Error;
 
     fn try_from(role: &str) -> Result<Self> {
         Self::from_wire_token(role)
+    }
+}
+
+impl AsRef<str> for RoleIdentifier {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEnum, Debug, Clone, Copy, PartialEq, Eq, Hash,
+)]
+pub enum HarnessKind {
+    Codex,
+    Claude,
+}
+
+impl HarnessKind {
+    pub const fn as_wire_token(self) -> &'static str {
+        match self {
+            Self::Codex => "codex",
+            Self::Claude => "claude",
+        }
+    }
+
+    pub fn from_wire_token(harness: impl Into<String>) -> Result<Self> {
+        let harness = harness.into();
+        match harness.as_str() {
+            "codex" => Ok(Self::Codex),
+            "claude" => Ok(Self::Claude),
+            _ => Err(Error::InvalidRoleIdentifier { role: harness }),
+        }
+    }
+}
+
+impl fmt::Display for HarnessKind {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(self.as_wire_token())
     }
 }
 
@@ -445,9 +468,7 @@ pub struct ScopeConflict {
 
 /// A role releases all of its currently-held scopes.
 /// Reply: `ReleaseAcknowledgment` listing what was released.
-#[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
-)]
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
 pub struct RoleRelease {
     pub role: RoleName,
 }
@@ -552,6 +573,7 @@ pub struct RoleSnapshot {
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
 pub struct RoleStatus {
     pub role: RoleName,
+    pub harness: HarnessKind,
     pub claims: Vec<ClaimEntry>,
 }
 
