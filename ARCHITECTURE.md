@@ -12,37 +12,29 @@ wire vocabulary for the ordinary `persona-orchestrate` surface and
 contains no daemon, actor, database, CLI parser, or transport policy.
 
 The channel is declared by one `signal_channel!` invocation in
-`src/lib.rs`. Each request variant declares its `SignalVerb` in the
-contract, so consumers do not infer verbs by string matching.
+`src/lib.rs`. Public operations use contract-local verb roots. The
+daemon lowers those operations to Sema effects internally.
 
-## MUST IMPLEMENT — signal architecture migration
+## Migration history — contract-local verbs (2026-05-19)
 
-This contract is pending the signal architecture migration named in
-`primary/reports/designer/238-signal-architecture-redirection-contract-local-verbs.md`
-and implemented by
-`primary/reports/designer/239-signal-architecture-migration-plan.md`.
-The current `SignalVerb` mapping is temporary.
+This contract migrated from `signal-core` public `SignalVerb` wrappers
+to `signal-frame` contract-local operation roots.
 
-Required refactor after `signal-frame` and the updated
-`signal_channel!` macro are available:
+The public request surface is now:
 
-- replace the `signal-core` dependency with `signal-frame`;
-- drop the `SignalVerb` prefixes on every request variant;
-- expose contract-local operation roots in verb form;
-- add the public observer hook for inbound contract operations and
-  outbound Sema effects;
-- move verb-to-Sema lowering into the `persona-orchestrate` runtime
-  executor.
+- `Claim(RoleClaim)`
+- `Release(RoleRelease)`
+- `Handoff(RoleHandoff)`
+- `Observe(RoleObservation)`
+- `Submit(ActivitySubmission)`
+- `Query(ActivityQuery)`
+- `Watch(ObservationSubscription)`
+- `Unwatch(ObservationToken)`
 
-The expected ordinary operation roots are `Claim`, `Release`,
-`Handoff`, `Observe`, `Submit`, and `Query`. The lower Sema effects
-remain runtime work: `Claim` lowers to an assertion, `Release` to a
-retraction, `Handoff` to a mutation, `Observe` and `Query` to
-matches, and `Submit` to an assertion when accepted.
-
-**Note to remover:** when the refactor lands, remove this section and
-add a `## Migration history — contract-local verbs (2026-05-XX)`
-paragraph noting the shape change.
+There is no public `Assert` / `Retract` / `Mutate` / `Match` tag in
+this contract. `persona-orchestrate` owns the lower Sema translation.
+The observer stream exposes inbound operation and outbound Sema-effect
+events for introspection.
 
 ## 1 · Channel
 
@@ -95,19 +87,21 @@ validated newtypes. Construct them through `from_wire_token`,
 Invalid values are rejected at the contract boundary and also during
 NOTA decode.
 
-## 4 · Verb Map
+## 4 · Operation Roots
 
-| Request | Verb |
+| Operation | Lower Sema effect |
 |---|---|
-| `RoleClaim` | `Assert` |
-| `RoleRelease` | `Retract` |
-| `RoleHandoff` | `Mutate` |
-| `RoleObservation` | `Match` |
-| `ActivitySubmission` | `Assert` |
-| `ActivityQuery` | `Match` |
+| `Claim` | `Assert` |
+| `Release` | `Retract` |
+| `Handoff` | `Mutate` |
+| `Observe` | `Match` |
+| `Submit` | `Assert` |
+| `Query` | `Match` |
+| `Watch` | `Subscribe` |
+| `Unwatch` | `Retract` |
 
-`OrchestrateRequest::operation_kind()` exposes the domain operation
-without asking consumers to match on verb roots.
+`OrchestrateRequest::operation_kind()` exposes the contract operation
+without asking consumers to know the lower Sema effect.
 
 ## 5 · Non-Ownership
 
@@ -129,22 +123,24 @@ contract. This ordinary contract is the peer/CLI surface.
 
 - every request variant round-trips through an `OrchestrateFrame`;
 - every reply variant round-trips through an `OrchestrateFrame`;
-- every request variant maps to its declared `SignalVerb`;
+- operation roots encode as contract-local NOTA heads;
 - dynamic role identifiers round-trip as ordinary payload data;
+- observer events round-trip through the streaming frame shape;
 - invalid scope primitives are rejected.
 
 ## Code Map
 
 ```text
 src/lib.rs            payloads, validation newtypes, signal_channel!
-tests/round_trip.rs   frame round trips and verb witnesses
+tests/round_trip.rs   frame round trips and contract-local operation witnesses
 ```
 
 ## See Also
 
 - `../persona-orchestrate/ARCHITECTURE.md` — runtime consumer and
   state owner.
-- `../signal-core/ARCHITECTURE.md` — Signal frame kernel.
+- `../signal-frame/ARCHITECTURE.md` — Signal frame kernel.
+- `../signal-sema/ARCHITECTURE.md` — lower Sema operation vocabulary.
 - `~/primary/skills/contract-repo.md` — contract-repo discipline.
 - `~/primary/skills/architectural-truth-tests.md` — witness-test
   discipline.

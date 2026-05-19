@@ -30,7 +30,8 @@ use nota_codec::{
     NotaTryTransparent,
 };
 use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
-use signal_core::signal_channel;
+use signal_frame::signal_channel;
+use signal_sema::SemaOperation;
 use std::fmt;
 use std::str::FromStr;
 
@@ -693,50 +694,179 @@ pub struct ActivityList {
     pub records: Vec<Activity>,
 }
 
-// ─── Channel declaration ──────────────────────────────────
+// ─── Observation stream ───────────────────────────────────
 
-signal_channel! {
-    channel Orchestrate {
-        request OrchestrateRequest {
-            Assert RoleClaim(RoleClaim),
-            Retract RoleRelease(RoleRelease),
-            Mutate RoleHandoff(RoleHandoff),
-            Match RoleObservation(RoleObservation),
-            Assert ActivitySubmission(ActivitySubmission),
-            Match ActivityQuery(ActivityQuery),
-        }
-        reply OrchestrateReply {
-            ClaimAcceptance(ClaimAcceptance),
-            ClaimRejection(ClaimRejection),
-            ReleaseAcknowledgment(ReleaseAcknowledgment),
-            HandoffAcceptance(HandoffAcceptance),
-            HandoffRejection(HandoffRejection),
-            RoleSnapshot(RoleSnapshot),
-            ActivityAcknowledgment(ActivityAcknowledgment),
-            ActivityList(ActivityList),
+/// Subscribe to contract-operation and Sema-effect observations on
+/// the public socket.
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+pub struct ObservationSubscription {
+    pub include_operations: bool,
+    pub include_sema_effects: bool,
+}
+
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaTransparent,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub struct ObservationToken(u64);
+
+impl ObservationToken {
+    pub const fn new(value: u64) -> Self {
+        Self(value)
+    }
+
+    pub const fn value(self) -> u64 {
+        self.0
+    }
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
+)]
+pub struct ObservationOpened {
+    pub token: ObservationToken,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
+)]
+pub struct ObservationClosed {
+    pub token: ObservationToken,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
+)]
+pub struct OperationObserved {
+    pub operation: OperationKind,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
+)]
+pub struct SemaEffectObserved {
+    pub operation: OperationKind,
+    pub effect: SemaOperation,
+}
+
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ObservationEvent {
+    Operation(OperationObserved),
+    SemaEffect(SemaEffectObserved),
+}
+
+impl NotaEncode for ObservationEvent {
+    fn encode(&self, encoder: &mut Encoder) -> nota_codec::Result<()> {
+        match self {
+            Self::Operation(observed) => {
+                encoder.start_record("Operation")?;
+                observed.encode(encoder)?;
+                encoder.end_record()
+            }
+            Self::SemaEffect(observed) => {
+                encoder.start_record("SemaEffect")?;
+                observed.encode(encoder)?;
+                encoder.end_record()
+            }
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum OrchestrateOperationKind {
-    RoleClaim,
-    RoleRelease,
-    RoleHandoff,
-    RoleObservation,
-    ActivitySubmission,
-    ActivityQuery,
+impl NotaDecode for ObservationEvent {
+    fn decode(decoder: &mut Decoder<'_>) -> nota_codec::Result<Self> {
+        let head = decoder.peek_record_head()?;
+        match head.as_str() {
+            "Operation" => {
+                decoder.expect_record_head("Operation")?;
+                let observed = OperationObserved::decode(decoder)?;
+                decoder.expect_record_end()?;
+                Ok(Self::Operation(observed))
+            }
+            "SemaEffect" => {
+                decoder.expect_record_head("SemaEffect")?;
+                let observed = SemaEffectObserved::decode(decoder)?;
+                decoder.expect_record_end()?;
+                Ok(Self::SemaEffect(observed))
+            }
+            other => Err(nota_codec::Error::UnknownKindForVerb {
+                verb: "ObservationEvent",
+                got: other.to_string(),
+            }),
+        }
+    }
 }
 
-impl OrchestrateRequest {
-    pub fn operation_kind(&self) -> OrchestrateOperationKind {
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEnum, Debug, Clone, Copy, PartialEq, Eq, Hash,
+)]
+pub enum OperationKind {
+    Claim,
+    Release,
+    Handoff,
+    Observe,
+    Submit,
+    Query,
+    Watch,
+    Unwatch,
+}
+
+// ─── Channel declaration ──────────────────────────────────
+
+signal_channel! {
+    channel Orchestrate {
+        operation Claim(RoleClaim),
+        operation Release(RoleRelease),
+        operation Handoff(RoleHandoff),
+        operation Observe(RoleObservation),
+        operation Submit(ActivitySubmission),
+        operation Query(ActivityQuery),
+        operation Watch(ObservationSubscription) opens ObservationStream,
+        operation Unwatch(ObservationToken),
+    }
+    reply OrchestrateReply {
+        ClaimAcceptance(ClaimAcceptance),
+        ClaimRejection(ClaimRejection),
+        ReleaseAcknowledgment(ReleaseAcknowledgment),
+        HandoffAcceptance(HandoffAcceptance),
+        HandoffRejection(HandoffRejection),
+        RoleSnapshot(RoleSnapshot),
+        ActivityAcknowledgment(ActivityAcknowledgment),
+        ActivityList(ActivityList),
+        ObservationOpened(ObservationOpened),
+        ObservationClosed(ObservationClosed),
+    }
+    event OrchestrateEvent {
+        Observed(ObservationEvent) belongs ObservationStream,
+    }
+    stream ObservationStream {
+        token ObservationToken;
+        opened ObservationOpened;
+        event Observed;
+        close Unwatch;
+    }
+}
+
+pub type OrchestrateRequest = OrchestrateOperation;
+
+impl OrchestrateOperation {
+    pub fn operation_kind(&self) -> OperationKind {
         match self {
-            Self::RoleClaim(_) => OrchestrateOperationKind::RoleClaim,
-            Self::RoleRelease(_) => OrchestrateOperationKind::RoleRelease,
-            Self::RoleHandoff(_) => OrchestrateOperationKind::RoleHandoff,
-            Self::RoleObservation(_) => OrchestrateOperationKind::RoleObservation,
-            Self::ActivitySubmission(_) => OrchestrateOperationKind::ActivitySubmission,
-            Self::ActivityQuery(_) => OrchestrateOperationKind::ActivityQuery,
+            Self::Claim(_) => OperationKind::Claim,
+            Self::Release(_) => OperationKind::Release,
+            Self::Handoff(_) => OperationKind::Handoff,
+            Self::Observe(_) => OperationKind::Observe,
+            Self::Submit(_) => OperationKind::Submit,
+            Self::Query(_) => OperationKind::Query,
+            Self::Watch(_) => OperationKind::Watch,
+            Self::Unwatch(_) => OperationKind::Unwatch,
         }
     }
 }

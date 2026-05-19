@@ -6,18 +6,21 @@
 //! proves the macro-emitted type round-trips through a
 //! length-prefixed Frame.
 
-use signal_core::{
+use signal_frame::{
     ExchangeIdentifier, ExchangeLane, LaneSequence, NonEmpty, Reply, RequestPayload, SessionEpoch,
-    SignalVerb, SubReply,
+    SubReply,
 };
 use signal_persona_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
     ActivitySubmission, ClaimAcceptance, ClaimEntry, ClaimRejection, Error, HandoffAcceptance,
-    HandoffRejection, HandoffRejectionReason, HarnessKind, OrchestrateFrame, OrchestrateFrameBody,
-    OrchestrateOperationKind, OrchestrateReply, OrchestrateRequest, ReleaseAcknowledgment,
-    RoleClaim, RoleHandoff, RoleName, RoleObservation, RoleRelease, RoleSnapshot, RoleStatus,
-    ScopeConflict, ScopeReason, ScopeReference, TaskToken, TimestampNanos, WirePath,
+    HandoffRejection, HandoffRejectionReason, HarnessKind, ObservationClosed, ObservationEvent,
+    ObservationOpened, ObservationSubscription, ObservationToken, OperationKind, OperationObserved,
+    OrchestrateEvent, OrchestrateFrame, OrchestrateFrameBody, OrchestrateReply, OrchestrateRequest,
+    ReleaseAcknowledgment, RoleClaim, RoleHandoff, RoleName, RoleObservation, RoleRelease,
+    RoleSnapshot, RoleStatus, ScopeConflict, ScopeReason, ScopeReference, SemaEffectObserved,
+    TaskToken, TimestampNanos, WirePath,
 };
+use signal_sema::SemaOperation;
 
 // ─── Helpers ──────────────────────────────────────────────
 
@@ -30,7 +33,6 @@ fn exchange() -> ExchangeIdentifier {
 }
 
 fn round_trip_request(request: OrchestrateRequest) -> OrchestrateRequest {
-    let expected_verb = request.signal_verb();
     let frame = OrchestrateFrame::new(OrchestrateFrameBody::Request {
         exchange: exchange(),
         request: request.into_request(),
@@ -39,9 +41,8 @@ fn round_trip_request(request: OrchestrateRequest) -> OrchestrateRequest {
     let decoded = OrchestrateFrame::decode_length_prefixed(&bytes).expect("decode");
     match decoded.into_body() {
         OrchestrateFrameBody::Request { request, .. } => {
-            let operation = request.operations().head();
-            assert_eq!(operation.verb, expected_verb);
-            operation.payload.clone()
+            let operation = request.payloads().head();
+            operation.clone()
         }
         other => panic!("expected request operation, got {other:?}"),
     }
@@ -50,10 +51,7 @@ fn round_trip_request(request: OrchestrateRequest) -> OrchestrateRequest {
 fn round_trip_reply(reply: OrchestrateReply) -> OrchestrateReply {
     let frame = OrchestrateFrame::new(OrchestrateFrameBody::Reply {
         exchange: exchange(),
-        reply: Reply::completed(NonEmpty::single(SubReply::Ok {
-            verb: SignalVerb::Match,
-            payload: reply,
-        })),
+        reply: Reply::completed(NonEmpty::single(SubReply::Ok { payload: reply })),
     });
     let bytes = frame.encode_length_prefixed().expect("encode");
     let decoded = OrchestrateFrame::decode_length_prefixed(&bytes).expect("decode");
@@ -66,6 +64,24 @@ fn round_trip_reply(reply: OrchestrateReply) -> OrchestrateReply {
             other => panic!("expected accepted reply, got {other:?}"),
         },
         other => panic!("expected reply operation, got {other:?}"),
+    }
+}
+
+fn round_trip_event(event: OrchestrateEvent) -> OrchestrateEvent {
+    let frame = OrchestrateFrame::new(OrchestrateFrameBody::SubscriptionEvent {
+        event_identifier: signal_frame::StreamEventIdentifier::new(
+            SessionEpoch::new(1),
+            ExchangeLane::Acceptor,
+            LaneSequence::first(),
+        ),
+        token: signal_frame::SubscriptionTokenInner::new(7),
+        event: event.clone(),
+    });
+    let bytes = frame.encode_length_prefixed().expect("encode");
+    let decoded = OrchestrateFrame::decode_length_prefixed(&bytes).expect("decode");
+    match decoded.into_body() {
+        OrchestrateFrameBody::SubscriptionEvent { event, .. } => event,
+        other => panic!("expected subscription event, got {other:?}"),
     }
 }
 
@@ -144,7 +160,7 @@ fn sample_task_scope() -> ScopeReference {
 
 #[test]
 fn role_claim_with_paths_round_trips() {
-    let request = OrchestrateRequest::RoleClaim(RoleClaim {
+    let request = OrchestrateRequest::Claim(RoleClaim {
         role: designer(),
         scopes: vec![sample_path_scope(), sample_task_scope()],
         reason: sample_reason(),
@@ -155,14 +171,14 @@ fn role_claim_with_paths_round_trips() {
 
 #[test]
 fn role_release_round_trips() {
-    let request = OrchestrateRequest::RoleRelease(RoleRelease { role: operator() });
+    let request = OrchestrateRequest::Release(RoleRelease { role: operator() });
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
 }
 
 #[test]
 fn role_handoff_round_trips() {
-    let request = OrchestrateRequest::RoleHandoff(RoleHandoff {
+    let request = OrchestrateRequest::Handoff(RoleHandoff {
         from: designer(),
         to: operator(),
         scopes: vec![sample_path_scope()],
@@ -174,14 +190,14 @@ fn role_handoff_round_trips() {
 
 #[test]
 fn role_observation_round_trips() {
-    let request = OrchestrateRequest::RoleObservation(RoleObservation);
+    let request = OrchestrateRequest::Observe(RoleObservation);
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
 }
 
 #[test]
 fn activity_submission_round_trips() {
-    let request = OrchestrateRequest::ActivitySubmission(ActivitySubmission {
+    let request = OrchestrateRequest::Submit(ActivitySubmission {
         role: operator_assistant(),
         scope: sample_path_scope(),
         reason: ScopeReason::from_text("audit signal-persona-system integration")
@@ -193,7 +209,7 @@ fn activity_submission_round_trips() {
 
 #[test]
 fn activity_query_unfiltered_round_trips() {
-    let request = OrchestrateRequest::ActivityQuery(ActivityQuery {
+    let request = OrchestrateRequest::Query(ActivityQuery {
         limit: 25,
         filters: vec![],
     });
@@ -203,7 +219,7 @@ fn activity_query_unfiltered_round_trips() {
 
 #[test]
 fn activity_query_with_role_filter_round_trips() {
-    let request = OrchestrateRequest::ActivityQuery(ActivityQuery {
+    let request = OrchestrateRequest::Query(ActivityQuery {
         limit: 50,
         filters: vec![ActivityFilter::RoleFilter(operator())],
     });
@@ -213,7 +229,7 @@ fn activity_query_with_role_filter_round_trips() {
 
 #[test]
 fn activity_query_with_path_prefix_round_trips() {
-    let request = OrchestrateRequest::ActivityQuery(ActivityQuery {
+    let request = OrchestrateRequest::Query(ActivityQuery {
         limit: 10,
         filters: vec![ActivityFilter::PathPrefix(
             WirePath::from_absolute_path("/git/github.com/LiGoldragon/persona-router")
@@ -226,10 +242,24 @@ fn activity_query_with_path_prefix_round_trips() {
 
 #[test]
 fn activity_query_with_task_filter_round_trips() {
-    let request = OrchestrateRequest::ActivityQuery(ActivityQuery {
+    let request = OrchestrateRequest::Query(ActivityQuery {
         limit: 100,
         filters: vec![ActivityFilter::TaskToken(sample_task())],
     });
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+}
+
+#[test]
+fn observation_subscription_round_trips() {
+    let request = OrchestrateRequest::Watch(ObservationSubscription {
+        include_operations: true,
+        include_sema_effects: true,
+    });
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+
+    let request = OrchestrateRequest::Unwatch(ObservationToken::new(7));
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
 }
@@ -365,6 +395,34 @@ fn activity_list_round_trips() {
     assert_eq!(decoded, reply);
 }
 
+#[test]
+fn observation_replies_round_trip() {
+    let opened = OrchestrateReply::ObservationOpened(ObservationOpened {
+        token: ObservationToken::new(7),
+    });
+    assert_eq!(round_trip_reply(opened.clone()), opened);
+
+    let closed = OrchestrateReply::ObservationClosed(ObservationClosed {
+        token: ObservationToken::new(7),
+    });
+    assert_eq!(round_trip_reply(closed.clone()), closed);
+}
+
+#[test]
+fn observation_events_round_trip() {
+    let operation = OrchestrateEvent::Observed(ObservationEvent::Operation(OperationObserved {
+        operation: OperationKind::Claim,
+    }));
+    assert_eq!(round_trip_event(operation.clone()), operation);
+
+    let sema_effect =
+        OrchestrateEvent::Observed(ObservationEvent::SemaEffect(SemaEffectObserved {
+            operation: OperationKind::Query,
+            effect: SemaOperation::Match,
+        }));
+    assert_eq!(round_trip_event(sema_effect.clone()), sema_effect);
+}
+
 // ─── Scope-reference variants ─────────────────────────────
 
 #[test]
@@ -394,7 +452,7 @@ fn role_name_parses_workspace_coordination_tokens() {
 
 #[test]
 fn path_scope_round_trips() {
-    let request = OrchestrateRequest::RoleClaim(RoleClaim {
+    let request = OrchestrateRequest::Claim(RoleClaim {
         role: designer(),
         scopes: vec![ScopeReference::Path(sample_path())],
         reason: sample_reason(),
@@ -405,7 +463,7 @@ fn path_scope_round_trips() {
 
 #[test]
 fn task_scope_round_trips() {
-    let request = OrchestrateRequest::RoleClaim(RoleClaim {
+    let request = OrchestrateRequest::Claim(RoleClaim {
         role: designer(),
         scopes: vec![ScopeReference::Task(sample_task())],
         reason: sample_reason(),
@@ -418,44 +476,55 @@ fn task_scope_round_trips() {
 fn orchestrate_request_exposes_contract_owned_operation_kind() {
     let cases = vec![
         (
-            OrchestrateRequest::RoleClaim(RoleClaim {
+            OrchestrateRequest::Claim(RoleClaim {
                 role: designer(),
                 scopes: vec![sample_path_scope()],
                 reason: sample_reason(),
             }),
-            OrchestrateOperationKind::RoleClaim,
+            OperationKind::Claim,
         ),
         (
-            OrchestrateRequest::RoleRelease(RoleRelease { role: operator() }),
-            OrchestrateOperationKind::RoleRelease,
+            OrchestrateRequest::Release(RoleRelease { role: operator() }),
+            OperationKind::Release,
         ),
         (
-            OrchestrateRequest::RoleHandoff(RoleHandoff {
+            OrchestrateRequest::Handoff(RoleHandoff {
                 from: designer(),
                 to: operator(),
                 scopes: vec![sample_path_scope()],
                 reason: sample_reason(),
             }),
-            OrchestrateOperationKind::RoleHandoff,
+            OperationKind::Handoff,
         ),
         (
-            OrchestrateRequest::RoleObservation(RoleObservation),
-            OrchestrateOperationKind::RoleObservation,
+            OrchestrateRequest::Observe(RoleObservation),
+            OperationKind::Observe,
         ),
         (
-            OrchestrateRequest::ActivitySubmission(ActivitySubmission {
+            OrchestrateRequest::Submit(ActivitySubmission {
                 role: operator(),
                 scope: sample_path_scope(),
                 reason: sample_reason(),
             }),
-            OrchestrateOperationKind::ActivitySubmission,
+            OperationKind::Submit,
         ),
         (
-            OrchestrateRequest::ActivityQuery(ActivityQuery {
+            OrchestrateRequest::Query(ActivityQuery {
                 limit: 10,
                 filters: vec![ActivityFilter::RoleFilter(operator())],
             }),
-            OrchestrateOperationKind::ActivityQuery,
+            OperationKind::Query,
+        ),
+        (
+            OrchestrateRequest::Watch(ObservationSubscription {
+                include_operations: true,
+                include_sema_effects: false,
+            }),
+            OperationKind::Watch,
+        ),
+        (
+            OrchestrateRequest::Unwatch(ObservationToken::new(3)),
+            OperationKind::Unwatch,
         ),
     ];
 
@@ -465,38 +534,28 @@ fn orchestrate_request_exposes_contract_owned_operation_kind() {
 }
 
 #[test]
-fn orchestrate_request_variants_do_not_silently_default_to_assert() {
-    let cases = vec![
-        (
-            OrchestrateRequest::RoleRelease(RoleRelease { role: operator() }),
-            SignalVerb::Retract,
-        ),
-        (
-            OrchestrateRequest::RoleHandoff(RoleHandoff {
-                from: designer(),
-                to: operator(),
-                scopes: vec![sample_path_scope()],
-                reason: sample_reason(),
-            }),
-            SignalVerb::Mutate,
-        ),
-        (
-            OrchestrateRequest::RoleObservation(RoleObservation),
-            SignalVerb::Match,
-        ),
-        (
-            OrchestrateRequest::ActivityQuery(ActivityQuery {
-                limit: 8,
-                filters: vec![ActivityFilter::RoleFilter(operator())],
-            }),
-            SignalVerb::Match,
-        ),
-    ];
+fn orchestrate_operations_encode_as_contract_local_nota_heads() {
+    use nota_codec::{Decoder, Encoder, NotaDecode, NotaEncode};
 
-    for (request, verb) in cases {
-        assert_eq!(request.signal_verb(), verb);
-        assert_ne!(request.signal_verb(), SignalVerb::Assert);
-    }
+    let request = OrchestrateRequest::Query(ActivityQuery {
+        limit: 8,
+        filters: vec![ActivityFilter::RoleFilter(operator())],
+    });
+    let mut encoder = Encoder::new();
+    request.into_request().encode(&mut encoder).expect("encode");
+    let text = encoder.into_string();
+
+    assert!(text.starts_with("(Query "));
+    assert!(!text.contains("Match"));
+    assert!(!text.contains("Assert"));
+
+    let mut decoder = Decoder::new(&text);
+    let decoded = signal_persona_orchestrate::OrchestrateChannelRequest::decode(&mut decoder)
+        .expect("decode request");
+    assert_eq!(
+        decoded.payloads().head().operation_kind(),
+        OperationKind::Query
+    );
 }
 
 #[test]
