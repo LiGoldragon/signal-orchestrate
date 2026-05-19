@@ -15,6 +15,32 @@ The channel is declared by one `signal_channel!` invocation in
 `src/lib.rs`. Each request variant declares its `SignalVerb` in the
 contract, so consumers do not infer verbs by string matching.
 
+## MUST IMPLEMENT — signal architecture migration
+
+This contract is migrating to contract-local verbs per
+`primary/reports/designer/238-signal-architecture-redirection-contract-local-verbs.md`
+and `primary/reports/designer/239-signal-architecture-migration-plan.md`.
+
+Drop the SignalVerb prefixes on every request variant. The
+canonical contract-local verbs for orchestration are `Claim`
+(payload `RoleClaim` becomes the noun the verb acts on), `Release`
+(for `RoleRelease`), `Handoff` (for `RoleHandoff`), `Observe`
+(for `RoleObservation`, payload names the query target), `Submit`
+(for `ActivitySubmission`, payload `Activity`), and `Query`
+(for `ActivityQuery`, payload names the filter shape). `Mutate`
+on `RoleHandoff` is grammatically wrong — `Handoff` IS the verb;
+the move below daemon. Move the verb-to-Sema lowering
+(`Claim` → `Assert`, `Release` → `Retract`, `Handoff` → `Mutate`,
+`Observe` / `Query` → `Match`, `Submit` → `Assert`) into the
+runtime executor.
+
+References: `primary/reports/designer/238-signal-architecture-redirection-contract-local-verbs.md`,
+`primary/reports/designer/239-signal-architecture-migration-plan.md`.
+
+**Note to remover:** when the refactor lands, remove this section and
+add a `## Migration history — contract-local verbs (2026-05-XX)`
+paragraph noting the shape change.
+
 ## 1 · Channel
 
 | Side | Component |
