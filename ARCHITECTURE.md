@@ -54,8 +54,8 @@ If the domain `Watch`/`Unwatch` and the mandatory observability
 collide on naming, the macro-injected `Tap`/`Untap` wins and the
 domain verb stays as `Watch`/`Unwatch` (no collision today). Add the
 `observable { filter default; operation_event OperationReceived;
-effect_event SemaEffectEmitted; }` block when the macro grammar
-lands per `/246-v4`.
+effect_event EffectEmitted; }` block when the macro grammar lands per
+`/246-v4`; `EffectEmitted` carries the lowered `SemaObservation`.
 
 ## 1 · Channel
 

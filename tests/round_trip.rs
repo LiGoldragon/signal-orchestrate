@@ -12,15 +12,15 @@ use signal_frame::{
 };
 use signal_persona_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
-    ActivitySubmission, ClaimAcceptance, ClaimEntry, ClaimRejection, Error, HandoffAcceptance,
-    HandoffRejection, HandoffRejectionReason, HarnessKind, ObservationClosed, ObservationEvent,
-    ObservationOpened, ObservationSubscription, ObservationToken, OperationKind, OperationObserved,
-    OrchestrateEvent, OrchestrateFrame, OrchestrateFrameBody, OrchestrateReply, OrchestrateRequest,
-    ReleaseAcknowledgment, RoleClaim, RoleHandoff, RoleName, RoleObservation, RoleRelease,
-    RoleSnapshot, RoleStatus, ScopeConflict, ScopeReason, ScopeReference, SemaEffectObserved,
-    TaskToken, TimestampNanos, WirePath,
+    ActivitySubmission, ClaimAcceptance, ClaimEntry, ClaimRejection, EffectEmitted, Error,
+    HandoffAcceptance, HandoffRejection, HandoffRejectionReason, HarnessKind, ObservationClosed,
+    ObservationEvent, ObservationOpened, ObservationSubscription, ObservationToken, OperationKind,
+    OperationReceived, OrchestrateEvent, OrchestrateFrame, OrchestrateFrameBody, OrchestrateReply,
+    OrchestrateRequest, ReleaseAcknowledgment, RoleClaim, RoleHandoff, RoleName, RoleObservation,
+    RoleRelease, RoleSnapshot, RoleStatus, ScopeConflict, ScopeReason, ScopeReference, TaskToken,
+    TimestampNanos, WirePath,
 };
-use signal_sema::SemaOperation;
+use signal_sema::{SemaObservation, SemaOperation, SemaOutcome};
 
 // ─── Helpers ──────────────────────────────────────────────
 
@@ -410,17 +410,16 @@ fn observation_replies_round_trip() {
 
 #[test]
 fn observation_events_round_trip() {
-    let operation = OrchestrateEvent::Observed(ObservationEvent::Operation(OperationObserved {
-        operation: OperationKind::Claim,
-    }));
+    let operation =
+        OrchestrateEvent::Observed(ObservationEvent::OperationReceived(OperationReceived {
+            operation: OperationKind::Claim,
+        }));
     assert_eq!(round_trip_event(operation.clone()), operation);
 
-    let sema_effect =
-        OrchestrateEvent::Observed(ObservationEvent::SemaEffect(SemaEffectObserved {
-            operation: OperationKind::Query,
-            effect: SemaOperation::Match,
-        }));
-    assert_eq!(round_trip_event(sema_effect.clone()), sema_effect);
+    let effect = OrchestrateEvent::Observed(ObservationEvent::EffectEmitted(EffectEmitted {
+        observation: SemaObservation::new(SemaOperation::Match, SemaOutcome::Matched),
+    }));
+    assert_eq!(round_trip_event(effect.clone()), effect);
 }
 
 // ─── Scope-reference variants ─────────────────────────────

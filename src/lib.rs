@@ -20,7 +20,7 @@
 //! The channel is mostly request/reply: ordinary operations
 //! get typed replies, while `Watch` opens the observation
 //! stream and `Unwatch` closes it. Observation events carry
-//! inbound operation kinds and daemon-lowered Sema effects.
+//! inbound operation kinds and daemon-lowered Sema observations.
 //!
 //! See `ARCHITECTURE.md` for the channel's role and
 //! boundaries; `~/primary/skills/contract-repo.md` for the
@@ -32,7 +32,7 @@ use nota_codec::{
 };
 use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 use signal_frame::signal_channel;
-use signal_sema::SemaOperation;
+use signal_sema::SemaObservation;
 use std::fmt;
 use std::str::FromStr;
 
@@ -746,35 +746,34 @@ pub struct ObservationClosed {
 #[derive(
     Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
 )]
-pub struct OperationObserved {
+pub struct OperationReceived {
     pub operation: OperationKind,
 }
 
 #[derive(
     Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
 )]
-pub struct SemaEffectObserved {
-    pub operation: OperationKind,
-    pub effect: SemaOperation,
+pub struct EffectEmitted {
+    pub observation: SemaObservation,
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ObservationEvent {
-    Operation(OperationObserved),
-    SemaEffect(SemaEffectObserved),
+    OperationReceived(OperationReceived),
+    EffectEmitted(EffectEmitted),
 }
 
 impl NotaEncode for ObservationEvent {
     fn encode(&self, encoder: &mut Encoder) -> nota_codec::Result<()> {
         match self {
-            Self::Operation(observed) => {
-                encoder.start_record("Operation")?;
+            Self::OperationReceived(observed) => {
+                encoder.start_record("OperationReceived")?;
                 observed.encode(encoder)?;
                 encoder.end_record()
             }
-            Self::SemaEffect(observed) => {
-                encoder.start_record("SemaEffect")?;
-                observed.encode(encoder)?;
+            Self::EffectEmitted(emitted) => {
+                encoder.start_record("EffectEmitted")?;
+                emitted.encode(encoder)?;
                 encoder.end_record()
             }
         }
@@ -785,17 +784,17 @@ impl NotaDecode for ObservationEvent {
     fn decode(decoder: &mut Decoder<'_>) -> nota_codec::Result<Self> {
         let head = decoder.peek_record_head()?;
         match head.as_str() {
-            "Operation" => {
-                decoder.expect_record_head("Operation")?;
-                let observed = OperationObserved::decode(decoder)?;
+            "OperationReceived" => {
+                decoder.expect_record_head("OperationReceived")?;
+                let observed = OperationReceived::decode(decoder)?;
                 decoder.expect_record_end()?;
-                Ok(Self::Operation(observed))
+                Ok(Self::OperationReceived(observed))
             }
-            "SemaEffect" => {
-                decoder.expect_record_head("SemaEffect")?;
-                let observed = SemaEffectObserved::decode(decoder)?;
+            "EffectEmitted" => {
+                decoder.expect_record_head("EffectEmitted")?;
+                let emitted = EffectEmitted::decode(decoder)?;
                 decoder.expect_record_end()?;
-                Ok(Self::SemaEffect(observed))
+                Ok(Self::EffectEmitted(emitted))
             }
             other => Err(nota_codec::Error::UnknownKindForVerb {
                 verb: "ObservationEvent",
