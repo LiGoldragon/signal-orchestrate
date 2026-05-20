@@ -32,9 +32,30 @@ The public request surface is now:
 - `Unwatch(ObservationToken)`
 
 There is no public `Assert` / `Retract` / `Mutate` / `Match` tag in
-this contract. `persona-orchestrate` owns the lower Sema translation.
-The observer stream exposes inbound operation and outbound Sema-effect
-events for introspection.
+this contract. `persona-orchestrate` owns its typed Component
+Commands (Layer 2) and projects them to payloadless Sema class labels
+(Layer 3) for observation. The observer stream exposes inbound
+operation and outbound effect events for introspection.
+
+## MUST IMPLEMENT — Tap/Untap mandatory observable surface
+
+Per the three-layer model affirmed 2026-05-20 (psyche 2026-05-20T02:00Z;
+spec `primary/reports/designer/246-v4-bundled-fix-deep-design-with-examples.md`):
+persona components have a *mandatory* `Tap`/`Untap` observable
+surface — the macro injects `Tap(ObserverFilter)` /
+`Untap(<Channel>ObserverSubscriptionToken)` verbs uniformly across
+every persona daemon. The existing domain-specific `Watch`/`Unwatch`
+pair (for role observation) is a separate subscription;
+`persona-introspect` reaches the standardized observability through
+`Tap`/`Untap`, while `Watch`/`Unwatch` carries the domain-shaped role
+observation.
+
+If the domain `Watch`/`Unwatch` and the mandatory observability
+collide on naming, the macro-injected `Tap`/`Untap` wins and the
+domain verb stays as `Watch`/`Unwatch` (no collision today). Add the
+`observable { filter default; operation_event OperationReceived;
+effect_event SemaEffectEmitted; }` block when the macro grammar
+lands per `/246-v4`.
 
 ## 1 · Channel
 
@@ -89,9 +110,14 @@ validated newtypes. Construct them through `from_wire_token`,
 Invalid values are rejected at the contract boundary and also during
 NOTA decode.
 
-## 4 · Operation Roots
+## 4 · Sema-class projections (Layer 3)
 
-| Operation | Lower Sema effect |
+Each contract-local operation's daemon-side Component Command
+projects to a payloadless Sema class label for observation. The wire
+form carries the contract-local verb only; the table below is the
+*expected daemon-side classification*:
+
+| Operation | Projected Sema class |
 |---|---|
 | `Claim` | `Assert` |
 | `Release` | `Retract` |
@@ -101,9 +127,11 @@ NOTA decode.
 | `Query` | `Match` |
 | `Watch` | `Subscribe` |
 | `Unwatch` | `Retract` |
+| `Tap` (mandatory) | `Subscribe` |
+| `Untap` (mandatory) | `Retract` |
 
 `OrchestrateRequest::operation_kind()` exposes the contract operation
-without asking consumers to know the lower Sema effect.
+without asking consumers to know the Sema class.
 
 ## 5 · Non-Ownership
 
@@ -142,7 +170,9 @@ tests/round_trip.rs   frame round trips and contract-local operation witnesses
 - `../persona-orchestrate/ARCHITECTURE.md` — runtime consumer and
   state owner.
 - `../signal-frame/ARCHITECTURE.md` — Signal frame kernel.
-- `../signal-sema/ARCHITECTURE.md` — lower Sema operation vocabulary.
+- `../signal-sema/ARCHITECTURE.md` — payloadless Sema classification
+  vocabulary used at the observation layer.
 - `~/primary/skills/contract-repo.md` — contract-repo discipline.
+- `~/primary/skills/component-triad.md` §"Verbs come in three layers".
 - `~/primary/skills/architectural-truth-tests.md` — witness-test
   discipline.
