@@ -920,6 +920,59 @@ pub struct ActivityList {
     pub records: Vec<Activity>,
 }
 
+// ─── Partial application ──────────────────────────────────
+
+/// Component that participated in a fanned-out orchestration
+/// mutation.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEnum, Debug, Clone, Copy, PartialEq, Eq, Hash,
+)]
+pub enum DownstreamComponent {
+    Router,
+    Harness,
+    Terminal,
+    Message,
+    Mind,
+    System,
+    Introspect,
+}
+
+/// Successful leg of a fanned-out mutation.
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+pub struct ApplicationSuccess {
+    pub component: DownstreamComponent,
+    pub detail: ScopeReason,
+}
+
+/// Typed reason why a downstream leg failed after at least one
+/// sibling leg succeeded.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEnum, Debug, Clone, Copy, PartialEq, Eq, Hash,
+)]
+pub enum ApplicationFailureReason {
+    Unreachable,
+    Rejected,
+    Unimplemented,
+    TimedOut,
+    Unknown,
+}
+
+/// Failed leg of a fanned-out mutation.
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+pub struct ApplicationFailure {
+    pub component: DownstreamComponent,
+    pub reason: ApplicationFailureReason,
+    pub detail: ScopeReason,
+}
+
+/// Reply when one or more downstream mutation legs were durably
+/// applied and one or more sibling legs failed.
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+pub struct PartialApplied {
+    pub succeeded: Vec<ApplicationSuccess>,
+    pub failed: Vec<ApplicationFailure>,
+}
+
 // ─── Observation stream ───────────────────────────────────
 
 /// Subscribe to contract-operation and Sema-effect observations on
@@ -1050,6 +1103,7 @@ signal_channel! {
         LanesObserved(LanesObserved),
         ActivityAcknowledgment(ActivityAcknowledgment),
         ActivityList(ActivityList),
+        PartialApplied(PartialApplied),
         ObservationOpened(ObservationOpened),
         ObservationClosed(ObservationClosed),
     }

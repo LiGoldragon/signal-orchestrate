@@ -12,14 +12,15 @@ use signal_frame::{
 };
 use signal_persona_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
-    ActivitySubmission, ClaimAcceptance, ClaimEntry, ClaimRejection, EffectEmitted, Error,
+    ActivitySubmission, ApplicationFailure, ApplicationFailureReason, ApplicationSuccess,
+    ClaimAcceptance, ClaimEntry, ClaimRejection, DownstreamComponent, EffectEmitted, Error,
     HandoffAcceptance, HandoffRejection, HandoffRejectionReason, HarnessKind, LaneAuthority,
     LaneIdentifier, LaneRegistration, LanesObserved, Observation, ObservationClosed,
     ObservationEvent, ObservationOpened, ObservationSubscription, ObservationToken, OperationKind,
     OperationReceived, OrchestrateEvent, OrchestrateFrame, OrchestrateFrameBody, OrchestrateReply,
-    OrchestrateRequest, ReleaseAcknowledgment, Role, RoleClaim, RoleHandoff, RoleName, RoleRelease,
-    RoleSnapshot, RoleStatus, RoleToken, ScopeConflict, ScopeReason, ScopeReference, TaskToken,
-    TimestampNanos, WirePath,
+    OrchestrateRequest, PartialApplied, ReleaseAcknowledgment, Role, RoleClaim, RoleHandoff,
+    RoleName, RoleRelease, RoleSnapshot, RoleStatus, RoleToken, ScopeConflict, ScopeReason,
+    ScopeReference, TaskToken, TimestampNanos, WirePath,
 };
 use signal_sema::{SemaObservation, SemaOperation, SemaOutcome};
 
@@ -444,6 +445,23 @@ fn activity_list_round_trips() {
                 stamped_at: TimestampNanos::new(1_730_000_001_000_000_000),
             },
         ],
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}
+
+#[test]
+fn partial_applied_round_trips() {
+    let reply = OrchestrateReply::PartialApplied(PartialApplied {
+        succeeded: vec![ApplicationSuccess {
+            component: DownstreamComponent::Router,
+            detail: ScopeReason::from_text("channel 42 installed").expect("success detail"),
+        }],
+        failed: vec![ApplicationFailure {
+            component: DownstreamComponent::Harness,
+            reason: ApplicationFailureReason::Unreachable,
+            detail: ScopeReason::from_text("codex-7 transcript is gone").expect("failure detail"),
+        }],
     });
     let decoded = round_trip_reply(reply.clone());
     assert_eq!(decoded, reply);

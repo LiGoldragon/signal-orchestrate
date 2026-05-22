@@ -81,6 +81,7 @@ OrchestrateRequest                 OrchestrateReply
 ├─ Query(ActivityQuery)            ├─ RoleSnapshot
 ├─ Watch(ObservationSubscription)  ├─ ActivityAcknowledgment
 └─ Unwatch(ObservationToken)       ├─ ActivityList
+                                   ├─ PartialApplied
                                    ├─ ObservationOpened
                                    └─ ObservationClosed
 ```
@@ -103,6 +104,9 @@ This contract owns:
 - `TaskToken`
 - `ScopeReason`
 - `TimestampNanos`
+- `PartialApplied`, `ApplicationSuccess`, `ApplicationFailure`,
+  `DownstreamComponent`, and `ApplicationFailureReason`: typed
+  record-divergence reply vocabulary for fanned-out Mutate chains.
 
 `RoleIdentifier`, `WirePath`, `TaskToken`, and `ScopeReason` are
 validated newtypes. Construct them through `from_wire_token`,
@@ -153,6 +157,8 @@ contract. This ordinary contract is the peer/CLI surface.
 
 - every request variant round-trips through an `OrchestrateFrame`;
 - every reply variant round-trips through an `OrchestrateFrame`;
+- `PartialApplied` carries successful and failed downstream legs as
+  typed data, not strings;
 - operation roots encode as contract-local NOTA heads;
 - dynamic role identifiers round-trip as ordinary payload data;
 - observer events round-trip through the streaming frame shape;
