@@ -409,8 +409,8 @@ impl NotaDecode for ScopeReference {
                 decoder.expect_record_end()?;
                 Ok(Self::Task(task))
             }
-            other => Err(nota_codec::Error::UnknownKindForVerb {
-                verb: "ScopeReference",
+            other => Err(nota_codec::Error::UnknownVariant {
+                enum_name: "ScopeReference",
                 got: other.to_string(),
             }),
         }
@@ -725,8 +725,8 @@ impl NotaDecode for HandoffRejectionReason {
                 decoder.expect_record_end()?;
                 Ok(Self::TargetRoleConflict(conflicts))
             }
-            other => Err(nota_codec::Error::UnknownKindForVerb {
-                verb: "HandoffRejectionReason",
+            other => Err(nota_codec::Error::UnknownVariant {
+                enum_name: "HandoffRejectionReason",
                 got: other.to_string(),
             }),
         }
@@ -771,8 +771,8 @@ impl NotaDecode for Observation {
                 decoder.expect_record_end()?;
                 Ok(Self::Lanes)
             }
-            other => Err(nota_codec::Error::UnknownKindForVerb {
-                verb: "Observation",
+            other => Err(nota_codec::Error::UnknownVariant {
+                enum_name: "Observation",
                 got: other.to_string(),
             }),
         }
@@ -906,8 +906,8 @@ impl NotaDecode for ActivityFilter {
                 decoder.expect_record_end()?;
                 Ok(Self::TaskToken(token))
             }
-            other => Err(nota_codec::Error::UnknownKindForVerb {
-                verb: "ActivityFilter",
+            other => Err(nota_codec::Error::UnknownVariant {
+                enum_name: "ActivityFilter",
                 got: other.to_string(),
             }),
         }
@@ -968,9 +968,7 @@ pub struct ObservationClosed {
     pub token: ObservationToken,
 }
 
-#[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
-)]
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
 pub struct OperationReceived {
     pub operation: OperationKind,
 }
@@ -982,7 +980,7 @@ pub struct EffectEmitted {
     pub observation: SemaObservation,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
 pub enum ObservationEvent {
     OperationReceived(OperationReceived),
     EffectEmitted(EffectEmitted),
@@ -1021,26 +1019,12 @@ impl NotaDecode for ObservationEvent {
                 decoder.expect_record_end()?;
                 Ok(Self::EffectEmitted(emitted))
             }
-            other => Err(nota_codec::Error::UnknownKindForVerb {
-                verb: "ObservationEvent",
+            other => Err(nota_codec::Error::UnknownVariant {
+                enum_name: "ObservationEvent",
                 got: other.to_string(),
             }),
         }
     }
-}
-
-#[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEnum, Debug, Clone, Copy, PartialEq, Eq, Hash,
-)]
-pub enum OperationKind {
-    Claim,
-    Release,
-    Handoff,
-    Observe,
-    Submit,
-    Query,
-    Watch,
-    Unwatch,
 }
 
 // ─── Channel declaration ──────────────────────────────────
@@ -1056,7 +1040,7 @@ signal_channel! {
         operation Watch(ObservationSubscription) opens ObservationStream,
         operation Unwatch(ObservationToken),
     }
-    reply OrchestrateReply {
+    reply Reply {
         ClaimAcceptance(ClaimAcceptance),
         ClaimRejection(ClaimRejection),
         ReleaseAcknowledgment(ReleaseAcknowledgment),
@@ -1069,7 +1053,7 @@ signal_channel! {
         ObservationOpened(ObservationOpened),
         ObservationClosed(ObservationClosed),
     }
-    event OrchestrateEvent {
+    event Event {
         Observed(ObservationEvent) belongs ObservationStream,
     }
     stream ObservationStream {
@@ -1080,19 +1064,17 @@ signal_channel! {
     }
 }
 
-pub type OrchestrateRequest = OrchestrateOperation;
+pub type OrchestrateRequest = Operation;
+pub type OrchestrateReply = Reply;
+pub type OrchestrateEvent = Event;
+pub type OrchestrateFrame = Frame;
+pub type OrchestrateFrameBody = signal_frame::StreamingFrameBody<Operation, Reply, Event>;
+pub type OrchestrateChannelRequest = signal_frame::Request<Operation>;
+pub type OrchestrateChannelReply = signal_frame::Reply<Reply>;
+pub type OrchestrateRequestBuilder = signal_frame::RequestBuilder<Operation>;
 
-impl OrchestrateOperation {
+impl Operation {
     pub fn operation_kind(&self) -> OperationKind {
-        match self {
-            Self::Claim(_) => OperationKind::Claim,
-            Self::Release(_) => OperationKind::Release,
-            Self::Handoff(_) => OperationKind::Handoff,
-            Self::Observe(_) => OperationKind::Observe,
-            Self::Submit(_) => OperationKind::Submit,
-            Self::Query(_) => OperationKind::Query,
-            Self::Watch(_) => OperationKind::Watch,
-            Self::Unwatch(_) => OperationKind::Unwatch,
-        }
+        self.kind()
     }
 }

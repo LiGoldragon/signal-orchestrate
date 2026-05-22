@@ -52,14 +52,14 @@ fn round_trip_request(request: OrchestrateRequest) -> OrchestrateRequest {
 fn round_trip_reply(reply: OrchestrateReply) -> OrchestrateReply {
     let frame = OrchestrateFrame::new(OrchestrateFrameBody::Reply {
         exchange: exchange(),
-        reply: Reply::completed(NonEmpty::single(SubReply::Ok { payload: reply })),
+        reply: Reply::committed(NonEmpty::single(SubReply::Ok(reply))),
     });
     let bytes = frame.encode_length_prefixed().expect("encode");
     let decoded = OrchestrateFrame::decode_length_prefixed(&bytes).expect("decode");
     match decoded.into_body() {
         OrchestrateFrameBody::Reply { reply, .. } => match reply {
             Reply::Accepted { per_operation, .. } => match per_operation.into_head() {
-                SubReply::Ok { payload, .. } => payload,
+                SubReply::Ok(payload) => payload,
                 other => panic!("expected accepted reply payload, got {other:?}"),
             },
             other => panic!("expected accepted reply, got {other:?}"),
