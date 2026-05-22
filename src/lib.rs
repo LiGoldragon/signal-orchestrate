@@ -52,6 +52,16 @@ pub enum Error {
         "role identifier must be non-empty, unbracketed, and contain no whitespace or path separators: {role}"
     )]
     InvalidRoleIdentifier { role: String },
+    #[error(
+        "role token must be non-empty, unbracketed, and contain no whitespace or path separators: {token}"
+    )]
+    InvalidRoleToken { token: String },
+    #[error("role vector must contain at least one token")]
+    EmptyRole,
+    #[error(
+        "lane identifier must be non-empty, unbracketed, and contain no whitespace or path separators: {lane}"
+    )]
+    InvalidLaneIdentifier { lane: String },
 }
 
 // ─── Identity ─────────────────────────────────────────────
@@ -154,6 +164,172 @@ impl AsRef<str> for RoleIdentifier {
     fn as_ref(&self) -> &str {
         self.as_str()
     }
+}
+
+/// One token in a role vector.
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    NotaTryTransparent,
+)]
+pub struct RoleToken(String);
+
+impl RoleToken {
+    pub fn try_new(token: String) -> Result<Self> {
+        Self::from_text(token)
+    }
+
+    pub fn from_text(token: impl Into<String>) -> Result<Self> {
+        let token = token.into();
+        if token.is_empty()
+            || token.chars().any(char::is_whitespace)
+            || token.contains('/')
+            || token.contains('\\')
+            || token.contains('[')
+            || token.contains(']')
+        {
+            return Err(Error::InvalidRoleToken { token });
+        }
+        Ok(Self(token))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for RoleToken {
+    type Error = Error;
+
+    fn try_from(token: String) -> Result<Self> {
+        Self::from_text(token)
+    }
+}
+
+impl TryFrom<&str> for RoleToken {
+    type Error = Error;
+
+    fn try_from(token: &str) -> Result<Self> {
+        Self::from_text(token)
+    }
+}
+
+impl AsRef<str> for RoleToken {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+pub struct Role {
+    pub tokens: Vec<RoleToken>,
+}
+
+impl Role {
+    pub fn try_new(tokens: Vec<RoleToken>) -> Result<Self> {
+        if tokens.is_empty() {
+            return Err(Error::EmptyRole);
+        }
+        Ok(Self { tokens })
+    }
+
+    pub fn tokens(&self) -> &[RoleToken] {
+        &self.tokens
+    }
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEnum, Debug, Clone, Copy, PartialEq, Eq, Hash,
+)]
+pub enum LaneAuthority {
+    Structural,
+    Support,
+}
+
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    NotaTryTransparent,
+)]
+pub struct LaneIdentifier(String);
+
+impl LaneIdentifier {
+    pub fn try_new(lane: String) -> Result<Self> {
+        Self::from_wire_token(lane)
+    }
+
+    pub fn from_wire_token(lane: impl Into<String>) -> Result<Self> {
+        let lane = lane.into();
+        if lane.is_empty()
+            || lane.chars().any(char::is_whitespace)
+            || lane.contains('/')
+            || lane.contains('\\')
+            || lane.contains('[')
+            || lane.contains(']')
+        {
+            return Err(Error::InvalidLaneIdentifier { lane });
+        }
+        Ok(Self(lane))
+    }
+
+    pub fn as_wire_token(&self) -> &str {
+        &self.0
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Display for LaneIdentifier {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(self.as_wire_token())
+    }
+}
+
+impl TryFrom<String> for LaneIdentifier {
+    type Error = Error;
+
+    fn try_from(lane: String) -> Result<Self> {
+        Self::from_wire_token(lane)
+    }
+}
+
+impl TryFrom<&str> for LaneIdentifier {
+    type Error = Error;
+
+    fn try_from(lane: &str) -> Result<Self> {
+        Self::from_wire_token(lane)
+    }
+}
+
+impl AsRef<str> for LaneIdentifier {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+pub struct LaneRegistration {
+    pub lane: LaneIdentifier,
+    pub role: Role,
+    pub authority: LaneAuthority,
 }
 
 #[derive(
@@ -559,8 +735,52 @@ impl NotaDecode for HandoffRejectionReason {
 
 // ─── Observation ──────────────────────────────────────────
 
-/// Request a snapshot of every role's active claims plus the
-/// most recent activity entries. Reply: `RoleSnapshot`.
+/// Select what the `Observe` operation reads.
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Observation {
+    Roles,
+    Lanes,
+}
+
+impl NotaEncode for Observation {
+    fn encode(&self, encoder: &mut Encoder) -> nota_codec::Result<()> {
+        match self {
+            Self::Roles => {
+                encoder.start_record("Roles")?;
+                encoder.end_record()
+            }
+            Self::Lanes => {
+                encoder.start_record("Lanes")?;
+                encoder.end_record()
+            }
+        }
+    }
+}
+
+impl NotaDecode for Observation {
+    fn decode(decoder: &mut Decoder<'_>) -> nota_codec::Result<Self> {
+        let head = decoder.peek_record_head()?;
+        match head.as_str() {
+            "Roles" => {
+                decoder.expect_record_head("Roles")?;
+                decoder.expect_record_end()?;
+                Ok(Self::Roles)
+            }
+            "Lanes" => {
+                decoder.expect_record_head("Lanes")?;
+                decoder.expect_record_end()?;
+                Ok(Self::Lanes)
+            }
+            other => Err(nota_codec::Error::UnknownKindForVerb {
+                verb: "Observation",
+                got: other.to_string(),
+            }),
+        }
+    }
+}
+
+/// Legacy empty payload kept for older callers while the `Observe`
+/// operation moves to [`Observation`].
 #[derive(
     Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
 )]
@@ -570,6 +790,11 @@ pub struct RoleObservation;
 pub struct RoleSnapshot {
     pub roles: Vec<RoleStatus>,
     pub recent_activity: Vec<Activity>,
+}
+
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+pub struct LanesObserved {
+    pub lanes: Vec<LaneRegistration>,
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
@@ -825,7 +1050,7 @@ signal_channel! {
         operation Claim(RoleClaim),
         operation Release(RoleRelease),
         operation Handoff(RoleHandoff),
-        operation Observe(RoleObservation),
+        operation Observe(Observation),
         operation Submit(ActivitySubmission),
         operation Query(ActivityQuery),
         operation Watch(ObservationSubscription) opens ObservationStream,
@@ -838,6 +1063,7 @@ signal_channel! {
         HandoffAcceptance(HandoffAcceptance),
         HandoffRejection(HandoffRejection),
         RoleSnapshot(RoleSnapshot),
+        LanesObserved(LanesObserved),
         ActivityAcknowledgment(ActivityAcknowledgment),
         ActivityList(ActivityList),
         ObservationOpened(ObservationOpened),

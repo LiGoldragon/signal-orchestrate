@@ -13,11 +13,12 @@ use signal_frame::{
 use signal_persona_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
     ActivitySubmission, ClaimAcceptance, ClaimEntry, ClaimRejection, EffectEmitted, Error,
-    HandoffAcceptance, HandoffRejection, HandoffRejectionReason, HarnessKind, ObservationClosed,
+    HandoffAcceptance, HandoffRejection, HandoffRejectionReason, HarnessKind, LaneAuthority,
+    LaneIdentifier, LaneRegistration, LanesObserved, Observation, ObservationClosed,
     ObservationEvent, ObservationOpened, ObservationSubscription, ObservationToken, OperationKind,
     OperationReceived, OrchestrateEvent, OrchestrateFrame, OrchestrateFrameBody, OrchestrateReply,
-    OrchestrateRequest, ReleaseAcknowledgment, RoleClaim, RoleHandoff, RoleName, RoleObservation,
-    RoleRelease, RoleSnapshot, RoleStatus, ScopeConflict, ScopeReason, ScopeReference, TaskToken,
+    OrchestrateRequest, ReleaseAcknowledgment, Role, RoleClaim, RoleHandoff, RoleName, RoleRelease,
+    RoleSnapshot, RoleStatus, RoleToken, ScopeConflict, ScopeReason, ScopeReference, TaskToken,
     TimestampNanos, WirePath,
 };
 use signal_sema::{SemaObservation, SemaOperation, SemaOutcome};
@@ -156,6 +157,18 @@ fn sample_task_scope() -> ScopeReference {
     ScopeReference::Task(sample_task())
 }
 
+fn role_token(token: &str) -> RoleToken {
+    RoleToken::from_text(token).expect("role token")
+}
+
+fn role_vector(tokens: &[&str]) -> Role {
+    Role::try_new(tokens.iter().map(|token| role_token(token)).collect()).expect("role vector")
+}
+
+fn lane_identifier(token: &str) -> LaneIdentifier {
+    LaneIdentifier::from_wire_token(token).expect("lane identifier")
+}
+
 // ─── Request variants ─────────────────────────────────────
 
 #[test]
@@ -190,7 +203,14 @@ fn role_handoff_round_trips() {
 
 #[test]
 fn role_observation_round_trips() {
-    let request = OrchestrateRequest::Observe(RoleObservation);
+    let request = OrchestrateRequest::Observe(Observation::Roles);
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+}
+
+#[test]
+fn lane_observation_round_trips() {
+    let request = OrchestrateRequest::Observe(Observation::Lanes);
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
 }
@@ -367,6 +387,40 @@ fn role_snapshot_round_trips() {
 }
 
 #[test]
+fn lane_registry_records_round_trip() {
+    let reply = OrchestrateReply::LanesObserved(LanesObserved {
+        lanes: vec![
+            LaneRegistration {
+                lane: lane_identifier("designer"),
+                role: role_vector(&["Designer"]),
+                authority: LaneAuthority::Structural,
+            },
+            LaneRegistration {
+                lane: lane_identifier("persona-signal-designer-assistant"),
+                role: role_vector(&["PersonaSignal", "Designer"]),
+                authority: LaneAuthority::Support,
+            },
+        ],
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}
+
+#[test]
+fn role_vector_round_trips_through_nota() {
+    use nota_codec::{Decoder, Encoder, NotaDecode, NotaEncode};
+
+    let role = role_vector(&["PersonaSignal", "Designer"]);
+    let mut encoder = Encoder::new();
+    role.encode(&mut encoder).expect("encode role");
+    let text = encoder.into_string();
+
+    let mut decoder = Decoder::new(&text);
+    let decoded = Role::decode(&mut decoder).expect("decode role");
+    assert_eq!(decoded, role);
+}
+
+#[test]
 fn activity_acknowledgment_round_trips() {
     let reply = OrchestrateReply::ActivityAcknowledgment(ActivityAcknowledgment { slot: 42 });
     let decoded = round_trip_reply(reply.clone());
@@ -496,7 +550,7 @@ fn orchestrate_request_exposes_contract_owned_operation_kind() {
             OperationKind::Handoff,
         ),
         (
-            OrchestrateRequest::Observe(RoleObservation),
+            OrchestrateRequest::Observe(Observation::Roles),
             OperationKind::Observe,
         ),
         (
