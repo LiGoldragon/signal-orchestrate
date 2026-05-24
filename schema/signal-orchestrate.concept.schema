@@ -1,14 +1,14 @@
 {}
 
 [
-  (Claim [Role])
-  (Release [Role])
-  (Handoff [Role])
-  (Observe [Activity])
-  (Submit [Activity])
-  (Query [Activity])
-  (Watch [Activity])
-  (Unwatch [Activity])
+  (Claim [RoleClaim])
+  (Release [RoleRelease])
+  (Handoff [RoleHandoff])
+  (Observe [Observation])
+  (Submit [ActivitySubmission])
+  (Query [ActivityQuery])
+  (Watch [ObservationSubscription])
+  (Unwatch [ObservationToken])
 ]
 
 []
@@ -16,26 +16,89 @@
 []
 
 {
-  Claim [(Role Role)]
-  Release [(Role Role)]
-  Handoff [(Role Role)]
-  Observe [(Activity Activity)]
-  Submit [(Activity Activity)]
-  Query [(Activity Activity)]
-  Watch [(Activity Activity)]
-  Unwatch [(Activity Activity)]
-  Role (Name)
-  Activity (Text)
-  RepositoryIndex (Text)
-  Lane (Name)
-  Text (String)
-  Identifier (u64)
-  Name (String)
-  Path (String)
-  Status [Concept Active Retired]
+  Claim [(RoleClaim RoleClaim)]
+  Release [(RoleRelease RoleRelease)]
+  Handoff [(RoleHandoff RoleHandoff)]
+  Observe [(Observation Observation)]
+  Submit [(ActivitySubmission ActivitySubmission)]
+  Query [(ActivityQuery ActivityQuery)]
+  Watch [(ObservationSubscription ObservationSubscription)]
+  Unwatch [(ObservationToken ObservationToken)]
+
+  RoleIdentifier (String)
+  RoleName (RoleIdentifier)
+  RoleToken (String)
+  Role ((Vec RoleToken))
+  LaneAuthority [Structural Support]
+  LaneIdentifier (String)
+  LaneRegistration (LaneIdentifier Role LaneAuthority)
+  HarnessKind [Codex Claude]
+  WirePath (String)
+  TaskToken (String)
+  ScopeReason (String)
+  ScopeReference [(Path WirePath) (Task TaskToken)]
+  TimestampNanos (u64)
+
+  RoleClaim (RoleName (Vec ScopeReference) ScopeReason)
+  RoleRelease (RoleName)
+  RoleHandoff (RoleName RoleName (Vec ScopeReference) ScopeReason)
+  Observation [Roles Lanes]
+  ActivitySubmission (RoleName ScopeReference ScopeReason)
+  ActivityQuery (u32 (Vec ActivityFilter))
+  ActivityFilter [(RoleFilter RoleName) (PathPrefix WirePath) (TaskToken TaskToken)]
+  ObservationSubscription (Boolean Boolean)
+  ObservationToken (u64)
+
+  ClaimAcceptance (RoleName (Vec ScopeReference))
+  ClaimRejection (RoleName (Vec ScopeConflict))
+  ScopeConflict (ScopeReference RoleName ScopeReason)
+  ReleaseAcknowledgment (RoleName (Vec ScopeReference))
+  HandoffAcceptance (RoleName RoleName (Vec ScopeReference))
+  HandoffRejection (RoleName RoleName HandoffRejectionReason)
+  HandoffRejectionReason [SourceRoleDoesNotHold (TargetRoleConflict (Vec ScopeConflict))]
+  RoleSnapshot ((Vec RoleStatus) (Vec Activity))
+  LanesObserved ((Vec LaneRegistration))
+  RoleStatus (RoleName HarnessKind (Vec ClaimEntry))
+  ClaimEntry (ScopeReference ScopeReason)
+  Activity (RoleName ScopeReference ScopeReason TimestampNanos)
+  ActivityAcknowledgment (u64)
+  ActivityList ((Vec Activity))
+  DownstreamComponent [Router Harness Terminal Message Mind System Introspect]
+  ApplicationFailureReason [Unreachable Rejected Unimplemented TimedOut Unknown]
+  ApplicationSuccess (DownstreamComponent ScopeReason)
+  ApplicationFailure (DownstreamComponent ApplicationFailureReason ScopeReason)
+  PartialApplied ((Vec ApplicationSuccess) (Vec ApplicationFailure))
+  ObservationOpened (ObservationToken)
+  ObservationClosed (ObservationToken)
+
+  OperationReceived (OperationKind)
+  EffectEmitted (SemaObservation)
+  ObservationEvent [(OperationReceived OperationReceived) (EffectEmitted EffectEmitted)]
+  Observed (ObservationEvent)
+  OperationKind [Claim Release Handoff Observe Submit Query Watch Unwatch]
+  SemaObservation [Asserted Retracted Mutated Matched Subscribed NoChange]
 }
 
 [
-  (Version 0 1)
-  (Status Concept)
+  (Reply
+    ClaimAcceptance
+    ClaimRejection
+    ReleaseAcknowledgment
+    HandoffAcceptance
+    HandoffRejection
+    RoleSnapshot
+    LanesObserved
+    ActivityAcknowledgment
+    ActivityList
+    PartialApplied
+    ObservationOpened
+    ObservationClosed)
+
+  (Event (belongs ObservationStream)
+    Observed)
+
+  (Observable
+    (filter default)
+    (operation_event OperationReceived)
+    (effect_event EffectEmitted))
 ]
