@@ -1,0 +1,41 @@
+{}
+
+[
+  (Claim [Role])
+  (Release [Role])
+  (Handoff [Role])
+  (Observe [Activity])
+  (Submit [Activity])
+  (Query [Activity])
+  (Watch [Activity])
+  (Unwatch [Activity])
+]
+
+[]
+
+[]
+
+{
+  Claim [(Role Role)]
+  Release [(Role Role)]
+  Handoff [(Role Role)]
+  Observe [(Activity Activity)]
+  Submit [(Activity Activity)]
+  Query [(Activity Activity)]
+  Watch [(Activity Activity)]
+  Unwatch [(Activity Activity)]
+  Role (Name)
+  Activity (Text)
+  RepositoryIndex (Text)
+  Lane (Name)
+  Text (String)
+  Identifier (u64)
+  Name (String)
+  Path (String)
+  Status [Concept Active Retired]
+}
+
+[
+  (Version 0 1)
+  (Status Concept)
+]
