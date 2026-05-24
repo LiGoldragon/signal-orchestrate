@@ -1,4 +1,4 @@
-# skills — signal-persona-orchestrate
+# skills — signal-orchestrate
 
 *Per-repo agent guide.*
 
@@ -15,11 +15,11 @@ Before changing code in this repo, read:
 - `~/primary/skills/nix-discipline.md` — flake-input rules,
   `nix flake check` is the gate.
 - this repo's `ARCHITECTURE.md`.
-- the consumer's `ARCHITECTURE.md` (`persona-orchestrate/`).
+- the consumer's `ARCHITECTURE.md` (`orchestrate/`).
 
 If your change adds a new request or reply variant, edit
 `src/lib.rs` first, push, then update the consumer
-(`persona-orchestrate`) to handle it.
+(`orchestrate`) to handle it.
 
 ## What this repo owns
 
@@ -42,12 +42,12 @@ If your change adds a new request or reply variant, edit
 ## What this repo does not own
 
 - The state actor or the database — that's
-  `persona-orchestrate`.
+  `orchestrate`.
 - The CLI binary parsing — that's the `orchestrate` bin
-  target inside `persona-orchestrate`.
+  target inside `orchestrate`.
 - Lock-file projection writing — that's
-  `persona-orchestrate`.
+  `orchestrate`.
 - The activity log retention policy — that's
-  `persona-orchestrate`.
-- Storage tables — those live in `persona-orchestrate`'s
+  `orchestrate`.
+- Storage tables — those live in `orchestrate`'s
   `src/tables.rs` (typed `sema::Table<K, V>` constants).

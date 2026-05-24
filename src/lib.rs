@@ -1,12 +1,12 @@
-//! Signal contract — `orchestrate` CLI ↔ `persona-orchestrate`.
+//! Signal contract — `orchestrate` CLI ↔ `orchestrate`.
 //!
 //! Read this file as the public interface of the workspace
 //! orchestration channel. The channel carries:
 //!
 //! - **Role claim/release/handoff** — the claim-flow today
 //!   served by `tools/orchestrate` (a bash helper); migrating
-//!   into `persona-orchestrate` per
-//!   `~/primary/reports/designer/93-persona-orchestrate-rust-rewrite-and-activity-log.md`.
+//!   into `orchestrate` per
+//!   `~/primary/reports/designer/93-orchestrate-rust-rewrite-and-activity-log.md`.
 //! - **Role observation** — read the active claims for every
 //!   role plus the most recent activity entries.
 //! - **Activity submission** — append a typed activity record:

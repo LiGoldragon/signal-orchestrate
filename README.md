@@ -1,6 +1,6 @@
-# signal-persona-orchestrate
+# signal-orchestrate
 
-The ordinary Signal contract for **`persona-orchestrate`**:
+The ordinary Signal contract for **`orchestrate`**:
 role claim/release/handoff/observation plus activity submission
 and query.
 
@@ -16,7 +16,7 @@ channel carries:
 ## Quick reference
 
 ```rust
-use signal_persona_orchestrate::{
+use signal_orchestrate::{
     OrchestrateRequest, RoleClaim, RoleName, ScopeReason, ScopeReference, WirePath,
 };
 
@@ -30,7 +30,7 @@ let request = OrchestrateRequest::RoleClaim(RoleClaim {
     ],
     reason: ScopeReason::from_text("rescope per /91 §3.1")?,
 });
-// Hand the request to persona-orchestrate's daemon over OrchestrateFrame.
+// Hand the request to orchestrate's daemon over OrchestrateFrame.
 ```
 
 The state actor replies with `OrchestrateReply::ClaimAcceptance`
@@ -44,5 +44,5 @@ typed `ScopeConflict` records) on overlap.
   discipline
 - `signal-core` — kernel that supplies `Frame`,
   `Request`, `Reply`, `signal_channel!`
-- `persona-orchestrate` — the consumer that implements
+- `orchestrate` — the consumer that implements
   this contract

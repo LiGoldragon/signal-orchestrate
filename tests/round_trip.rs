@@ -1,5 +1,5 @@
 //! Architectural-truth round-trip tests for the
-//! `signal-persona-orchestrate` channel.
+//! `signal-orchestrate` channel.
 //!
 //! Per `~/primary/skills/architectural-truth-tests.md`,
 //! each variant of both enums has a witness test that
@@ -10,7 +10,7 @@ use signal_frame::{
     ExchangeIdentifier, ExchangeLane, LaneSequence, NonEmpty, Reply, RequestPayload, SessionEpoch,
     SubReply,
 };
-use signal_persona_orchestrate::{
+use signal_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
     ActivitySubmission, ApplicationFailure, ApplicationFailureReason, ApplicationSuccess,
     ClaimAcceptance, ClaimEntry, ClaimRejection, DownstreamComponent, EffectEmitted, Error,
@@ -88,10 +88,8 @@ fn round_trip_event(event: OrchestrateEvent) -> OrchestrateEvent {
 }
 
 fn sample_path() -> WirePath {
-    WirePath::from_absolute_path(
-        "/git/github.com/LiGoldragon/signal-persona-orchestrate/src/lib.rs",
-    )
-    .expect("sample path")
+    WirePath::from_absolute_path("/git/github.com/LiGoldragon/signal-orchestrate/src/lib.rs")
+        .expect("sample path")
 }
 
 fn sample_task() -> TaskToken {
@@ -621,7 +619,7 @@ fn orchestrate_operations_encode_as_contract_local_nota_heads() {
     assert!(!text.contains("Assert"));
 
     let mut decoder = Decoder::new(&text);
-    let decoded = signal_persona_orchestrate::OrchestrateChannelRequest::decode(&mut decoder)
+    let decoded = signal_orchestrate::OrchestrateChannelRequest::decode(&mut decoder)
         .expect("decode request");
     assert_eq!(
         decoded.payloads().head().operation_kind(),

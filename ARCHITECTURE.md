@@ -1,4 +1,4 @@
-# signal-persona-orchestrate — architecture
+# signal-orchestrate — architecture
 
 *The ordinary Signal contract for Persona orchestration: role claims,
 claim release/handoff/observation, and activity log requests.*
@@ -7,8 +7,8 @@ claim release/handoff/observation, and activity log requests.*
 
 ## 0 · TL;DR
 
-`signal-persona-orchestrate` is a contract crate. It owns the typed
-wire vocabulary for the ordinary `persona-orchestrate` surface and
+`signal-orchestrate` is a contract crate. It owns the typed
+wire vocabulary for the ordinary `orchestrate` surface and
 contains no daemon, actor, database, CLI parser, or transport policy.
 
 The channel is declared by one `signal_channel!` invocation in
@@ -32,7 +32,7 @@ The public request surface is now:
 - `Unwatch(ObservationToken)`
 
 There is no public `Assert` / `Retract` / `Mutate` / `Match` tag in
-this contract. `persona-orchestrate` owns its typed Component
+this contract. `orchestrate` owns its typed Component
 Commands (Layer 2) and projects them to payloadless Sema class labels
 (Layer 3) for observation. The observer stream exposes inbound
 operation and outbound effect events for introspection.
@@ -61,8 +61,8 @@ effect_event EffectEmitted; }` block when the macro grammar lands per
 
 | Side | Component |
 |---|---|
-| Request producer | `persona-orchestrate` CLI, transitional workspace helpers, or peers speaking the ordinary orchestration surface. |
-| Request consumer | `persona-orchestrate` daemon. |
+| Request producer | `orchestrate` CLI, transitional workspace helpers, or peers speaking the ordinary orchestration surface. |
+| Request consumer | `orchestrate` daemon. |
 | Wire type | `OrchestrateFrame` / `OrchestrateRequest` / `OrchestrateReply`. |
 
 The channel is request/reply for ordinary operations and stream-capable
@@ -142,13 +142,13 @@ without asking consumers to know the Sema class.
 This crate does not own:
 
 - daemon actors or request handlers;
-- the `persona-orchestrate.redb` database;
+- the `orchestrate.redb` database;
 - lock-file projections;
 - CLI argv parsing or NOTA rendering policy;
 - socket paths, reconnect policy, or transport lifecycle;
 - owner-only orchestration orders.
 
-Owner-only orders belong in an `owner-signal-persona-orchestrate`
+Owner-only orders belong in an `owner-signal-orchestrate`
 contract. This ordinary contract is the peer/CLI surface.
 
 ## 6 · Witness Tests
@@ -173,7 +173,7 @@ tests/round_trip.rs   frame round trips and contract-local operation witnesses
 
 ## See Also
 
-- `../persona-orchestrate/ARCHITECTURE.md` — runtime consumer and
+- `../orchestrate/ARCHITECTURE.md` — runtime consumer and
   state owner.
 - `../signal-frame/ARCHITECTURE.md` — Signal frame kernel.
 - `../signal-sema/ARCHITECTURE.md` — payloadless Sema classification
