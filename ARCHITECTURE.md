@@ -171,6 +171,22 @@ src/lib.rs            payloads, validation newtypes, signal_channel!
 tests/round_trip.rs   frame round trips and contract-local operation witnesses
 ```
 
+## Pending schema-engine upgrade
+
+**Status:** scheduled for migration to schema-language-based contract per `reports/designer/326-v13-spirit-complete-schema-vision.md` + `reports/designer/324-migration-mvp-spirit-handover-re-specification.md`.
+
+**Target:** this contract's hand-written `signal_channel!` invocation in `src/lib.rs` + Layer 2 Component Commands + storage types convert to a single `orchestrate/orchestrate.schema` file. The brilliant macro library (`primary-ezqx.1`) reads the schema + emits all the wire types + ShortHeader projection + dispatcher + VersionProjection + storage descriptors. The "Migration history - contract-local verbs (2026-05-19)" section (lines 18-39) records the destination verb set (`Claim`, `Release`, `Handoff`, `Observe`, `Submit`, `Query`, `Watch`, `Unwatch`, plus mandatory `Tap`/`Untap` per the 2026-05-20 affirmation).
+
+**Sequence:** Spirit is the MVP pilot landing first via `primary-ezqx.1`; this contract follows after the pilot succeeds and per-component schema cutover beads land. Cutover sequences alongside the `orchestrate` runtime cutover.
+
+**Per-component concerns:** Cluster/lifecycle orchestration contract; schema cutover after Spirit + mind. The schema must preserve the closed reply variants (`ClaimAcceptance`, `ClaimRejection`, `ReleaseAcknowledgment`, `HandoffAcceptance`, `HandoffRejection`, `RoleSnapshot`, `ActivityAcknowledgment`, `ActivityList`, `PartialApplied`, `ObservationOpened`, `ObservationClosed`) without an `Unknown` sentinel. Typed values (`RoleIdentifier`, `HarnessKind`, `ScopeReference`, `WirePath`, `TaskToken`, `ScopeReason`, `TimestampNanos`, and the divergence vocabulary `PartialApplied` / `ApplicationSuccess` / `ApplicationFailure` / `DownstreamComponent` / `ApplicationFailureReason`) need validation hooks the schema emits without losing the `from_wire_token` / `from_absolute_path` / `from_text` discipline.
+
+**References:**
+- `reports/designer/326-v13-spirit-complete-schema-vision.md` — uniform header form + schema-language design
+- `reports/designer/324-migration-mvp-spirit-handover-re-specification.md` — migration MVP + handover state
+- `reports/designer/322-spirit-mvp-positional-schema-worked-example.md` — Spirit MVP worked example
+- `reports/operator/174-schema-import-header-design-critique-2026-05-24.md` — header/body/feature separation + lowering rules
+
 ## See Also
 
 - `../orchestrate/ARCHITECTURE.md` — runtime consumer and
