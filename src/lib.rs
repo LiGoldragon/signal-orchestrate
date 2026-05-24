@@ -25,6 +25,24 @@
 //! See `ARCHITECTURE.md` for the channel's role and
 //! boundaries; `~/primary/skills/contract-repo.md` for the
 //! contract-repo discipline this crate follows.
+//!
+//! ## Schema port (second-designer/173)
+//!
+//! `orchestrate.schema` at the crate root is the source-of-truth
+//! schema for both the ordinary and the owner contracts of this
+//! component. It mirrors the Spirit MVP pattern
+//! (`signal-persona-spirit/spirit.schema`) and is the second
+//! pilot for the schema-engine migration.
+//!
+//! The hand-written `signal_channel!` invocation below remains
+//! live; a future macro pass over `orchestrate.schema` will
+//! produce equivalent types. The [`schema_emitted`] module
+//! documents — in executable Rust — what that emission looks
+//! like and exercises a short-header projection + Sema
+//! classification smoke test against it.
+
+pub mod schema_emitted;
+pub mod upgrade_handover;
 
 use nota_codec::{
     Decoder, Encoder, NotaDecode, NotaEncode, NotaEnum, NotaRecord, NotaTransparent,
