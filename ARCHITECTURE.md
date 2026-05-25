@@ -173,19 +173,60 @@ tests/round_trip.rs   frame round trips and contract-local operation witnesses
 
 ## Pending schema-engine upgrade
 
-**Status:** scheduled for migration to schema-language-based contract per `reports/designer/326-v13-spirit-complete-schema-vision.md` + `reports/designer/324-migration-mvp-spirit-handover-re-specification.md`.
+**Status:** scheduled for migration to schema-language-based contract per
+`primary/reports/designer/326-v13-spirit-complete-schema-vision.md` +
+`primary/reports/designer/324-migration-mvp-spirit-handover-re-specification.md`.
+The reader model is multi-pass NOTA-first per spirit record 549; macro
+application iterates to a fixed point per record 569.
 
-**Target:** this contract's hand-written `signal_channel!` invocation in `src/lib.rs` + Layer 2 Component Commands + storage types convert to a single `orchestrate/orchestrate.schema` file. The brilliant macro library (`primary-ezqx.1`) reads the schema + emits all the wire types + ShortHeader projection + dispatcher + VersionProjection + storage descriptors. The "Migration history - contract-local verbs (2026-05-19)" section (lines 18-39) records the destination verb set (`Claim`, `Release`, `Handoff`, `Observe`, `Submit`, `Query`, `Watch`, `Unwatch`, plus mandatory `Tap`/`Untap` per the 2026-05-20 affirmation).
+**Target:** this contract's hand-written `signal_channel!` invocation in
+`src/lib.rs` + Layer 2 Component Commands + storage types convert to a
+single `orchestrate/orchestrate.schema` file. The brilliant macro
+library (`primary-ezqx.1`) reads the schema + emits all the wire types
++ ShortHeader projection + dispatcher + VersionProjection + storage
+descriptors. The "Migration history - contract-local verbs
+(2026-05-19)" section (lines 18-39) records the destination verb set
+(`Claim`, `Release`, `Handoff`, `Observe`, `Submit`, `Query`, `Watch`,
+`Unwatch`, plus mandatory `Tap`/`Untap` per the 2026-05-20 affirmation).
 
-**Sequence:** Spirit is the MVP pilot landing first via `primary-ezqx.1`; this contract follows after the pilot succeeds and per-component schema cutover beads land. Cutover sequences alongside the `orchestrate` runtime cutover.
+**Sequence:** Spirit is the MVP pilot landing first via
+`primary-ezqx.1`; this contract follows after the pilot succeeds and
+per-component schema cutover beads land. Cutover sequences alongside
+the `orchestrate` runtime cutover.
 
-**Per-component concerns:** Cluster/lifecycle orchestration contract; schema cutover after Spirit + mind. The schema must preserve the closed reply variants (`ClaimAcceptance`, `ClaimRejection`, `ReleaseAcknowledgment`, `HandoffAcceptance`, `HandoffRejection`, `RoleSnapshot`, `ActivityAcknowledgment`, `ActivityList`, `PartialApplied`, `ObservationOpened`, `ObservationClosed`) without an `Unknown` sentinel. Typed values (`RoleIdentifier`, `HarnessKind`, `ScopeReference`, `WirePath`, `TaskToken`, `ScopeReason`, `TimestampNanos`, and the divergence vocabulary `PartialApplied` / `ApplicationSuccess` / `ApplicationFailure` / `DownstreamComponent` / `ApplicationFailureReason`) need validation hooks the schema emits without losing the `from_wire_token` / `from_absolute_path` / `from_text` discipline.
+**Per-component concerns:** Cluster/lifecycle orchestration contract;
+schema cutover after Spirit + mind. The schema must preserve the closed
+reply variants (`ClaimAcceptance`, `ClaimRejection`,
+`ReleaseAcknowledgment`, `HandoffAcceptance`, `HandoffRejection`,
+`RoleSnapshot`, `ActivityAcknowledgment`, `ActivityList`,
+`PartialApplied`, `ObservationOpened`, `ObservationClosed`) without an
+`Unknown` sentinel. Typed values (`RoleIdentifier`, `HarnessKind`,
+`ScopeReference`, `WirePath`, `TaskToken`, `ScopeReason`,
+`TimestampNanos`, and the divergence vocabulary `PartialApplied` /
+`ApplicationSuccess` / `ApplicationFailure` / `DownstreamComponent` /
+`ApplicationFailureReason`) need validation hooks the schema emits
+without losing the `from_wire_token` / `from_absolute_path` /
+`from_text` discipline.
+
+**Variant slot policy.** Per spirit record 562 the orchestrate schema's
+enums place data-carrying variants in slots 0-6 and unit variants
+after. The reply enums above are all data-carrying; future unit
+variants (e.g. a new `ObservationClosedReason` flag) land in the slot
+range after the data variants. Per record 563 the micro-enum policy
+applies inside the reply types: Booleans pack to one bit, Options to
+two, and so on, letting SEMA fit smaller than rkyv-with-raw-enums.
 
 **References:**
-- `reports/designer/326-v13-spirit-complete-schema-vision.md` — uniform header form + schema-language design
-- `reports/designer/324-migration-mvp-spirit-handover-re-specification.md` — migration MVP + handover state
-- `reports/designer/322-spirit-mvp-positional-schema-worked-example.md` — Spirit MVP worked example
-- `reports/operator/174-schema-import-header-design-critique-2026-05-24.md` — header/body/feature separation + lowering rules
+- `primary/reports/designer/326-v13-spirit-complete-schema-vision.md` —
+  uniform header form + schema-language design
+- `primary/reports/designer/333-upgrade-mechanism-full-design-explained.md`
+  + `333-v2` — upgrade mechanism design + corrections
+- `primary/reports/designer/334-v2-multi-pass-nota-first-schema-reader.md`
+  — multi-pass reader model (record 549)
+- `primary/reports/designer/324-migration-mvp-spirit-handover-re-specification.md`
+  — migration MVP + handover state
+- `primary/reports/operator/174-schema-import-header-design-critique-2026-05-24.md`
+  — header/body/feature separation + lowering rules
 
 ## See Also
 
