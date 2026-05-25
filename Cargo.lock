@@ -130,7 +130,7 @@ dependencies = [
 [[package]]
 name = "nota-codec"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/nota-codec.git?branch=main#538555e895529e2884b7d37d20c66aadc2a49c08"
+source = "git+https://github.com/LiGoldragon/nota-codec.git?branch=main#139217d78e88df6df518b886a56ac2272255005f"
 dependencies = [
  "camino",
  "nota-derive",
@@ -140,7 +140,7 @@ dependencies = [
 [[package]]
 name = "nota-derive"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/nota-derive.git?branch=main#8323149593b95d6e90c1fdde54e9aba58803337c"
+source = "git+https://github.com/LiGoldragon/nota-derive.git?branch=main#cde0e8262f2f90afbdf26d9b1b3561376723d816"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -152,6 +152,12 @@ name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
+
+[[package]]
+name = "paste"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "pin-project-lite"
@@ -254,7 +260,7 @@ checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 [[package]]
 name = "schema"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/schema.git?branch=main#b3a1c8d3083211da7ff8856011604788298b1d46"
+source = "git+https://github.com/LiGoldragon/schema.git?branch=main#be6860fb40def6881e481ed92cd855ad94f4aab5"
 dependencies = [
  "nota-codec",
 ]
@@ -262,9 +268,10 @@ dependencies = [
 [[package]]
 name = "signal-frame"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#653773b7d4c18d16efd977ada4d280876debefd7"
+source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#37ecf58222d2b8d1f0edf019ca6ff71c651c25db"
 dependencies = [
  "nota-codec",
+ "paste",
  "rkyv",
  "signal-frame-macros",
  "thiserror",
@@ -273,10 +280,12 @@ dependencies = [
 [[package]]
 name = "signal-frame-macros"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#653773b7d4c18d16efd977ada4d280876debefd7"
+source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#37ecf58222d2b8d1f0edf019ca6ff71c651c25db"
 dependencies = [
+ "nota-codec",
  "proc-macro2",
  "quote",
+ "schema",
  "syn",
 ]
 
