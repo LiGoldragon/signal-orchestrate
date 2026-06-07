@@ -13,7 +13,8 @@ contains no daemon, actor, database, CLI parser, or transport policy.
 
 The channel is declared by one `signal_channel!` invocation in
 `src/lib.rs`. Public operations use contract-local verb roots. The
-daemon lowers those operations to Sema effects internally.
+daemon lowers those operations to internal commands and publishes
+contract-owned effect observations.
 
 ## Migration history — contract-local verbs (2026-05-19)
 
@@ -34,8 +35,8 @@ The public request surface is now:
 There is no public `Assert` / `Retract` / `Mutate` / `Match` tag in
 this contract. `orchestrate` owns its typed Component
 Commands (Layer 2) and projects them to payloadless Sema class labels
-(Layer 3) for observation. The observer stream exposes inbound
-operation and outbound effect events for introspection.
+(Layer 3) inside the daemon. The observer stream exposes inbound
+operation and outbound contract-owned effect events for introspection.
 
 ## MUST IMPLEMENT — Tap/Untap mandatory observable surface
 
@@ -55,7 +56,8 @@ collide on naming, the macro-injected `Tap`/`Untap` wins and the
 domain verb stays as `Watch`/`Unwatch` (no collision today). Add the
 `observable { filter default; operation_event OperationReceived;
 effect_event EffectEmitted; }` block when the macro grammar lands per
-`/246-v4`; `EffectEmitted` carries the lowered `SemaObservation`.
+`/246-v4`; `EffectEmitted` carries the affected operation and a
+contract-owned `EffectOutcome`.
 
 ## 1 · Channel
 

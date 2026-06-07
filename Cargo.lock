@@ -130,7 +130,7 @@ dependencies = [
 [[package]]
 name = "nota-codec"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/nota-codec.git?branch=main#139217d78e88df6df518b886a56ac2272255005f"
+source = "git+https://github.com/LiGoldragon/nota-codec.git?branch=main#f761421c383121a04df761a444a3778d1c0b137d"
 dependencies = [
  "camino",
  "nota-derive",
@@ -140,7 +140,7 @@ dependencies = [
 [[package]]
 name = "nota-derive"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/nota-derive.git?branch=main#cde0e8262f2f90afbdf26d9b1b3561376723d816"
+source = "git+https://github.com/LiGoldragon/nota-derive.git?branch=main#11347da1ff4425ff4e743c15a3e3ec322b54ea9a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -287,14 +287,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 
 [[package]]
-name = "schema"
-version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/schema.git?branch=main#be6860fb40def6881e481ed92cd855ad94f4aab5"
-dependencies = [
- "nota-codec",
-]
-
-[[package]]
 name = "schema-next"
 version = "0.1.4"
 source = "git+https://github.com/LiGoldragon/schema-next.git?branch=main#77e71a410d03e3cc5c16cebd82202e712439e648"
@@ -306,7 +298,7 @@ dependencies = [
 [[package]]
 name = "schema-rust-next"
 version = "0.1.15"
-source = "git+https://github.com/LiGoldragon/schema-rust-next.git?branch=main#c4761cc8dc610e15766111a8ca39ac038d598fda"
+source = "git+https://github.com/LiGoldragon/schema-rust-next.git?branch=main#8ae5b59633cfa1570ca0dbb7bc0096a0d3829374"
 dependencies = [
  "prettyplease",
  "proc-macro2",
@@ -319,7 +311,7 @@ dependencies = [
 [[package]]
 name = "signal-frame"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#1493c59f9c3ca8c398dec89837d7d8b14898b810"
+source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#ed066bcce411faf4cb4c7e8aad45cf72f8c9aa9e"
 dependencies = [
  "nota-codec",
  "paste",
@@ -331,12 +323,11 @@ dependencies = [
 [[package]]
 name = "signal-frame-macros"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#1493c59f9c3ca8c398dec89837d7d8b14898b810"
+source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#ed066bcce411faf4cb4c7e8aad45cf72f8c9aa9e"
 dependencies = [
  "nota-codec",
  "proc-macro2",
  "quote",
- "schema",
  "syn",
 ]
 
@@ -350,17 +341,6 @@ dependencies = [
  "schema-next",
  "schema-rust-next",
  "signal-frame",
- "signal-sema",
- "thiserror",
-]
-
-[[package]]
-name = "signal-sema"
-version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/signal-sema.git?branch=main#22b036a095857b42a81556666e093f03bf4533a1"
-dependencies = [
- "nota-codec",
- "rkyv",
  "thiserror",
 ]
 

@@ -13,8 +13,8 @@ use signal_frame::{
 use signal_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
     ActivitySubmission, ApplicationFailure, ApplicationFailureReason, ApplicationSuccess,
-    ClaimAcceptance, ClaimEntry, ClaimRejection, DownstreamComponent, EffectEmitted, Error,
-    HandoffAcceptance, HandoffRejection, HandoffRejectionReason, HarnessKind, LaneAuthority,
+    ClaimAcceptance, ClaimEntry, ClaimRejection, DownstreamComponent, EffectEmitted, EffectOutcome,
+    Error, HandoffAcceptance, HandoffRejection, HandoffRejectionReason, HarnessKind, LaneAuthority,
     LaneIdentifier, LaneRegistration, LanesObserved, Observation, ObservationClosed,
     ObservationEvent, ObservationOpened, ObservationSubscription, ObservationToken, OperationKind,
     OperationReceived, OrchestrateEvent, OrchestrateFrame, OrchestrateFrameBody, OrchestrateReply,
@@ -22,7 +22,6 @@ use signal_orchestrate::{
     RoleName, RoleRelease, RoleSnapshot, RoleStatus, RoleToken, ScopeConflict, ScopeReason,
     ScopeReference, TaskToken, TimestampNanos, WirePath,
 };
-use signal_sema::{SemaObservation, SemaOperation, SemaOutcome};
 
 // ─── Helpers ──────────────────────────────────────────────
 
@@ -273,7 +272,7 @@ fn activity_query_with_task_filter_round_trips() {
 fn observation_subscription_round_trips() {
     let request = OrchestrateRequest::Watch(ObservationSubscription {
         include_operations: true,
-        include_sema_effects: true,
+        include_effects: true,
     });
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
@@ -487,7 +486,8 @@ fn observation_events_round_trip() {
     assert_eq!(round_trip_event(operation.clone()), operation);
 
     let effect = OrchestrateEvent::Observed(ObservationEvent::EffectEmitted(EffectEmitted {
-        observation: SemaObservation::new(SemaOperation::Match, SemaOutcome::Matched),
+        operation: OperationKind::Query,
+        outcome: EffectOutcome::Observed,
     }));
     assert_eq!(round_trip_event(effect.clone()), effect);
 }
@@ -587,7 +587,7 @@ fn orchestrate_request_exposes_contract_owned_operation_kind() {
         (
             OrchestrateRequest::Watch(ObservationSubscription {
                 include_operations: true,
-                include_sema_effects: false,
+                include_effects: false,
             }),
             OperationKind::Watch,
         ),

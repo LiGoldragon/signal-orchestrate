@@ -18,7 +18,8 @@ policy stays in `owner-signal-orchestrate`.
 `orchestrate` daemon. It carries the role-lifecycle relation (claim, release,
 handoff, observation) and the activity-log relation (submit, query). It contains
 no daemon, actor, database, CLI parser, or transport policy — the daemon lowers
-these public operations to component-local commands and Sema effects internally.
+these public operations to component-local commands and effect observations
+internally.
 Owner-only orchestration policy (lane registry, scheduling, supervision policy)
 stays in `owner-signal-orchestrate`; runtime actors, the store, and the lowering
 logic live in `orchestrate`.

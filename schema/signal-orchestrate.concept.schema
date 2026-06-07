@@ -72,11 +72,11 @@
   ObservationClosed (ObservationToken)
 
   OperationReceived (OperationKind)
-  EffectEmitted (SemaObservation)
+  EffectEmitted (OperationKind EffectOutcome)
   ObservationEvent [(OperationReceived OperationReceived) (EffectEmitted EffectEmitted)]
   Observed (ObservationEvent)
   OperationKind [Claim Release Handoff Observe Submit Query Watch Unwatch]
-  SemaObservation [Asserted Retracted Mutated Matched Subscribed NoChange]
+  EffectOutcome [Applied Removed Changed Observed StreamOpened StreamClosed NoChange]
 }
 
 [

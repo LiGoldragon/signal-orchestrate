@@ -20,7 +20,7 @@
 //! The channel is mostly request/reply: ordinary operations
 //! get typed replies, while `Watch` opens the observation
 //! stream and `Unwatch` closes it. Observation events carry
-//! inbound operation kinds and daemon-lowered Sema observations.
+//! inbound operation kinds and daemon-emitted operation effects.
 //!
 //! See `ARCHITECTURE.md` for the channel's role and
 //! boundaries; `~/primary/skills/contract-repo.md` for the
@@ -32,7 +32,6 @@ use nota_codec::{
 };
 use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 use signal_frame::signal_channel;
-use signal_sema::SemaObservation;
 use std::fmt;
 use std::str::FromStr;
 
@@ -977,12 +976,12 @@ pub struct PartialApplied {
 
 // ─── Observation stream ───────────────────────────────────
 
-/// Subscribe to contract-operation and Sema-effect observations on
+/// Subscribe to contract-operation and effect observations on
 /// the public socket.
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
 pub struct ObservationSubscription {
     pub include_operations: bool,
-    pub include_sema_effects: bool,
+    pub include_effects: bool,
 }
 
 #[derive(
@@ -1029,10 +1028,24 @@ pub struct OperationReceived {
 }
 
 #[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEnum, Debug, Clone, Copy, PartialEq, Eq, Hash,
+)]
+pub enum EffectOutcome {
+    Applied,
+    Removed,
+    Changed,
+    Observed,
+    StreamOpened,
+    StreamClosed,
+    NoChange,
+}
+
+#[derive(
     Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
 )]
 pub struct EffectEmitted {
-    pub observation: SemaObservation,
+    pub operation: OperationKind,
+    pub outcome: EffectOutcome,
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]

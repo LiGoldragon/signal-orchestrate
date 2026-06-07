@@ -112,7 +112,7 @@ pub enum ActivityFilter {
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ObservationSubscription {
     pub include_operations: Boolean,
-    pub include_sema_effects: Boolean,
+    pub include_effects: Boolean,
 }
 
 pub type ObservationToken = Integer;
@@ -279,30 +279,14 @@ pub enum OperationKind {
 
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub enum SemaOperation {
-    Assert,
-    Retract,
-    Mutate,
-    Match,
-    Subscribe,
-}
-
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub enum SemaOutcome {
-    Asserted,
-    Retracted,
-    Mutated,
-    Matched,
-    Subscribed,
+pub enum EffectOutcome {
+    Applied,
+    Removed,
+    Changed,
+    Observed,
+    StreamOpened,
+    StreamClosed,
     NoChange,
-}
-
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct SemaObservation {
-    pub operation: SemaOperation,
-    pub outcome: SemaOutcome,
 }
 
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -311,7 +295,10 @@ pub struct OperationReceived(pub OperationKind);
 
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct EffectEmitted(pub SemaObservation);
+pub struct EffectEmitted {
+    pub operation: OperationKind,
+    pub outcome: EffectOutcome,
+}
 
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -486,23 +473,6 @@ impl From<OperationKind> for OperationReceived {
     }
 }
 
-impl EffectEmitted {
-    pub fn new(payload: SemaObservation) -> Self {
-        Self(payload)
-    }
-    pub fn payload(&self) -> &SemaObservation {
-        &self.0
-    }
-    pub fn into_payload(self) -> SemaObservation {
-        self.0
-    }
-}
-impl From<SemaObservation> for EffectEmitted {
-    fn from(payload: SemaObservation) -> Self {
-        Self::new(payload)
-    }
-}
-
 impl ScopeReference {
     pub fn path(payload: WirePath) -> Self {
         Self::Path(payload)
@@ -534,8 +504,8 @@ impl ObservationEvent {
     pub fn operation_received(payload: OperationKind) -> Self {
         Self::OperationReceived(OperationReceived::new(payload))
     }
-    pub fn effect_emitted(payload: SemaObservation) -> Self {
-        Self::EffectEmitted(EffectEmitted::new(payload))
+    pub fn effect_emitted(payload: EffectEmitted) -> Self {
+        Self::EffectEmitted(payload)
     }
 }
 
@@ -1082,27 +1052,7 @@ impl OperationKind {
 }
 
 #[cfg(feature = "nota-text")]
-impl SemaOperation {
-    pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
-        <Self as NotaDecode>::from_nota_block(block)
-    }
-    pub fn to_nota(&self) -> String {
-        <Self as NotaEncode>::to_nota(self)
-    }
-}
-
-#[cfg(feature = "nota-text")]
-impl SemaOutcome {
-    pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
-        <Self as NotaDecode>::from_nota_block(block)
-    }
-    pub fn to_nota(&self) -> String {
-        <Self as NotaEncode>::to_nota(self)
-    }
-}
-
-#[cfg(feature = "nota-text")]
-impl SemaObservation {
+impl EffectOutcome {
     pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
         <Self as NotaDecode>::from_nota_block(block)
     }

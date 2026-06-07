@@ -20,7 +20,6 @@ nota-text = ["dep:nota-next"]
 
 [dependencies]
 signal-frame = { git = "https://github.com/LiGoldragon/signal-frame.git", branch = "main" }
-signal-sema  = { git = "https://github.com/LiGoldragon/signal-sema.git", branch = "main" }
 nota-codec  = { git = "https://github.com/LiGoldragon/nota-codec.git", branch = "main" }
 nota-next   = { git = "https://github.com/LiGoldragon/nota-next.git", branch = "main", optional = true }
 rkyv        = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
