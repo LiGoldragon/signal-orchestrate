@@ -26,10 +26,7 @@
 //! boundaries; `~/primary/skills/contract-repo.md` for the
 //! contract-repo discipline this crate follows.
 
-use nota_codec::{
-    Decoder, Encoder, NotaDecode, NotaEncode, NotaEnum, NotaRecord, NotaTransparent,
-    NotaTryTransparent,
-};
+use nota_next::{Block, Delimiter, NotaBlock, NotaDecode, NotaDecodeError, NotaEncode};
 use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 use signal_frame::signal_channel;
 use std::fmt;
@@ -39,7 +36,7 @@ pub mod schema;
 
 // ─── Error ────────────────────────────────────────────────
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub type ContractResult<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum Error {
@@ -65,6 +62,23 @@ pub enum Error {
     InvalidLaneIdentifier { lane: String },
 }
 
+macro_rules! validated_string_nota_codec {
+    ($type:ty, $constructor:path) => {
+        impl NotaDecode for $type {
+            fn from_nota_block(block: &Block) -> std::result::Result<Self, NotaDecodeError> {
+                let text = String::from_nota_block(block)?;
+                $constructor(text).map_err(|error| NotaDecodeError::Parse(error.to_string()))
+            }
+        }
+
+        impl NotaEncode for $type {
+            fn to_nota(&self) -> String {
+                self.as_str().to_owned().to_nota()
+            }
+        }
+    };
+}
+
 // ─── Identity ─────────────────────────────────────────────
 
 /// A dynamic workspace role identifier.
@@ -73,17 +87,7 @@ pub enum Error {
 /// the work context it owns, and new roles can be created at
 /// runtime through the owner orchestration surface.
 #[derive(
-    Archive,
-    RkyvSerialize,
-    RkyvDeserialize,
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    Ord,
-    NotaTryTransparent,
+    Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord,
 )]
 pub struct RoleIdentifier(String);
 
@@ -104,11 +108,11 @@ impl RoleIdentifier {
         "poet-assistant",
     ];
 
-    pub fn try_new(role: String) -> Result<Self> {
+    pub fn try_new(role: String) -> ContractResult<Self> {
         Self::from_wire_token(role)
     }
 
-    pub fn from_wire_token(role: impl Into<String>) -> Result<Self> {
+    pub fn from_wire_token(role: impl Into<String>) -> ContractResult<Self> {
         let role = role.into();
         if role.is_empty()
             || role.chars().any(char::is_whitespace)
@@ -140,7 +144,7 @@ impl fmt::Display for RoleIdentifier {
 impl FromStr for RoleIdentifier {
     type Err = Error;
 
-    fn from_str(role: &str) -> Result<Self> {
+    fn from_str(role: &str) -> ContractResult<Self> {
         Self::from_wire_token(role)
     }
 }
@@ -148,7 +152,7 @@ impl FromStr for RoleIdentifier {
 impl TryFrom<String> for RoleIdentifier {
     type Error = Error;
 
-    fn try_from(role: String) -> Result<Self> {
+    fn try_from(role: String) -> ContractResult<Self> {
         Self::from_wire_token(role)
     }
 }
@@ -156,7 +160,7 @@ impl TryFrom<String> for RoleIdentifier {
 impl TryFrom<&str> for RoleIdentifier {
     type Error = Error;
 
-    fn try_from(role: &str) -> Result<Self> {
+    fn try_from(role: &str) -> ContractResult<Self> {
         Self::from_wire_token(role)
     }
 }
@@ -167,28 +171,20 @@ impl AsRef<str> for RoleIdentifier {
     }
 }
 
+validated_string_nota_codec!(RoleIdentifier, RoleIdentifier::from_wire_token);
+
 /// One token in a role vector.
 #[derive(
-    Archive,
-    RkyvSerialize,
-    RkyvDeserialize,
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    Ord,
-    NotaTryTransparent,
+    Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord,
 )]
 pub struct RoleToken(String);
 
 impl RoleToken {
-    pub fn try_new(token: String) -> Result<Self> {
+    pub fn try_new(token: String) -> ContractResult<Self> {
         Self::from_text(token)
     }
 
-    pub fn from_text(token: impl Into<String>) -> Result<Self> {
+    pub fn from_text(token: impl Into<String>) -> ContractResult<Self> {
         let token = token.into();
         if token.is_empty()
             || token.chars().any(char::is_whitespace)
@@ -210,7 +206,7 @@ impl RoleToken {
 impl TryFrom<String> for RoleToken {
     type Error = Error;
 
-    fn try_from(token: String) -> Result<Self> {
+    fn try_from(token: String) -> ContractResult<Self> {
         Self::from_text(token)
     }
 }
@@ -218,7 +214,7 @@ impl TryFrom<String> for RoleToken {
 impl TryFrom<&str> for RoleToken {
     type Error = Error;
 
-    fn try_from(token: &str) -> Result<Self> {
+    fn try_from(token: &str) -> ContractResult<Self> {
         Self::from_text(token)
     }
 }
@@ -229,13 +225,17 @@ impl AsRef<str> for RoleToken {
     }
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+validated_string_nota_codec!(RoleToken, RoleToken::from_text);
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct Role {
     pub tokens: Vec<RoleToken>,
 }
 
 impl Role {
-    pub fn try_new(tokens: Vec<RoleToken>) -> Result<Self> {
+    pub fn try_new(tokens: Vec<RoleToken>) -> ContractResult<Self> {
         if tokens.is_empty() {
             return Err(Error::EmptyRole);
         }
@@ -248,7 +248,17 @@ impl Role {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEnum, Debug, Clone, Copy, PartialEq, Eq, Hash,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
 )]
 pub enum LaneAuthority {
     Structural,
@@ -256,26 +266,16 @@ pub enum LaneAuthority {
 }
 
 #[derive(
-    Archive,
-    RkyvSerialize,
-    RkyvDeserialize,
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    Ord,
-    NotaTryTransparent,
+    Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord,
 )]
 pub struct LaneIdentifier(String);
 
 impl LaneIdentifier {
-    pub fn try_new(lane: String) -> Result<Self> {
+    pub fn try_new(lane: String) -> ContractResult<Self> {
         Self::from_wire_token(lane)
     }
 
-    pub fn from_wire_token(lane: impl Into<String>) -> Result<Self> {
+    pub fn from_wire_token(lane: impl Into<String>) -> ContractResult<Self> {
         let lane = lane.into();
         if lane.is_empty()
             || lane.chars().any(char::is_whitespace)
@@ -307,7 +307,7 @@ impl fmt::Display for LaneIdentifier {
 impl TryFrom<String> for LaneIdentifier {
     type Error = Error;
 
-    fn try_from(lane: String) -> Result<Self> {
+    fn try_from(lane: String) -> ContractResult<Self> {
         Self::from_wire_token(lane)
     }
 }
@@ -315,7 +315,7 @@ impl TryFrom<String> for LaneIdentifier {
 impl TryFrom<&str> for LaneIdentifier {
     type Error = Error;
 
-    fn try_from(lane: &str) -> Result<Self> {
+    fn try_from(lane: &str) -> ContractResult<Self> {
         Self::from_wire_token(lane)
     }
 }
@@ -326,7 +326,11 @@ impl AsRef<str> for LaneIdentifier {
     }
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+validated_string_nota_codec!(LaneIdentifier, LaneIdentifier::from_wire_token);
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct LaneRegistration {
     pub lane: LaneIdentifier,
     pub role: Role,
@@ -334,7 +338,17 @@ pub struct LaneRegistration {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEnum, Debug, Clone, Copy, PartialEq, Eq, Hash,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
 )]
 pub enum HarnessKind {
     Codex,
@@ -349,7 +363,7 @@ impl HarnessKind {
         }
     }
 
-    pub fn from_wire_token(harness: impl Into<String>) -> Result<Self> {
+    pub fn from_wire_token(harness: impl Into<String>) -> ContractResult<Self> {
         let harness = harness.into();
         match harness.as_str() {
             "codex" => Ok(Self::Codex),
@@ -368,7 +382,18 @@ impl fmt::Display for HarnessKind {
 // ─── Scope reference ──────────────────────────────────────
 
 /// What's being claimed / observed / acted on.
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+)]
 pub enum ScopeReference {
     /// An absolute file or directory path.
     Path(WirePath),
@@ -377,62 +402,19 @@ pub enum ScopeReference {
     Task(TaskToken),
 }
 
-impl NotaEncode for ScopeReference {
-    fn encode(&self, encoder: &mut Encoder) -> nota_codec::Result<()> {
-        match self {
-            Self::Path(path) => {
-                encoder.start_record("Path")?;
-                path.encode(encoder)?;
-                encoder.end_record()
-            }
-            Self::Task(task) => {
-                encoder.start_record("Task")?;
-                task.encode(encoder)?;
-                encoder.end_record()
-            }
-        }
-    }
-}
-
-impl NotaDecode for ScopeReference {
-    fn decode(decoder: &mut Decoder<'_>) -> nota_codec::Result<Self> {
-        let head = decoder.peek_record_head()?;
-        match head.as_str() {
-            "Path" => {
-                decoder.expect_record_head("Path")?;
-                let path = WirePath::decode(decoder)?;
-                decoder.expect_record_end()?;
-                Ok(Self::Path(path))
-            }
-            "Task" => {
-                decoder.expect_record_head("Task")?;
-                let task = TaskToken::decode(decoder)?;
-                decoder.expect_record_end()?;
-                Ok(Self::Task(task))
-            }
-            other => Err(nota_codec::Error::UnknownVariant {
-                enum_name: "ScopeReference",
-                got: other.to_string(),
-            }),
-        }
-    }
-}
-
 /// Absolute path, newtyped for cross-platform stability on
 /// the wire (per `~/primary/skills/rust-discipline.md`
 /// §"Newtype the wire form" — `PathBuf` archives
 /// non-deterministically).
-#[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaTryTransparent, Debug, Clone, PartialEq, Eq, Hash,
-)]
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct WirePath(String);
 
 impl WirePath {
-    pub fn try_new(path: String) -> Result<Self> {
+    pub fn try_new(path: String) -> ContractResult<Self> {
         Self::from_absolute_path(path)
     }
 
-    pub fn from_absolute_path(path: impl Into<String>) -> Result<Self> {
+    pub fn from_absolute_path(path: impl Into<String>) -> ContractResult<Self> {
         let path = path.into();
 
         if !path.starts_with('/') || path.split('/').any(|component| component == "..") {
@@ -460,7 +442,7 @@ impl WirePath {
 impl TryFrom<String> for WirePath {
     type Error = Error;
 
-    fn try_from(path: String) -> Result<Self> {
+    fn try_from(path: String) -> ContractResult<Self> {
         Self::from_absolute_path(path)
     }
 }
@@ -468,7 +450,7 @@ impl TryFrom<String> for WirePath {
 impl TryFrom<&str> for WirePath {
     type Error = Error;
 
-    fn try_from(path: &str) -> Result<Self> {
+    fn try_from(path: &str) -> ContractResult<Self> {
         Self::from_absolute_path(path)
     }
 }
@@ -479,20 +461,20 @@ impl AsRef<str> for WirePath {
     }
 }
 
+validated_string_nota_codec!(WirePath, WirePath::from_absolute_path);
+
 /// A bracketed task identifier (stored without brackets).
 /// Bracketed form like `[primary-f99]` is the human surface;
 /// the wire carries the raw token.
-#[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaTryTransparent, Debug, Clone, PartialEq, Eq, Hash,
-)]
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TaskToken(String);
 
 impl TaskToken {
-    pub fn try_new(token: String) -> Result<Self> {
+    pub fn try_new(token: String) -> ContractResult<Self> {
         Self::from_wire_token(token)
     }
 
-    pub fn from_wire_token(token: impl Into<String>) -> Result<Self> {
+    pub fn from_wire_token(token: impl Into<String>) -> ContractResult<Self> {
         let token = token.into();
         if token.is_empty()
             || token.chars().any(char::is_whitespace)
@@ -512,7 +494,7 @@ impl TaskToken {
 impl TryFrom<String> for TaskToken {
     type Error = Error;
 
-    fn try_from(token: String) -> Result<Self> {
+    fn try_from(token: String) -> ContractResult<Self> {
         Self::from_wire_token(token)
     }
 }
@@ -520,7 +502,7 @@ impl TryFrom<String> for TaskToken {
 impl TryFrom<&str> for TaskToken {
     type Error = Error;
 
-    fn try_from(token: &str) -> Result<Self> {
+    fn try_from(token: &str) -> ContractResult<Self> {
         Self::from_wire_token(token)
     }
 }
@@ -531,23 +513,23 @@ impl AsRef<str> for TaskToken {
     }
 }
 
+validated_string_nota_codec!(TaskToken, TaskToken::from_wire_token);
+
 // ─── Reason ───────────────────────────────────────────────
 
 /// A short reason string. Provisional per
 /// `~/primary/reports/designer/92-sema-as-database-library-architecture-revamp.md`
 /// §4 — strings allowed here until the typed Nexus record
 /// shape for "intent" is named.
-#[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaTryTransparent, Debug, Clone, PartialEq, Eq, Hash,
-)]
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ScopeReason(String);
 
 impl ScopeReason {
-    pub fn try_new(reason: String) -> Result<Self> {
+    pub fn try_new(reason: String) -> ContractResult<Self> {
         Self::from_text(reason)
     }
 
-    pub fn from_text(reason: impl Into<String>) -> Result<Self> {
+    pub fn from_text(reason: impl Into<String>) -> ContractResult<Self> {
         let reason = reason.into();
         if reason.is_empty() || reason.contains('\n') || reason.contains('\r') {
             return Err(Error::InvalidScopeReason { reason });
@@ -563,7 +545,7 @@ impl ScopeReason {
 impl TryFrom<String> for ScopeReason {
     type Error = Error;
 
-    fn try_from(reason: String) -> Result<Self> {
+    fn try_from(reason: String) -> ContractResult<Self> {
         Self::from_text(reason)
     }
 }
@@ -571,7 +553,7 @@ impl TryFrom<String> for ScopeReason {
 impl TryFrom<&str> for ScopeReason {
     type Error = Error;
 
-    fn try_from(reason: &str) -> Result<Self> {
+    fn try_from(reason: &str) -> ContractResult<Self> {
         Self::from_text(reason)
     }
 }
@@ -581,6 +563,8 @@ impl AsRef<str> for ScopeReason {
         &self.0
     }
 }
+
+validated_string_nota_codec!(ScopeReason, ScopeReason::from_text);
 
 // ─── Time ─────────────────────────────────────────────────
 
@@ -598,7 +582,8 @@ impl AsRef<str> for ScopeReason {
     Hash,
     PartialOrd,
     Ord,
-    NotaTransparent,
+    NotaEncode,
+    NotaDecode,
 )]
 pub struct TimestampNanos(u64);
 
@@ -617,26 +602,34 @@ impl TimestampNanos {
 /// A role asks to claim one or more scopes with a short
 /// reason. Reply: `ClaimAcceptance` on success, `ClaimRejection`
 /// listing every conflict on failure.
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct RoleClaim {
     pub role: RoleName,
     pub scopes: Vec<ScopeReference>,
     pub reason: ScopeReason,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct ClaimAcceptance {
     pub role: RoleName,
     pub scopes: Vec<ScopeReference>,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct ClaimRejection {
     pub role: RoleName,
     pub conflicts: Vec<ScopeConflict>,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct ScopeConflict {
     pub scope: ScopeReference,
     pub held_by: RoleName,
@@ -647,12 +640,16 @@ pub struct ScopeConflict {
 
 /// A role releases all of its currently-held scopes.
 /// Reply: `ReleaseAcknowledgment` listing what was released.
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct RoleRelease {
     pub role: RoleName,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct ReleaseAcknowledgment {
     pub role: RoleName,
     pub released_scopes: Vec<ScopeReference>,
@@ -663,7 +660,9 @@ pub struct ReleaseAcknowledgment {
 /// One role hands a set of scopes to another role atomically.
 /// Reply: `HandoffAcceptance` on success, `HandoffRejection`
 /// with a typed reason on failure.
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct RoleHandoff {
     pub from: RoleName,
     pub to: RoleName,
@@ -671,21 +670,27 @@ pub struct RoleHandoff {
     pub reason: ScopeReason,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct HandoffAcceptance {
     pub from: RoleName,
     pub to: RoleName,
     pub scopes: Vec<ScopeReference>,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct HandoffRejection {
     pub from: RoleName,
     pub to: RoleName,
     pub reason: HandoffRejectionReason,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub enum HandoffRejectionReason {
     /// The `from` role doesn't currently hold the named scopes.
     SourceRoleDoesNotHold,
@@ -695,117 +700,69 @@ pub enum HandoffRejectionReason {
     TargetRoleConflict(Vec<ScopeConflict>),
 }
 
-impl NotaEncode for HandoffRejectionReason {
-    fn encode(&self, encoder: &mut Encoder) -> nota_codec::Result<()> {
-        match self {
-            Self::SourceRoleDoesNotHold => {
-                encoder.start_record("SourceRoleDoesNotHold")?;
-                encoder.end_record()
-            }
-            Self::TargetRoleConflict(conflicts) => {
-                encoder.start_record("TargetRoleConflict")?;
-                conflicts.encode(encoder)?;
-                encoder.end_record()
-            }
-        }
-    }
-}
-
-impl NotaDecode for HandoffRejectionReason {
-    fn decode(decoder: &mut Decoder<'_>) -> nota_codec::Result<Self> {
-        let head = decoder.peek_record_head()?;
-        match head.as_str() {
-            "SourceRoleDoesNotHold" => {
-                decoder.expect_record_head("SourceRoleDoesNotHold")?;
-                decoder.expect_record_end()?;
-                Ok(Self::SourceRoleDoesNotHold)
-            }
-            "TargetRoleConflict" => {
-                decoder.expect_record_head("TargetRoleConflict")?;
-                let conflicts = Vec::<ScopeConflict>::decode(decoder)?;
-                decoder.expect_record_end()?;
-                Ok(Self::TargetRoleConflict(conflicts))
-            }
-            other => Err(nota_codec::Error::UnknownVariant {
-                enum_name: "HandoffRejectionReason",
-                got: other.to_string(),
-            }),
-        }
-    }
-}
-
 // ─── Observation ──────────────────────────────────────────
 
 /// Select what the `Observe` operation reads.
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+)]
 pub enum Observation {
     Roles,
     Lanes,
 }
 
-impl NotaEncode for Observation {
-    fn encode(&self, encoder: &mut Encoder) -> nota_codec::Result<()> {
-        match self {
-            Self::Roles => {
-                encoder.start_record("Roles")?;
-                encoder.end_record()
-            }
-            Self::Lanes => {
-                encoder.start_record("Lanes")?;
-                encoder.end_record()
-            }
-        }
-    }
-}
-
-impl NotaDecode for Observation {
-    fn decode(decoder: &mut Decoder<'_>) -> nota_codec::Result<Self> {
-        let head = decoder.peek_record_head()?;
-        match head.as_str() {
-            "Roles" => {
-                decoder.expect_record_head("Roles")?;
-                decoder.expect_record_end()?;
-                Ok(Self::Roles)
-            }
-            "Lanes" => {
-                decoder.expect_record_head("Lanes")?;
-                decoder.expect_record_end()?;
-                Ok(Self::Lanes)
-            }
-            other => Err(nota_codec::Error::UnknownVariant {
-                enum_name: "Observation",
-                got: other.to_string(),
-            }),
-        }
-    }
-}
-
 /// Legacy empty payload kept for older callers while the `Observe`
 /// operation moves to [`Observation`].
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
 )]
-pub struct RoleObservation;
+pub struct RoleObservation {}
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct RoleSnapshot {
     pub roles: Vec<RoleStatus>,
     pub recent_activity: Vec<Activity>,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct LanesObserved {
     pub lanes: Vec<LaneRegistration>,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct RoleStatus {
     pub role: RoleName,
     pub harness: HarnessKind,
     pub claims: Vec<ClaimEntry>,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct ClaimEntry {
     pub scope: ScopeReference,
     pub reason: ScopeReason,
@@ -816,7 +773,9 @@ pub struct ClaimEntry {
 /// One activity record: who touched what and why. Time is
 /// store-supplied (per ESSENCE infrastructure-mints rule —
 /// the agent never invents timestamps).
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct Activity {
     pub role: RoleName,
     pub scope: ScopeReference,
@@ -827,7 +786,9 @@ pub struct Activity {
 /// Submit a new activity record. The store assigns
 /// `stamped_at` on commit. Reply: `ActivityAcknowledgment`
 /// carrying the slot the record landed in.
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct ActivitySubmission {
     pub role: RoleName,
     pub scope: ScopeReference,
@@ -835,7 +796,16 @@ pub struct ActivitySubmission {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
 )]
 pub struct ActivityAcknowledgment {
     /// The slot (sequential u64) the record was assigned.
@@ -845,13 +815,32 @@ pub struct ActivityAcknowledgment {
 /// Query the activity log. Limit caps how many records come
 /// back; filters narrow by role or scope. Empty filter list
 /// = "all".
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
 pub struct ActivityQuery {
     pub limit: u32,
     pub filters: Vec<ActivityFilter>,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
+impl NotaDecode for ActivityQuery {
+    fn from_nota_block(block: &Block) -> std::result::Result<Self, NotaDecodeError> {
+        let children =
+            NotaBlock::new(block).expect_children(Delimiter::Parenthesis, "ActivityQuery", 2)?;
+        let limit = u32::try_from(u64::from_nota_block(&children[0])?)
+            .map_err(|error| NotaDecodeError::Parse(error.to_string()))?;
+        let filters = Vec::<ActivityFilter>::from_nota_block(&children[1])?;
+        Ok(Self { limit, filters })
+    }
+}
+
+impl NotaEncode for ActivityQuery {
+    fn to_nota(&self) -> String {
+        Delimiter::Parenthesis.wrap([u64::from(self.limit).to_nota(), self.filters.to_nota()])
+    }
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub enum ActivityFilter {
     /// Only entries from this role.
     RoleFilter(RoleName),
@@ -863,59 +852,9 @@ pub enum ActivityFilter {
     TaskToken(TaskToken),
 }
 
-impl NotaEncode for ActivityFilter {
-    fn encode(&self, encoder: &mut Encoder) -> nota_codec::Result<()> {
-        match self {
-            Self::RoleFilter(role) => {
-                encoder.start_record("RoleFilter")?;
-                role.encode(encoder)?;
-                encoder.end_record()
-            }
-            Self::PathPrefix(path) => {
-                encoder.start_record("PathPrefix")?;
-                path.encode(encoder)?;
-                encoder.end_record()
-            }
-            Self::TaskToken(token) => {
-                encoder.start_record("TaskToken")?;
-                token.encode(encoder)?;
-                encoder.end_record()
-            }
-        }
-    }
-}
-
-impl NotaDecode for ActivityFilter {
-    fn decode(decoder: &mut Decoder<'_>) -> nota_codec::Result<Self> {
-        let head = decoder.peek_record_head()?;
-        match head.as_str() {
-            "RoleFilter" => {
-                decoder.expect_record_head("RoleFilter")?;
-                let role = RoleName::decode(decoder)?;
-                decoder.expect_record_end()?;
-                Ok(Self::RoleFilter(role))
-            }
-            "PathPrefix" => {
-                decoder.expect_record_head("PathPrefix")?;
-                let path = WirePath::decode(decoder)?;
-                decoder.expect_record_end()?;
-                Ok(Self::PathPrefix(path))
-            }
-            "TaskToken" => {
-                decoder.expect_record_head("TaskToken")?;
-                let token = TaskToken::decode(decoder)?;
-                decoder.expect_record_end()?;
-                Ok(Self::TaskToken(token))
-            }
-            other => Err(nota_codec::Error::UnknownVariant {
-                enum_name: "ActivityFilter",
-                got: other.to_string(),
-            }),
-        }
-    }
-}
-
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct ActivityList {
     /// Ordered most-recent first.
     pub records: Vec<Activity>,
@@ -926,7 +865,17 @@ pub struct ActivityList {
 /// Component that participated in a fanned-out orchestration
 /// mutation.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEnum, Debug, Clone, Copy, PartialEq, Eq, Hash,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
 )]
 pub enum DownstreamComponent {
     Router,
@@ -939,7 +888,9 @@ pub enum DownstreamComponent {
 }
 
 /// Successful leg of a fanned-out mutation.
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct ApplicationSuccess {
     pub component: DownstreamComponent,
     pub detail: ScopeReason,
@@ -948,7 +899,17 @@ pub struct ApplicationSuccess {
 /// Typed reason why a downstream leg failed after at least one
 /// sibling leg succeeded.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEnum, Debug, Clone, Copy, PartialEq, Eq, Hash,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
 )]
 pub enum ApplicationFailureReason {
     Unreachable,
@@ -959,7 +920,9 @@ pub enum ApplicationFailureReason {
 }
 
 /// Failed leg of a fanned-out mutation.
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct ApplicationFailure {
     pub component: DownstreamComponent,
     pub reason: ApplicationFailureReason,
@@ -968,7 +931,9 @@ pub struct ApplicationFailure {
 
 /// Reply when one or more downstream mutation legs were durably
 /// applied and one or more sibling legs failed.
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct PartialApplied {
     pub succeeded: Vec<ApplicationSuccess>,
     pub failed: Vec<ApplicationFailure>,
@@ -978,7 +943,9 @@ pub struct PartialApplied {
 
 /// Subscribe to contract-operation and effect observations on
 /// the public socket.
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct ObservationSubscription {
     pub include_operations: bool,
     pub include_effects: bool,
@@ -988,7 +955,8 @@ pub struct ObservationSubscription {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaTransparent,
+    NotaEncode,
+    NotaDecode,
     Debug,
     Clone,
     Copy,
@@ -1009,26 +977,56 @@ impl ObservationToken {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
 )]
 pub struct ObservationOpened {
     pub token: ObservationToken,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
 )]
 pub struct ObservationClosed {
     pub token: ObservationToken,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct OperationReceived {
     pub operation: OperationKind,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEnum, Debug, Clone, Copy, PartialEq, Eq, Hash,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
 )]
 pub enum EffectOutcome {
     Applied,
@@ -1041,58 +1039,28 @@ pub enum EffectOutcome {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaRecord, Debug, Clone, Copy, PartialEq, Eq,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
 )]
 pub struct EffectEmitted {
     pub operation: OperationKind,
     pub outcome: EffectOutcome,
 }
 
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub enum ObservationEvent {
     OperationReceived(OperationReceived),
     EffectEmitted(EffectEmitted),
-}
-
-impl NotaEncode for ObservationEvent {
-    fn encode(&self, encoder: &mut Encoder) -> nota_codec::Result<()> {
-        match self {
-            Self::OperationReceived(observed) => {
-                encoder.start_record("OperationReceived")?;
-                observed.encode(encoder)?;
-                encoder.end_record()
-            }
-            Self::EffectEmitted(emitted) => {
-                encoder.start_record("EffectEmitted")?;
-                emitted.encode(encoder)?;
-                encoder.end_record()
-            }
-        }
-    }
-}
-
-impl NotaDecode for ObservationEvent {
-    fn decode(decoder: &mut Decoder<'_>) -> nota_codec::Result<Self> {
-        let head = decoder.peek_record_head()?;
-        match head.as_str() {
-            "OperationReceived" => {
-                decoder.expect_record_head("OperationReceived")?;
-                let observed = OperationReceived::decode(decoder)?;
-                decoder.expect_record_end()?;
-                Ok(Self::OperationReceived(observed))
-            }
-            "EffectEmitted" => {
-                decoder.expect_record_head("EffectEmitted")?;
-                let emitted = EffectEmitted::decode(decoder)?;
-                decoder.expect_record_end()?;
-                Ok(Self::EffectEmitted(emitted))
-            }
-            other => Err(nota_codec::Error::UnknownVariant {
-                enum_name: "ObservationEvent",
-                got: other.to_string(),
-            }),
-        }
-    }
 }
 
 // ─── Channel declaration ──────────────────────────────────

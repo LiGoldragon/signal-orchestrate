@@ -406,15 +406,12 @@ fn lane_registry_records_round_trip() {
 
 #[test]
 fn role_vector_round_trips_through_nota() {
-    use nota_codec::{Decoder, Encoder, NotaDecode, NotaEncode};
+    use nota_next::{NotaEncode, NotaSource};
 
     let role = role_vector(&["PersonaSignal", "Designer"]);
-    let mut encoder = Encoder::new();
-    role.encode(&mut encoder).expect("encode role");
-    let text = encoder.into_string();
+    let text = role.to_nota();
 
-    let mut decoder = Decoder::new(&text);
-    let decoded = Role::decode(&mut decoder).expect("decode role");
+    let decoded = NotaSource::new(&text).parse::<Role>().expect("decode role");
     assert_eq!(decoded, role);
 }
 
@@ -604,22 +601,20 @@ fn orchestrate_request_exposes_contract_owned_operation_kind() {
 
 #[test]
 fn orchestrate_operations_encode_as_contract_local_nota_heads() {
-    use nota_codec::{Decoder, Encoder, NotaDecode, NotaEncode};
+    use nota_next::{NotaEncode, NotaSource};
 
     let request = OrchestrateRequest::Query(ActivityQuery {
         limit: 8,
         filters: vec![ActivityFilter::RoleFilter(operator())],
     });
-    let mut encoder = Encoder::new();
-    request.into_request().encode(&mut encoder).expect("encode");
-    let text = encoder.into_string();
+    let text = request.into_request().to_nota();
 
     assert!(text.starts_with("(Query "));
     assert!(!text.contains("Match"));
     assert!(!text.contains("Assert"));
 
-    let mut decoder = Decoder::new(&text);
-    let decoded = signal_orchestrate::OrchestrateChannelRequest::decode(&mut decoder)
+    let decoded = NotaSource::new(&text)
+        .parse::<signal_orchestrate::OrchestrateChannelRequest>()
         .expect("decode request");
     assert_eq!(
         decoded.payloads().head().operation_kind(),
