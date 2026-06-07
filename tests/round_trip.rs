@@ -8,7 +8,7 @@
 
 use signal_frame::{
     ExchangeIdentifier, ExchangeLane, LaneSequence, NonEmpty, Reply, RequestPayload, SessionEpoch,
-    SubReply,
+    SignalOperationHeads, SubReply,
 };
 use signal_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
@@ -596,6 +596,41 @@ fn orchestrate_request_exposes_contract_owned_operation_kind() {
 
     for (request, operation) in cases {
         assert_eq!(request.operation_kind(), operation);
+    }
+}
+
+#[test]
+fn orchestrate_contract_has_no_sema_observation_or_classification_roots() {
+    let manifest = include_str!("../Cargo.toml");
+    assert!(
+        !manifest.contains("signal-sema"),
+        "ordinary signal contracts must not depend on signal-sema for public wire vocabulary"
+    );
+
+    for source in [
+        include_str!("../src/lib.rs"),
+        include_str!("../schema/lib.schema"),
+        include_str!("../schema/signal-orchestrate.concept.schema"),
+    ] {
+        assert!(
+            !source.contains("SemaObservation"),
+            "EffectEmitted must stay a contract-owned operation/outcome event, not a SemaObservation payload"
+        );
+    }
+
+    let heads = <OrchestrateRequest as SignalOperationHeads>::HEADS;
+    for forbidden in [
+        "Assert",
+        "Mutate",
+        "Retract",
+        "Match",
+        "Subscribe",
+        "Validate",
+    ] {
+        assert!(
+            !heads.contains(&forbidden),
+            "Sema classification root {forbidden} must not appear on the public orchestrate wire"
+        );
     }
 }
 

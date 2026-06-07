@@ -42,7 +42,7 @@ typed `ScopeConflict` records) on overlap.
 - `ARCHITECTURE.md` — channel role + boundaries
 - `~/primary/skills/contract-repo.md` — contract-repo
   discipline
-- `signal-core` — kernel that supplies `Frame`,
+- `signal-frame` — kernel that supplies `Frame`,
   `Request`, `Reply`, `signal_channel!`
 - `orchestrate` — the consumer that implements
   this contract

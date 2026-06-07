@@ -3,10 +3,8 @@
 //! Read this file as the public interface of the workspace
 //! orchestration channel. The channel carries:
 //!
-//! - **Role claim/release/handoff** — the claim-flow today
-//!   served by `tools/orchestrate` (a bash helper); migrating
-//!   into `orchestrate` per
-//!   `~/primary/reports/designer/93-orchestrate-rust-rewrite-and-activity-log.md`.
+//! - **Role claim/release/handoff** — the claim-flow vocabulary
+//!   that the `orchestrate` daemon implements.
 //! - **Role observation** — read the active claims for every
 //!   role plus the most recent activity entries.
 //! - **Activity submission** — append a typed activity record:
@@ -517,9 +515,7 @@ validated_string_nota_codec!(TaskToken, TaskToken::from_wire_token);
 
 // ─── Reason ───────────────────────────────────────────────
 
-/// A short reason string. Provisional per
-/// `~/primary/reports/designer/92-sema-as-database-library-architecture-revamp.md`
-/// §4 — strings allowed here until the typed Nexus record
+/// A short reason string. Provisional until the typed Nexus record
 /// shape for "intent" is named.
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ScopeReason(String);

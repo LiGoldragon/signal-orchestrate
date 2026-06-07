@@ -49,5 +49,7 @@ If your change adds a new request or reply variant, edit
   `orchestrate`.
 - The activity log retention policy — that's
   `orchestrate`.
-- Storage tables — those live in `orchestrate`'s
-  `src/tables.rs` (typed `sema::Table<K, V>` constants).
+- Storage tables — those live in `orchestrate`'s SEMA engine integration.
+- Public Sema-operation mirrors — no `SemaObservation`, `signal-sema`,
+  `Assert`, `Mutate`, `Retract`, `Match`, `Subscribe`, or `Validate`
+  request roots belong in this contract.

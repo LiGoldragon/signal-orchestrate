@@ -3,8 +3,6 @@
 *The ordinary Signal contract for Persona orchestration: role claims,
 claim release/handoff/observation, and activity log requests.*
 
----
-
 ## 0 · TL;DR
 
 `signal-orchestrate` is a contract crate. It owns the typed
@@ -16,12 +14,9 @@ The channel is declared by one `signal_channel!` invocation in
 daemon lowers those operations to internal commands and publishes
 contract-owned effect observations.
 
-## Migration history — contract-local verbs (2026-05-19)
+## Contract Operation Heads
 
-This contract migrated from `signal-core` public `SignalVerb` wrappers
-to `signal-frame` contract-local operation roots.
-
-The public request surface is now:
+The public request surface is:
 
 - `Claim(RoleClaim)`
 - `Release(RoleRelease)`
@@ -32,17 +27,15 @@ The public request surface is now:
 - `Watch(ObservationSubscription)`
 - `Unwatch(ObservationToken)`
 
-There is no public `Assert` / `Retract` / `Mutate` / `Match` tag in
-this contract. `orchestrate` owns its typed Component
-Commands (Layer 2) and projects them to payloadless Sema class labels
-(Layer 3) inside the daemon. The observer stream exposes inbound
-operation and outbound contract-owned effect events for introspection.
+There is no public `Assert`, `Mutate`, `Retract`, `Match`, `Subscribe`, or
+`Validate` operation root in this contract. `orchestrate` owns its typed
+component commands, Nexus decisions, and SEMA reads or writes inside the
+daemon. The observer stream exposes inbound operation and outbound
+contract-owned effect events for introspection.
 
-## MUST IMPLEMENT — Tap/Untap mandatory observable surface
+## Tap/Untap Observable Surface
 
-Per the three-layer model affirmed 2026-05-20 (psyche 2026-05-20T02:00Z;
-spec `primary/reports/designer/246-v4-bundled-fix-deep-design-with-examples.md`):
-persona components have a *mandatory* `Tap`/`Untap` observable
+Persona components have a mandatory `Tap`/`Untap` observable
 surface — the macro injects `Tap(ObserverFilter)` /
 `Untap(<Channel>ObserverSubscriptionToken)` verbs uniformly across
 every persona daemon. The existing domain-specific `Watch`/`Unwatch`
@@ -116,28 +109,16 @@ validated newtypes. Construct them through `from_wire_token`,
 Invalid values are rejected at the contract boundary and also during
 NOTA decode.
 
-## 4 · Sema-class projections (Layer 3)
+## 4 · Daemon Lowering Boundary
 
-Each contract-local operation's daemon-side Component Command
-projects to a payloadless Sema class label for observation. The wire
-form carries the contract-local verb only; the table below is the
-*expected daemon-side classification*:
+Each contract-local operation lowers inside `orchestrate` into a daemon-owned
+command and any SEMA reads or writes needed to answer it. The wire form carries
+only the contract-local verb. `EffectEmitted` carries the contract-owned
+`operation` and `outcome` pair; it never carries `SemaObservation`, and this
+crate has no `signal-sema` dependency.
 
-| Operation | Projected Sema class |
-|---|---|
-| `Claim` | `Assert` |
-| `Release` | `Retract` |
-| `Handoff` | `Mutate` |
-| `Observe` | `Match` |
-| `Submit` | `Assert` |
-| `Query` | `Match` |
-| `Watch` | `Subscribe` |
-| `Unwatch` | `Retract` |
-| `Tap` (mandatory) | `Subscribe` |
-| `Untap` (mandatory) | `Retract` |
-
-`OrchestrateRequest::operation_kind()` exposes the contract operation
-without asking consumers to know the Sema class.
+`OrchestrateRequest::operation_kind()` exposes the contract operation without
+asking consumers to know any daemon storage plan.
 
 ## 5 · Non-Ownership
 
@@ -148,10 +129,10 @@ This crate does not own:
 - lock-file projections;
 - CLI argv parsing or NOTA rendering policy;
 - socket paths, reconnect policy, or transport lifecycle;
-- owner-only orchestration orders.
+- meta orchestration orders.
 
-Owner-only orders belong in an `owner-signal-orchestrate`
-contract. This ordinary contract is the peer/CLI surface.
+Meta orders belong in a `meta-signal-orchestrate` contract. This ordinary
+contract is the peer/CLI surface.
 
 ## 6 · Witness Tests
 
@@ -173,30 +154,12 @@ src/lib.rs            payloads, validation newtypes, signal_channel!
 tests/round_trip.rs   frame round trips and contract-local operation witnesses
 ```
 
-## Pending schema-engine upgrade
-
-**Status:** scheduled for migration to schema-language-based contract per `reports/designer/326-v13-spirit-complete-schema-vision.md` + `reports/designer/324-migration-mvp-spirit-handover-re-specification.md`.
-
-**Target:** this contract's hand-written `signal_channel!` invocation in `src/lib.rs` + Layer 2 Component Commands + storage types convert to a single `orchestrate/orchestrate.schema` file. The brilliant macro library (`primary-ezqx.1`) reads the schema + emits all the wire types + ShortHeader projection + dispatcher + VersionProjection + storage descriptors. The "Migration history - contract-local verbs (2026-05-19)" section (lines 18-39) records the destination verb set (`Claim`, `Release`, `Handoff`, `Observe`, `Submit`, `Query`, `Watch`, `Unwatch`, plus mandatory `Tap`/`Untap` per the 2026-05-20 affirmation).
-
-**Sequence:** Spirit is the MVP pilot landing first via `primary-ezqx.1`; this contract follows after the pilot succeeds and per-component schema cutover beads land. Cutover sequences alongside the `orchestrate` runtime cutover.
-
-**Per-component concerns:** Cluster/lifecycle orchestration contract; schema cutover after Spirit + mind. The schema must preserve the closed reply variants (`ClaimAcceptance`, `ClaimRejection`, `ReleaseAcknowledgment`, `HandoffAcceptance`, `HandoffRejection`, `RoleSnapshot`, `ActivityAcknowledgment`, `ActivityList`, `PartialApplied`, `ObservationOpened`, `ObservationClosed`) without an `Unknown` sentinel. Typed values (`RoleIdentifier`, `HarnessKind`, `ScopeReference`, `WirePath`, `TaskToken`, `ScopeReason`, `TimestampNanos`, and the divergence vocabulary `PartialApplied` / `ApplicationSuccess` / `ApplicationFailure` / `DownstreamComponent` / `ApplicationFailureReason`) need validation hooks the schema emits without losing the `from_wire_token` / `from_absolute_path` / `from_text` discipline.
-
-**References:**
-- `reports/designer/326-v13-spirit-complete-schema-vision.md` — uniform header form + schema-language design
-- `reports/designer/324-migration-mvp-spirit-handover-re-specification.md` — migration MVP + handover state
-- `reports/designer/322-spirit-mvp-positional-schema-worked-example.md` — Spirit MVP worked example
-- `reports/operator/174-schema-import-header-design-critique-2026-05-24.md` — header/body/feature separation + lowering rules
-
 ## See Also
 
 - `../orchestrate/ARCHITECTURE.md` — runtime consumer and
   state owner.
 - `../signal-frame/ARCHITECTURE.md` — Signal frame kernel.
-- `../signal-sema/ARCHITECTURE.md` — payloadless Sema classification
-  vocabulary used at the observation layer.
 - `~/primary/skills/contract-repo.md` — contract-repo discipline.
-- `~/primary/skills/component-triad.md` §"Verbs come in three layers".
+- `~/primary/skills/component-triad.md`.
 - `~/primary/skills/architectural-truth-tests.md` — witness-test
   discipline.

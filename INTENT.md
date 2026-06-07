@@ -9,8 +9,8 @@ log. Companion to `ARCHITECTURE.md` and `Cargo.toml`. Maintenance: `primary/skil
 
 This file carries only the intent that is FOR this `signal-orchestrate` contract.
 Workspace-shape intent stays in the primary workspace `primary/INTENT.md`.
-Component daemon intent stays in `orchestrate/INTENT.md`. Owner-only orchestration
-policy stays in `owner-signal-orchestrate`.
+Component daemon intent stays in `orchestrate/INTENT.md`. Meta orchestration
+policy stays in `meta-signal-orchestrate`.
 
 ## Why this repo exists
 
@@ -20,8 +20,8 @@ handoff, observation) and the activity-log relation (submit, query). It contains
 no daemon, actor, database, CLI parser, or transport policy — the daemon lowers
 these public operations to component-local commands and effect observations
 internally.
-Owner-only orchestration policy (lane registry, scheduling, supervision policy)
-stays in `owner-signal-orchestrate`; runtime actors, the store, and the lowering
+Meta orchestration policy (lane registry, scheduling, supervision policy)
+stays in `meta-signal-orchestrate`; runtime actors, the store, and the lowering
 logic live in `orchestrate`.
 
 ## The channel shape
@@ -40,10 +40,8 @@ The Orchestrate channel carries:
 - **Events:** `Observed(ObservationEvent)` on the `ObservationStream`.
 
 The wire vocabulary is contract-local: the daemon lowers these public operations
-into component-local commands; Sema classification happens at observation time,
-not on the wire. This contract already carries no public `Assert` / `Retract` /
-`Mutate` / `Match` tags — it migrated to contract-local operation roots
-(2026-05-19).
+into component-local Nexus commands and SEMA reads or writes. Database-action
+classification never crosses this public wire.
 
 ## Channels are closed, boundaries are named
 
@@ -84,22 +82,16 @@ operation verbs":
   and NOTA text.
 - Activity timestamps and claim sequence are not accepted from callers; the
   daemon store supplies them at commit.
-- Owner-only orchestration authority (lane registry, scheduling policy,
-  supervision policy) stays in `owner-signal-orchestrate`, not here.
+- Meta orchestration authority (lane registry, scheduling policy,
+  supervision policy) stays in `meta-signal-orchestrate`, not here.
 
-## Three-layer model
+## Daemon lowering boundary
 
-Layer 1 (this crate): contract operations on the wire (`Claim`, `Release`,
-`Handoff`, `Observe`, `Submit`, `Query`).
-Layer 2 (daemon): component-local `OrchestrateCommand` enum that the daemon
-executes against its store.
-Layer 3 (observation): payloadless Sema class labels for cross-component
-introspection; the observer stream exposes inbound operation and outbound effect
-events.
-
-The contract names the public action at the boundary; the daemon decides what
-internal work and Sema class label each action maps to. Sema classification
-never appears on the wire.
+The contract names the public action at the boundary. The daemon decides what
+internal work, durable read, durable write, effect, rejection, or reply each
+action becomes. Public contracts do not mirror `Assert`, `Mutate`, `Retract`,
+`Match`, `Subscribe`, or `Validate`, and this crate does not depend on
+`signal-sema`.
 
 ## Code map
 
@@ -117,7 +109,7 @@ This crate does not own:
 - the orchestrate redb store, claim tables, or activity log storage;
 - socket binding, transport, or version handshake policy;
 - claim conflict resolution, scheduling, lane registry, or supervision logic;
-- owner-only orchestration policy (that is `owner-signal-orchestrate`);
+- meta orchestration policy (that is `meta-signal-orchestrate`);
 - CLI formatting, audit wrapping, or Nexus record composition.
 
 ## See also
@@ -126,6 +118,6 @@ This crate does not own:
   the mandatory observable surface, and closed-enum discipline.
 - `../orchestrate/INTENT.md` — daemon-side intent (schema-driven planes, actors,
   state, policy lowering).
-- `../owner-signal-orchestrate/INTENT.md` — owner-only orchestration policy contract.
+- `../meta-signal-orchestrate/INTENT.md` — meta orchestration policy contract.
 - `primary/skills/contract-repo.md` — contract repo discipline and naming rules.
 - `primary/skills/component-triad.md` — repo triad structure and wire layers.
