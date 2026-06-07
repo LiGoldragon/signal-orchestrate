@@ -1,26 +1,36 @@
 [package]
 name         = "signal-orchestrate"
-version      = "0.1.0"
+version      = "0.2.0"
 edition      = "2024"
 rust-version = "1.85"
 license      = "MIT OR Apache-2.0"
 repository   = "https://github.com/LiGoldragon/signal-orchestrate"
 description  = "Signal contract — `orchestrate` CLI ↔ orchestrate channel: typed records for role claim/release/handoff/observation plus the workspace activity log."
 publish      = false
+links        = "signal-orchestrate"
+build        = "build.rs"
 
 [lib]
 name = "signal_orchestrate"
 path = "src/lib.rs"
 
+[features]
+default   = []
+nota-text = ["dep:nota-next"]
+
 [dependencies]
 signal-frame = { git = "https://github.com/LiGoldragon/signal-frame.git", branch = "main" }
 signal-sema  = { git = "https://github.com/LiGoldragon/signal-sema.git", branch = "main" }
 nota-codec  = { git = "https://github.com/LiGoldragon/nota-codec.git", branch = "main" }
+nota-next   = { git = "https://github.com/LiGoldragon/nota-next.git", branch = "main", optional = true }
 rkyv        = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 thiserror   = "2"
 
+[build-dependencies]
+schema-rust-next = { git = "https://github.com/LiGoldragon/schema-rust-next.git", branch = "main" }
+
 [dev-dependencies]
-schema = { git = "https://github.com/LiGoldragon/schema.git", branch = "main" }
+schema-next = { git = "https://github.com/LiGoldragon/schema-next.git", branch = "main" }
 
 [lints.rust]
 unsafe_code = "forbid"

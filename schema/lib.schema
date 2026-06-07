@@ -1,0 +1,79 @@
+{}
+[(Claim RoleClaim)
+ (Release RoleRelease)
+ (Handoff RoleHandoff)
+ (Observe Observation)
+ (Submit ActivitySubmission)
+ (Query ActivityQuery)
+ (Watch ObservationSubscription opens ObservationStream)
+ (Unwatch ObservationToken)]
+[(ClaimAcceptance ClaimAcceptance)
+ (ClaimRejection ClaimRejection)
+ (ReleaseAcknowledgment ReleaseAcknowledgment)
+ (HandoffAcceptance HandoffAcceptance)
+ (HandoffRejection HandoffRejection)
+ (RoleSnapshot RoleSnapshot)
+ (LanesObserved LanesObserved)
+ (ActivityAcknowledgment ActivityAcknowledgment)
+ (ActivityList ActivityList)
+ (PartialApplied PartialApplied)
+ (ObservationOpened ObservationOpened)
+ (ObservationClosed ObservationClosed)]
+{
+  RoleIdentifier String
+  RoleName RoleIdentifier
+  RoleToken String
+  Role { tokens (Vec RoleToken) }
+  LaneAuthority [Structural Support]
+  LaneIdentifier String
+  LaneRegistration { lane LaneIdentifier role Role authority LaneAuthority }
+  HarnessKind [Codex Claude]
+  WirePath String
+  TaskToken String
+  ScopeReason String
+  ScopeReference [(Path WirePath) (Task TaskToken)]
+  TimestampNanos Integer
+
+  RoleClaim { role RoleName scopes (Vec ScopeReference) reason ScopeReason }
+  RoleRelease { role RoleName }
+  RoleHandoff { from RoleName to RoleName scopes (Vec ScopeReference) reason ScopeReason }
+  Observation [Roles Lanes]
+  ActivitySubmission { role RoleName scope ScopeReference reason ScopeReason }
+  ActivityQuery { limit Integer filters (Vec ActivityFilter) }
+  ActivityFilter [(RoleFilter RoleName) (PathPrefix WirePath) (TaskToken TaskToken)]
+  ObservationSubscription { includeOperations Boolean includeSemaEffects Boolean }
+  ObservationToken Integer
+
+  ClaimAcceptance { role RoleName scopes (Vec ScopeReference) }
+  ClaimRejection { role RoleName conflicts (Vec ScopeConflict) }
+  ScopeConflict { scope ScopeReference heldBy RoleName heldReason ScopeReason }
+  ReleaseAcknowledgment { role RoleName releasedScopes (Vec ScopeReference) }
+  HandoffAcceptance { from RoleName to RoleName scopes (Vec ScopeReference) }
+  HandoffRejection { from RoleName to RoleName reason HandoffRejectionReason }
+  HandoffRejectionReason [SourceRoleDoesNotHold (TargetRoleConflict (Vec ScopeConflict))]
+  RoleSnapshot { roles (Vec RoleStatus) recentActivity (Vec Activity) }
+  LanesObserved { lanes (Vec LaneRegistration) }
+  RoleStatus { role RoleName harness HarnessKind claims (Vec ClaimEntry) }
+  ClaimEntry { scope ScopeReference reason ScopeReason }
+  Activity { role RoleName scope ScopeReference reason ScopeReason stampedAt TimestampNanos }
+  ActivityAcknowledgment { slot Integer }
+  ActivityList { records (Vec Activity) }
+
+  DownstreamComponent [Router Harness Terminal Message Mind System Introspect]
+  ApplicationFailureReason [Unreachable Rejected Unimplemented TimedOut Unknown]
+  ApplicationSuccess { component DownstreamComponent detail ScopeReason }
+  ApplicationFailure { component DownstreamComponent reason ApplicationFailureReason detail ScopeReason }
+  PartialApplied { succeeded (Vec ApplicationSuccess) failed (Vec ApplicationFailure) }
+
+  ObservationOpened { token ObservationToken }
+  ObservationClosed { token ObservationToken }
+  OperationKind [Claim Release Handoff Observe Submit Query Watch Unwatch]
+  SemaOperation [Assert Retract Mutate Match Subscribe]
+  SemaOutcome [Asserted Retracted Mutated Matched Subscribed NoChange]
+  SemaObservation { operation SemaOperation outcome SemaOutcome }
+  OperationReceived { operation OperationKind }
+  EffectEmitted { observation SemaObservation }
+  ObservationEvent [(OperationReceived OperationReceived belongs ObservationStream)
+                    (EffectEmitted EffectEmitted belongs ObservationStream)]
+  ObservationStream (Stream { token ObservationToken opened ObservationOpened event ObservationEvent close ObservationToken })
+}

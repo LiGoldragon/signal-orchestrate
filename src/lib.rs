@@ -36,6 +36,8 @@ use signal_sema::SemaObservation;
 use std::fmt;
 use std::str::FromStr;
 
+pub mod schema;
+
 // ─── Error ────────────────────────────────────────────────
 
 pub type Result<T> = std::result::Result<T, Error>;
