@@ -1004,9 +1004,8 @@ pub struct ObservationClosed {
     pub token: ObservationToken,
 }
 
-#[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
-)]
+#[cfg_attr(feature = "nota-text", derive(NotaEncode, NotaDecode))]
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
 pub struct OperationReceived {
     pub operation: OperationKind,
 }
@@ -1034,26 +1033,15 @@ pub enum EffectOutcome {
     NoChange,
 }
 
-#[derive(
-    Archive,
-    RkyvSerialize,
-    RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-)]
+#[cfg_attr(feature = "nota-text", derive(NotaEncode, NotaDecode))]
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EffectEmitted {
     pub operation: OperationKind,
     pub outcome: EffectOutcome,
 }
 
-#[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
-)]
+#[cfg_attr(feature = "nota-text", derive(NotaEncode, NotaDecode))]
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
 pub enum ObservationEvent {
     OperationReceived(OperationReceived),
     EffectEmitted(EffectEmitted),

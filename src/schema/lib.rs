@@ -29,7 +29,16 @@ pub struct Role(pub Vec<RoleToken>);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
 pub enum LaneAuthority {
     Structural,
     Support,
@@ -49,7 +58,16 @@ pub struct LaneRegistration {
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
 pub enum HarnessKind {
     Codex,
     Claude,
@@ -101,7 +119,16 @@ pub struct RoleHandoff {
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
 pub enum Observation {
     Roles,
     Lanes,
@@ -255,7 +282,16 @@ pub struct ActivityList(pub Vec<Activity>);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
 pub enum DownstreamComponent {
     Router,
     Harness,
@@ -268,7 +304,16 @@ pub enum DownstreamComponent {
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
 pub enum ApplicationFailureReason {
     Unreachable,
     Rejected,
@@ -314,7 +359,16 @@ pub struct ObservationClosed(pub ObservationToken);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
 pub enum OperationKind {
     Claim,
     Release,
@@ -328,7 +382,16 @@ pub enum OperationKind {
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
 pub enum EffectOutcome {
     Applied,
     Removed,
@@ -816,8 +879,8 @@ impl LaneAuthority {
     pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
         <Self as NotaDecode>::from_nota_block(block)
     }
-    pub fn to_nota(&self) -> String {
-        <Self as NotaEncode>::to_nota(self)
+    pub fn to_nota(self) -> String {
+        <Self as NotaEncode>::to_nota(&self)
     }
 }
 
@@ -838,8 +901,8 @@ impl HarnessKind {
     pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
         <Self as NotaDecode>::from_nota_block(block)
     }
-    pub fn to_nota(&self) -> String {
-        <Self as NotaEncode>::to_nota(self)
+    pub fn to_nota(self) -> String {
+        <Self as NotaEncode>::to_nota(&self)
     }
 }
 
@@ -893,8 +956,8 @@ impl Observation {
     pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
         <Self as NotaDecode>::from_nota_block(block)
     }
-    pub fn to_nota(&self) -> String {
-        <Self as NotaEncode>::to_nota(self)
+    pub fn to_nota(self) -> String {
+        <Self as NotaEncode>::to_nota(&self)
     }
 }
 
@@ -1102,8 +1165,8 @@ impl DownstreamComponent {
     pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
         <Self as NotaDecode>::from_nota_block(block)
     }
-    pub fn to_nota(&self) -> String {
-        <Self as NotaEncode>::to_nota(self)
+    pub fn to_nota(self) -> String {
+        <Self as NotaEncode>::to_nota(&self)
     }
 }
 
@@ -1113,8 +1176,8 @@ impl ApplicationFailureReason {
     pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
         <Self as NotaDecode>::from_nota_block(block)
     }
-    pub fn to_nota(&self) -> String {
-        <Self as NotaEncode>::to_nota(self)
+    pub fn to_nota(self) -> String {
+        <Self as NotaEncode>::to_nota(&self)
     }
 }
 
@@ -1179,8 +1242,8 @@ impl OperationKind {
     pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
         <Self as NotaDecode>::from_nota_block(block)
     }
-    pub fn to_nota(&self) -> String {
-        <Self as NotaEncode>::to_nota(self)
+    pub fn to_nota(self) -> String {
+        <Self as NotaEncode>::to_nota(&self)
     }
 }
 
@@ -1190,8 +1253,8 @@ impl EffectOutcome {
     pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
         <Self as NotaDecode>::from_nota_block(block)
     }
-    pub fn to_nota(&self) -> String {
-        <Self as NotaEncode>::to_nota(self)
+    pub fn to_nota(self) -> String {
+        <Self as NotaEncode>::to_nota(&self)
     }
 }
 
@@ -1572,5 +1635,67 @@ impl Output {
             });
         }
         Ok((route, value))
+    }
+}
+
+#[rustfmt::skip]
+impl signal_frame::RequestPayload for Input {}
+#[rustfmt::skip]
+impl signal_frame::SignalOperationHeads for Input {
+    const HEADS: &'static [&'static str] = &[
+        "Claim",
+        "Release",
+        "Handoff",
+        "Observe",
+        "Submit",
+        "Query",
+        "Watch",
+        "Unwatch",
+    ];
+}
+#[rustfmt::skip]
+impl signal_frame::LogVariant for Input {
+    fn log_variant(&self) -> u64 {
+        self.short_header()
+    }
+}
+#[rustfmt::skip]
+pub type Frame = signal_frame::ExchangeFrame<Input, Output>;
+#[rustfmt::skip]
+pub type FrameBody = signal_frame::ExchangeFrameBody<Input, Output>;
+#[rustfmt::skip]
+pub type Request = signal_frame::Request<Input>;
+#[rustfmt::skip]
+pub type ReplyEnvelope = signal_frame::Reply<Output>;
+#[rustfmt::skip]
+pub type RequestBuilder = signal_frame::RequestBuilder<Input>;
+#[rustfmt::skip]
+impl Input {
+    pub fn into_frame(self, exchange: signal_frame::ExchangeIdentifier) -> Frame {
+        let short_header = signal_frame::ShortHeader::new(self.short_header());
+        let request = signal_frame::Request::from_payload(self);
+        Frame::with_short_header(
+            short_header,
+            FrameBody::Request {
+                exchange,
+                request,
+            },
+        )
+    }
+}
+#[rustfmt::skip]
+impl Output {
+    pub fn into_reply_frame(self, exchange: signal_frame::ExchangeIdentifier) -> Frame {
+        let short_header = signal_frame::ShortHeader::new(self.short_header());
+        let reply = signal_frame::Reply::committed(
+            signal_frame::NonEmpty::single(signal_frame::SubReply::Ok(self)),
+        );
+        Frame::with_short_header(
+            short_header,
+            FrameBody::Reply {
+                exchange,
+                reply,
+            },
+        )
     }
 }
