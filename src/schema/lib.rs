@@ -14,18 +14,24 @@ pub type Path = std::string::String;
 pub use nota_next::{NotaDecode, NotaDecodeError, NotaEncode, NotaSource};
 
 #[rustfmt::skip]
-pub type RoleIdentifier = String;
-
-#[rustfmt::skip]
-pub type RoleName = RoleIdentifier;
-
-#[rustfmt::skip]
-pub type RoleToken = String;
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RoleIdentifier(String);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct Role(pub Vec<RoleToken>);
+pub struct RoleName(RoleIdentifier);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RoleToken(String);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct Role(Vec<RoleToken>);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -45,7 +51,9 @@ pub enum LaneAuthority {
 }
 
 #[rustfmt::skip]
-pub type LaneIdentifier = String;
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LaneIdentifier(String);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -74,13 +82,19 @@ pub enum HarnessKind {
 }
 
 #[rustfmt::skip]
-pub type WirePath = String;
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WirePath(String);
 
 #[rustfmt::skip]
-pub type TaskToken = String;
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct TaskToken(String);
 
 #[rustfmt::skip]
-pub type ScopeReason = String;
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ScopeReason(String);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -91,7 +105,9 @@ pub enum ScopeReference {
 }
 
 #[rustfmt::skip]
-pub type TimestampNanos = Integer;
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct TimestampNanos(Integer);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -105,7 +121,7 @@ pub struct RoleClaim {
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct RoleRelease(pub RoleName);
+pub struct RoleRelease(RoleName);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -169,7 +185,9 @@ pub struct ObservationSubscription {
 }
 
 #[rustfmt::skip]
-pub type ObservationToken = Integer;
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ObservationToken(Integer);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -241,7 +259,7 @@ pub struct RoleSnapshot {
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct LanesObserved(pub Vec<LaneRegistration>);
+pub struct LanesObserved(Vec<LaneRegistration>);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -273,12 +291,12 @@ pub struct Activity {
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct ActivityAcknowledgment(pub Integer);
+pub struct ActivityAcknowledgment(Integer);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct ActivityList(pub Vec<Activity>);
+pub struct ActivityList(Vec<Activity>);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -350,12 +368,12 @@ pub struct PartialApplied {
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct ObservationOpened(pub ObservationToken);
+pub struct ObservationOpened(ObservationToken);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct ObservationClosed(pub ObservationToken);
+pub struct ObservationClosed(ObservationToken);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -405,7 +423,7 @@ pub enum EffectOutcome {
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct OperationReceived(pub OperationKind);
+pub struct OperationReceived(OperationKind);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -456,6 +474,63 @@ pub enum Output {
 }
 
 #[rustfmt::skip]
+impl RoleIdentifier {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for RoleIdentifier {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl RoleName {
+    pub fn new(payload: RoleIdentifier) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &RoleIdentifier {
+        &self.0
+    }
+    pub fn into_payload(self) -> RoleIdentifier {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<RoleIdentifier> for RoleName {
+    fn from(payload: RoleIdentifier) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl RoleToken {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for RoleToken {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl Role {
     pub fn new(payload: Vec<RoleToken>) -> Self {
         Self(payload)
@@ -475,6 +550,101 @@ impl From<Vec<RoleToken>> for Role {
 }
 
 #[rustfmt::skip]
+impl LaneIdentifier {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for LaneIdentifier {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WirePath {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for WirePath {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl TaskToken {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for TaskToken {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ScopeReason {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for ScopeReason {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl TimestampNanos {
+    pub fn new(payload: Integer) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Integer {
+        &self.0
+    }
+    pub fn into_payload(self) -> Integer {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Integer> for TimestampNanos {
+    fn from(payload: Integer) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl RoleRelease {
     pub fn new(payload: RoleName) -> Self {
         Self(payload)
@@ -489,6 +659,25 @@ impl RoleRelease {
 #[rustfmt::skip]
 impl From<RoleName> for RoleRelease {
     fn from(payload: RoleName) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ObservationToken {
+    pub fn new(payload: Integer) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Integer {
+        &self.0
+    }
+    pub fn into_payload(self) -> Integer {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Integer> for ObservationToken {
+    fn from(payload: Integer) -> Self {
         Self::new(payload)
     }
 }
@@ -609,24 +798,24 @@ impl From<OperationKind> for OperationReceived {
 
 #[rustfmt::skip]
 impl ScopeReference {
-    pub fn path(payload: WirePath) -> Self {
-        Self::Path(payload)
+    pub fn path(payload: String) -> Self {
+        Self::Path(WirePath::new(payload))
     }
-    pub fn task(payload: TaskToken) -> Self {
-        Self::Task(payload)
+    pub fn task(payload: String) -> Self {
+        Self::Task(TaskToken::new(payload))
     }
 }
 
 #[rustfmt::skip]
 impl ActivityFilter {
-    pub fn role_filter(payload: RoleName) -> Self {
-        Self::RoleFilter(payload)
+    pub fn role_filter(payload: RoleIdentifier) -> Self {
+        Self::RoleFilter(RoleName::new(payload))
     }
-    pub fn path_prefix(payload: WirePath) -> Self {
-        Self::PathPrefix(payload)
+    pub fn path_prefix(payload: String) -> Self {
+        Self::PathPrefix(WirePath::new(payload))
     }
-    pub fn task_token(payload: TaskToken) -> Self {
-        Self::TaskToken(payload)
+    pub fn task_token(payload: String) -> Self {
+        Self::TaskToken(TaskToken::new(payload))
     }
 }
 
@@ -670,8 +859,8 @@ impl Input {
     pub fn watch(payload: ObservationSubscription) -> Self {
         Self::Watch(payload)
     }
-    pub fn unwatch(payload: ObservationToken) -> Self {
-        Self::Unwatch(payload)
+    pub fn unwatch(payload: Integer) -> Self {
+        Self::Unwatch(ObservationToken::new(payload))
     }
 }
 
@@ -712,6 +901,41 @@ impl Output {
     }
     pub fn observation_closed(payload: ObservationToken) -> Self {
         Self::ObservationClosed(ObservationClosed::new(payload))
+    }
+}
+
+#[rustfmt::skip]
+impl From<WirePath> for ScopeReference {
+    fn from(payload: WirePath) -> Self {
+        Self::Path(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<TaskToken> for ScopeReference {
+    fn from(payload: TaskToken) -> Self {
+        Self::Task(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<RoleName> for ActivityFilter {
+    fn from(payload: RoleName) -> Self {
+        Self::RoleFilter(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WirePath> for ActivityFilter {
+    fn from(payload: WirePath) -> Self {
+        Self::PathPrefix(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<TaskToken> for ActivityFilter {
+    fn from(payload: TaskToken) -> Self {
+        Self::TaskToken(payload)
     }
 }
 
@@ -775,6 +999,13 @@ impl From<ActivityQuery> for Input {
 impl From<ObservationSubscription> for Input {
     fn from(payload: ObservationSubscription) -> Self {
         Self::Watch(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<ObservationToken> for Input {
+    fn from(payload: ObservationToken) -> Self {
+        Self::Unwatch(payload)
     }
 }
 
@@ -864,6 +1095,39 @@ impl From<ObservationClosed> for Output {
 
 #[rustfmt::skip]
 #[cfg(feature = "nota-text")]
+impl RoleIdentifier {
+    pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
+        <Self as NotaDecode>::from_nota_block(block)
+    }
+    pub fn to_nota(&self) -> String {
+        <Self as NotaEncode>::to_nota(self)
+    }
+}
+
+#[rustfmt::skip]
+#[cfg(feature = "nota-text")]
+impl RoleName {
+    pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
+        <Self as NotaDecode>::from_nota_block(block)
+    }
+    pub fn to_nota(&self) -> String {
+        <Self as NotaEncode>::to_nota(self)
+    }
+}
+
+#[rustfmt::skip]
+#[cfg(feature = "nota-text")]
+impl RoleToken {
+    pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
+        <Self as NotaDecode>::from_nota_block(block)
+    }
+    pub fn to_nota(&self) -> String {
+        <Self as NotaEncode>::to_nota(self)
+    }
+}
+
+#[rustfmt::skip]
+#[cfg(feature = "nota-text")]
 impl Role {
     pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
         <Self as NotaDecode>::from_nota_block(block)
@@ -881,6 +1145,17 @@ impl LaneAuthority {
     }
     pub fn to_nota(self) -> String {
         <Self as NotaEncode>::to_nota(&self)
+    }
+}
+
+#[rustfmt::skip]
+#[cfg(feature = "nota-text")]
+impl LaneIdentifier {
+    pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
+        <Self as NotaDecode>::from_nota_block(block)
+    }
+    pub fn to_nota(&self) -> String {
+        <Self as NotaEncode>::to_nota(self)
     }
 }
 
@@ -908,7 +1183,51 @@ impl HarnessKind {
 
 #[rustfmt::skip]
 #[cfg(feature = "nota-text")]
+impl WirePath {
+    pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
+        <Self as NotaDecode>::from_nota_block(block)
+    }
+    pub fn to_nota(&self) -> String {
+        <Self as NotaEncode>::to_nota(self)
+    }
+}
+
+#[rustfmt::skip]
+#[cfg(feature = "nota-text")]
+impl TaskToken {
+    pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
+        <Self as NotaDecode>::from_nota_block(block)
+    }
+    pub fn to_nota(&self) -> String {
+        <Self as NotaEncode>::to_nota(self)
+    }
+}
+
+#[rustfmt::skip]
+#[cfg(feature = "nota-text")]
+impl ScopeReason {
+    pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
+        <Self as NotaDecode>::from_nota_block(block)
+    }
+    pub fn to_nota(&self) -> String {
+        <Self as NotaEncode>::to_nota(self)
+    }
+}
+
+#[rustfmt::skip]
+#[cfg(feature = "nota-text")]
 impl ScopeReference {
+    pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
+        <Self as NotaDecode>::from_nota_block(block)
+    }
+    pub fn to_nota(&self) -> String {
+        <Self as NotaEncode>::to_nota(self)
+    }
+}
+
+#[rustfmt::skip]
+#[cfg(feature = "nota-text")]
+impl TimestampNanos {
     pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
         <Self as NotaDecode>::from_nota_block(block)
     }
@@ -997,6 +1316,17 @@ impl ActivityFilter {
 #[rustfmt::skip]
 #[cfg(feature = "nota-text")]
 impl ObservationSubscription {
+    pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
+        <Self as NotaDecode>::from_nota_block(block)
+    }
+    pub fn to_nota(&self) -> String {
+        <Self as NotaEncode>::to_nota(self)
+    }
+}
+
+#[rustfmt::skip]
+#[cfg(feature = "nota-text")]
+impl ObservationToken {
     pub fn from_nota_block(block: &nota_next::Block) -> Result<Self, NotaDecodeError> {
         <Self as NotaDecode>::from_nota_block(block)
     }

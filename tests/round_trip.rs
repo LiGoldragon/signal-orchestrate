@@ -635,6 +635,7 @@ fn orchestrate_contract_has_no_sema_observation_or_classification_roots() {
 }
 
 #[test]
+#[cfg(feature = "nota-text")]
 fn orchestrate_operations_encode_as_contract_local_nota_heads() {
     use nota_next::{NotaEncode, NotaSource};
 
