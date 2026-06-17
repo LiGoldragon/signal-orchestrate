@@ -1,10 +1,16 @@
-use schema_next::{SchemaEngine, SchemaIdentity, SchemaSourceArtifact, StreamRelation};
+use schema_next::{
+    EnumDeclaration, Root, SchemaEngine, SchemaIdentity, SchemaSourceArtifact, StreamRelation,
+};
 use std::path::PathBuf;
 
 fn schema_file() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("schema")
         .join("lib.schema")
+}
+
+fn root_enum(root: &Root) -> &EnumDeclaration {
+    root.as_enum().expect("root is the enum-body form")
 }
 
 #[test]
@@ -19,11 +25,14 @@ fn signal_orchestrate_schema_lowers_ordinary_routes_and_streams() {
         )
         .expect("schema lowers");
 
-    assert_eq!(schema.input().variants.len(), 8);
-    assert_eq!(schema.output().variants.len(), 12);
+    let input = root_enum(schema.input());
+    let output = root_enum(schema.output());
+
+    assert_eq!(input.variants.len(), 8);
+    assert_eq!(output.variants.len(), 12);
     assert_eq!(schema.streams().len(), 1);
 
-    let claim = &schema.input().variants[0];
+    let claim = &input.variants[0];
     assert_eq!(claim.name.as_str(), "Claim");
     assert_eq!(
         claim
@@ -34,7 +43,7 @@ fn signal_orchestrate_schema_lowers_ordinary_routes_and_streams() {
         Some("RoleClaim")
     );
 
-    let watch = &schema.input().variants[6];
+    let watch = &input.variants[6];
     assert_eq!(watch.name.as_str(), "Watch");
     let relation = watch.stream_relation.as_ref().expect("Watch opens stream");
     assert!(matches!(
