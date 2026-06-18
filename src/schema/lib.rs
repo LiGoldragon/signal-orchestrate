@@ -31,7 +31,12 @@ pub struct RoleToken(String);
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct Role(Vec<RoleToken>);
+pub struct RoleTokens(Vec<RoleToken>);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct Role(RoleTokens);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -112,9 +117,54 @@ pub struct TimestampNanos(Integer);
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ScopeReferences(Vec<ScopeReference>);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ActivityFilters(Vec<ActivityFilter>);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ScopeConflicts(Vec<ScopeConflict>);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LaneRegistrations(Vec<LaneRegistration>);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RoleStatuses(Vec<RoleStatus>);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct Activities(Vec<Activity>);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ClaimEntries(Vec<ClaimEntry>);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ApplicationSuccesses(Vec<ApplicationSuccess>);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ApplicationFailures(Vec<ApplicationFailure>);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleClaim {
     pub role: RoleName,
-    pub scopes: Vec<ScopeReference>,
+    pub scopes: ScopeReferences,
     pub reason: ScopeReason,
 }
 
@@ -129,7 +179,7 @@ pub struct RoleRelease(RoleName);
 pub struct RoleHandoff {
     pub from: RoleName,
     pub to: RoleName,
-    pub scopes: Vec<ScopeReference>,
+    pub scopes: ScopeReferences,
     pub reason: ScopeReason,
 }
 
@@ -164,7 +214,7 @@ pub struct ActivitySubmission {
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ActivityQuery {
     pub limit: Integer,
-    pub filters: Vec<ActivityFilter>,
+    pub filters: ActivityFilters,
 }
 
 #[rustfmt::skip]
@@ -194,7 +244,7 @@ pub struct ObservationToken(Integer);
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ClaimAcceptance {
     pub role: RoleName,
-    pub scopes: Vec<ScopeReference>,
+    pub scopes: ScopeReferences,
 }
 
 #[rustfmt::skip]
@@ -202,7 +252,7 @@ pub struct ClaimAcceptance {
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ClaimRejection {
     pub role: RoleName,
-    pub conflicts: Vec<ScopeConflict>,
+    pub conflicts: ScopeConflicts,
 }
 
 #[rustfmt::skip]
@@ -219,7 +269,7 @@ pub struct ScopeConflict {
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ReleaseAcknowledgment {
     pub role: RoleName,
-    pub released_scopes: Vec<ScopeReference>,
+    pub released_scopes: ScopeReferences,
 }
 
 #[rustfmt::skip]
@@ -228,7 +278,7 @@ pub struct ReleaseAcknowledgment {
 pub struct HandoffAcceptance {
     pub from: RoleName,
     pub to: RoleName,
-    pub scopes: Vec<ScopeReference>,
+    pub scopes: ScopeReferences,
 }
 
 #[rustfmt::skip]
@@ -245,21 +295,21 @@ pub struct HandoffRejection {
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum HandoffRejectionReason {
     SourceRoleDoesNotHold,
-    TargetRoleConflict(Vec<ScopeConflict>),
+    TargetRoleConflict(ScopeConflicts),
 }
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleSnapshot {
-    pub roles: Vec<RoleStatus>,
-    pub recent_activity: Vec<Activity>,
+    pub roles: RoleStatuses,
+    pub recent_activity: Activities,
 }
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct LanesObserved(Vec<LaneRegistration>);
+pub struct LanesObserved(LaneRegistrations);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -267,7 +317,7 @@ pub struct LanesObserved(Vec<LaneRegistration>);
 pub struct RoleStatus {
     pub role: RoleName,
     pub harness: HarnessKind,
-    pub claims: Vec<ClaimEntry>,
+    pub claims: ClaimEntries,
 }
 
 #[rustfmt::skip]
@@ -296,7 +346,7 @@ pub struct ActivityAcknowledgment(Integer);
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct ActivityList(Vec<Activity>);
+pub struct ActivityList(Activities);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -361,8 +411,8 @@ pub struct ApplicationFailure {
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct PartialApplied {
-    pub succeeded: Vec<ApplicationSuccess>,
-    pub failed: Vec<ApplicationFailure>,
+    pub succeeded: ApplicationSuccesses,
+    pub failed: ApplicationFailures,
 }
 
 #[rustfmt::skip]
@@ -567,7 +617,7 @@ impl PartialEq<&str> for RoleToken {
 }
 
 #[rustfmt::skip]
-impl Role {
+impl RoleTokens {
     pub fn new(payload: Vec<RoleToken>) -> Self {
         Self(payload)
     }
@@ -579,8 +629,27 @@ impl Role {
     }
 }
 #[rustfmt::skip]
-impl From<Vec<RoleToken>> for Role {
+impl From<Vec<RoleToken>> for RoleTokens {
     fn from(payload: Vec<RoleToken>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl Role {
+    pub fn new(payload: RoleTokens) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &RoleTokens {
+        &self.0
+    }
+    pub fn into_payload(self) -> RoleTokens {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<RoleTokens> for Role {
+    fn from(payload: RoleTokens) -> Self {
         Self::new(payload)
     }
 }
@@ -771,6 +840,177 @@ impl PartialOrd<u64> for TimestampNanos {
 }
 
 #[rustfmt::skip]
+impl ScopeReferences {
+    pub fn new(payload: Vec<ScopeReference>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<ScopeReference> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<ScopeReference> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<ScopeReference>> for ScopeReferences {
+    fn from(payload: Vec<ScopeReference>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ActivityFilters {
+    pub fn new(payload: Vec<ActivityFilter>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<ActivityFilter> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<ActivityFilter> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<ActivityFilter>> for ActivityFilters {
+    fn from(payload: Vec<ActivityFilter>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ScopeConflicts {
+    pub fn new(payload: Vec<ScopeConflict>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<ScopeConflict> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<ScopeConflict> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<ScopeConflict>> for ScopeConflicts {
+    fn from(payload: Vec<ScopeConflict>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl LaneRegistrations {
+    pub fn new(payload: Vec<LaneRegistration>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<LaneRegistration> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<LaneRegistration> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<LaneRegistration>> for LaneRegistrations {
+    fn from(payload: Vec<LaneRegistration>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl RoleStatuses {
+    pub fn new(payload: Vec<RoleStatus>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<RoleStatus> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<RoleStatus> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<RoleStatus>> for RoleStatuses {
+    fn from(payload: Vec<RoleStatus>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl Activities {
+    pub fn new(payload: Vec<Activity>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<Activity> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<Activity> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<Activity>> for Activities {
+    fn from(payload: Vec<Activity>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ClaimEntries {
+    pub fn new(payload: Vec<ClaimEntry>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<ClaimEntry> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<ClaimEntry> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<ClaimEntry>> for ClaimEntries {
+    fn from(payload: Vec<ClaimEntry>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ApplicationSuccesses {
+    pub fn new(payload: Vec<ApplicationSuccess>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<ApplicationSuccess> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<ApplicationSuccess> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<ApplicationSuccess>> for ApplicationSuccesses {
+    fn from(payload: Vec<ApplicationSuccess>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ApplicationFailures {
+    pub fn new(payload: Vec<ApplicationFailure>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<ApplicationFailure> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<ApplicationFailure> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<ApplicationFailure>> for ApplicationFailures {
+    fn from(payload: Vec<ApplicationFailure>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl RoleRelease {
     pub fn new(payload: RoleName) -> Self {
         Self(payload)
@@ -828,19 +1068,19 @@ impl PartialOrd<u64> for ObservationToken {
 
 #[rustfmt::skip]
 impl LanesObserved {
-    pub fn new(payload: Vec<LaneRegistration>) -> Self {
+    pub fn new(payload: LaneRegistrations) -> Self {
         Self(payload)
     }
-    pub fn payload(&self) -> &Vec<LaneRegistration> {
+    pub fn payload(&self) -> &LaneRegistrations {
         &self.0
     }
-    pub fn into_payload(self) -> Vec<LaneRegistration> {
+    pub fn into_payload(self) -> LaneRegistrations {
         self.0
     }
 }
 #[rustfmt::skip]
-impl From<Vec<LaneRegistration>> for LanesObserved {
-    fn from(payload: Vec<LaneRegistration>) -> Self {
+impl From<LaneRegistrations> for LanesObserved {
+    fn from(payload: LaneRegistrations) -> Self {
         Self::new(payload)
     }
 }
@@ -884,19 +1124,19 @@ impl PartialOrd<u64> for ActivityAcknowledgment {
 
 #[rustfmt::skip]
 impl ActivityList {
-    pub fn new(payload: Vec<Activity>) -> Self {
+    pub fn new(payload: Activities) -> Self {
         Self(payload)
     }
-    pub fn payload(&self) -> &Vec<Activity> {
+    pub fn payload(&self) -> &Activities {
         &self.0
     }
-    pub fn into_payload(self) -> Vec<Activity> {
+    pub fn into_payload(self) -> Activities {
         self.0
     }
 }
 #[rustfmt::skip]
-impl From<Vec<Activity>> for ActivityList {
-    fn from(payload: Vec<Activity>) -> Self {
+impl From<Activities> for ActivityList {
+    fn from(payload: Activities) -> Self {
         Self::new(payload)
     }
 }
@@ -984,7 +1224,7 @@ impl ActivityFilter {
 #[rustfmt::skip]
 impl HandoffRejectionReason {
     pub fn target_role_conflict(payload: Vec<ScopeConflict>) -> Self {
-        Self::TargetRoleConflict(payload)
+        Self::TargetRoleConflict(ScopeConflicts::new(payload))
     }
 }
 
@@ -1046,13 +1286,13 @@ impl Output {
     pub fn role_snapshot(payload: RoleSnapshot) -> Self {
         Self::RoleSnapshot(payload)
     }
-    pub fn lanes_observed(payload: Vec<LaneRegistration>) -> Self {
+    pub fn lanes_observed(payload: LaneRegistrations) -> Self {
         Self::LanesObserved(LanesObserved::new(payload))
     }
     pub fn activity_acknowledgment(payload: Integer) -> Self {
         Self::ActivityAcknowledgment(ActivityAcknowledgment::new(payload))
     }
-    pub fn activity_list(payload: Vec<Activity>) -> Self {
+    pub fn activity_list(payload: Activities) -> Self {
         Self::ActivityList(ActivityList::new(payload))
     }
     pub fn partial_applied(payload: PartialApplied) -> Self {
@@ -1098,6 +1338,13 @@ impl From<WirePath> for ActivityFilter {
 impl From<TaskToken> for ActivityFilter {
     fn from(payload: TaskToken) -> Self {
         Self::TaskToken(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<ScopeConflicts> for HandoffRejectionReason {
+    fn from(payload: ScopeConflicts) -> Self {
+        Self::TargetRoleConflict(payload)
     }
 }
 

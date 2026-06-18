@@ -23,10 +23,11 @@
   RoleIdentifier String
   RoleName RoleIdentifier
   RoleToken String
-  Role { tokens (Vec RoleToken) }
+  RoleTokens (Vector RoleToken)
+  Role RoleTokens
   LaneAuthority [Structural Support]
   LaneIdentifier String
-  LaneRegistration { lane LaneIdentifier role Role authority LaneAuthority }
+  LaneRegistration { lane.LaneIdentifier Role authority.LaneAuthority }
   HarnessKind [Codex Claude]
   WirePath String
   TaskToken String
@@ -34,43 +35,53 @@
   ScopeReference [(Path WirePath) (Task TaskToken)]
   TimestampNanos Integer
 
-  RoleClaim { role RoleName scopes (Vec ScopeReference) reason ScopeReason }
-  RoleRelease { role RoleName }
-  RoleHandoff { from RoleName to RoleName scopes (Vec ScopeReference) reason ScopeReason }
+  ScopeReferences (Vector ScopeReference)
+  ActivityFilters (Vector ActivityFilter)
+  ScopeConflicts (Vector ScopeConflict)
+  LaneRegistrations (Vector LaneRegistration)
+  RoleStatuses (Vector RoleStatus)
+  Activities (Vector Activity)
+  ClaimEntries (Vector ClaimEntry)
+  ApplicationSuccesses (Vector ApplicationSuccess)
+  ApplicationFailures (Vector ApplicationFailure)
+
+  RoleClaim { role.RoleName scopes.ScopeReferences reason.ScopeReason }
+  RoleRelease RoleName
+  RoleHandoff { from.RoleName to.RoleName scopes.ScopeReferences reason.ScopeReason }
   Observation [Roles Lanes]
-  ActivitySubmission { role RoleName scope ScopeReference reason ScopeReason }
-  ActivityQuery { limit Integer filters (Vec ActivityFilter) }
+  ActivitySubmission { role.RoleName scope.ScopeReference reason.ScopeReason }
+  ActivityQuery { limit.Integer filters.ActivityFilters }
   ActivityFilter [(RoleFilter RoleName) (PathPrefix WirePath) (TaskToken TaskToken)]
-  ObservationSubscription { includeOperations Boolean includeEffects Boolean }
+  ObservationSubscription { include_operations.Boolean include_effects.Boolean }
   ObservationToken Integer
 
-  ClaimAcceptance { role RoleName scopes (Vec ScopeReference) }
-  ClaimRejection { role RoleName conflicts (Vec ScopeConflict) }
-  ScopeConflict { scope ScopeReference heldBy RoleName heldReason ScopeReason }
-  ReleaseAcknowledgment { role RoleName releasedScopes (Vec ScopeReference) }
-  HandoffAcceptance { from RoleName to RoleName scopes (Vec ScopeReference) }
-  HandoffRejection { from RoleName to RoleName reason HandoffRejectionReason }
-  HandoffRejectionReason [SourceRoleDoesNotHold (TargetRoleConflict (Vec ScopeConflict))]
-  RoleSnapshot { roles (Vec RoleStatus) recentActivity (Vec Activity) }
-  LanesObserved { lanes (Vec LaneRegistration) }
-  RoleStatus { role RoleName harness HarnessKind claims (Vec ClaimEntry) }
-  ClaimEntry { scope ScopeReference reason ScopeReason }
-  Activity { role RoleName scope ScopeReference reason ScopeReason stampedAt TimestampNanos }
-  ActivityAcknowledgment { slot Integer }
-  ActivityList { records (Vec Activity) }
+  ClaimAcceptance { role.RoleName scopes.ScopeReferences }
+  ClaimRejection { role.RoleName conflicts.ScopeConflicts }
+  ScopeConflict { scope.ScopeReference held_by.RoleName held_reason.ScopeReason }
+  ReleaseAcknowledgment { role.RoleName released_scopes.ScopeReferences }
+  HandoffAcceptance { from.RoleName to.RoleName scopes.ScopeReferences }
+  HandoffRejection { from.RoleName to.RoleName reason.HandoffRejectionReason }
+  HandoffRejectionReason [SourceRoleDoesNotHold (TargetRoleConflict ScopeConflicts)]
+  RoleSnapshot { roles.RoleStatuses recent_activity.Activities }
+  LanesObserved { lanes.LaneRegistrations }
+  RoleStatus { role.RoleName harness.HarnessKind claims.ClaimEntries }
+  ClaimEntry { scope.ScopeReference reason.ScopeReason }
+  Activity { role.RoleName scope.ScopeReference reason.ScopeReason stamped_at.TimestampNanos }
+  ActivityAcknowledgment Integer
+  ActivityList Activities
 
   DownstreamComponent [Router Harness Terminal Message Mind System Introspect]
   ApplicationFailureReason [Unreachable Rejected Unimplemented TimedOut Unknown]
-  ApplicationSuccess { component DownstreamComponent detail ScopeReason }
-  ApplicationFailure { component DownstreamComponent reason ApplicationFailureReason detail ScopeReason }
-  PartialApplied { succeeded (Vec ApplicationSuccess) failed (Vec ApplicationFailure) }
+  ApplicationSuccess { component.DownstreamComponent detail.ScopeReason }
+  ApplicationFailure { component.DownstreamComponent reason.ApplicationFailureReason detail.ScopeReason }
+  PartialApplied { succeeded.ApplicationSuccesses failed.ApplicationFailures }
 
-  ObservationOpened { token ObservationToken }
-  ObservationClosed { token ObservationToken }
+  ObservationOpened ObservationToken
+  ObservationClosed ObservationToken
   OperationKind [Claim Release Handoff Observe Submit Query Watch Unwatch]
   EffectOutcome [Applied Removed Changed Observed StreamOpened StreamClosed NoChange]
-  OperationReceived { operation OperationKind }
-  EffectEmitted { operation OperationKind outcome EffectOutcome }
+  OperationReceived OperationKind
+  EffectEmitted { operation.OperationKind outcome.EffectOutcome }
   ObservationEvent [(OperationReceived OperationReceived belongs ObservationStream)
                     (EffectEmitted EffectEmitted belongs ObservationStream)]
   ObservationStream (Stream { token ObservationToken opened ObservationOpened event ObservationEvent close ObservationToken })
