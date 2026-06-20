@@ -14,6 +14,7 @@
  (HandoffRejection HandoffRejection)
  (RoleSnapshot RoleSnapshot)
  (LanesObserved LanesObserved)
+ (WorktreesObserved WorktreesObserved)
  (ActivityAcknowledgment ActivityAcknowledgment)
  (ActivityList ActivityList)
  (PartialApplied PartialApplied)
@@ -35,10 +36,19 @@
   ScopeReference [(Path WirePath) (Task TaskToken)]
   TimestampNanos Integer
 
+  RepositoryName String
+  BranchName String
+  LaneName String
+  PurposeText String
+  WorktreeStatus [Active Merged Archived Recycled]
+  PushedState [Unpushed Pushed AncestorOfMain]
+  Worktree { repository.RepositoryName branch.BranchName path.WirePath owning_lane.LaneName WorktreeStatus purpose.PurposeText last_activity.TimestampNanos PushedState }
+
   ScopeReferences (Vector ScopeReference)
   ActivityFilters (Vector ActivityFilter)
   ScopeConflicts (Vector ScopeConflict)
   LaneRegistrations (Vector LaneRegistration)
+  Worktrees (Vector Worktree)
   RoleStatuses (Vector RoleStatus)
   Activities (Vector Activity)
   ClaimEntries (Vector ClaimEntry)
@@ -48,7 +58,7 @@
   RoleClaim { role.RoleName scopes.ScopeReferences reason.ScopeReason }
   RoleRelease RoleName
   RoleHandoff { from.RoleName to.RoleName scopes.ScopeReferences reason.ScopeReason }
-  Observation [Roles Lanes]
+  Observation [Roles Lanes Worktrees]
   ActivitySubmission { role.RoleName scope.ScopeReference reason.ScopeReason }
   ActivityQuery { limit.Integer filters.ActivityFilters }
   ActivityFilter [(RoleFilter RoleName) (PathPrefix WirePath) (TaskToken TaskToken)]
@@ -64,6 +74,7 @@
   HandoffRejectionReason [SourceRoleDoesNotHold (TargetRoleConflict ScopeConflicts)]
   RoleSnapshot { roles.RoleStatuses recent_activity.Activities }
   LanesObserved { lanes.LaneRegistrations }
+  WorktreesObserved { Worktrees }
   RoleStatus { role.RoleName harness.HarnessKind claims.ClaimEntries }
   ClaimEntry { scope.ScopeReference reason.ScopeReason }
   Activity { role.RoleName scope.ScopeReference reason.ScopeReason stamped_at.TimestampNanos }

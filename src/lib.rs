@@ -58,6 +58,20 @@ pub enum Error {
         "lane identifier must be non-empty, unbracketed, and contain no whitespace or path separators: {lane}"
     )]
     InvalidLaneIdentifier { lane: String },
+    #[error(
+        "repository name must be non-empty, unbracketed, and contain no whitespace or path separators: {name}"
+    )]
+    InvalidRepositoryName { name: String },
+    #[error(
+        "branch name must be non-empty, unbracketed, and contain no whitespace: {branch}"
+    )]
+    InvalidBranchName { branch: String },
+    #[error(
+        "lane name must be non-empty, unbracketed, and contain no whitespace or path separators: {lane}"
+    )]
+    InvalidLaneName { lane: String },
+    #[error("worktree purpose must be non-empty and single-line: {purpose}")]
+    InvalidPurposeText { purpose: String },
 }
 
 macro_rules! validated_string_nota_codec {
@@ -325,6 +339,286 @@ impl AsRef<str> for LaneIdentifier {
 }
 
 validated_string_nota_codec!(LaneIdentifier, LaneIdentifier::from_wire_token);
+
+// ─── Worktree identity ────────────────────────────────────
+
+/// The repository a worktree belongs to — the `<repo>` segment
+/// under `~/wt/github.com/LiGoldragon/<repo>/<name>`. Same shape
+/// as the git-index repository name (`StoredRepository::name`).
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord,
+)]
+pub struct RepositoryName(String);
+
+impl RepositoryName {
+    pub fn try_new(name: String) -> ContractResult<Self> {
+        Self::from_text(name)
+    }
+
+    pub fn from_text(name: impl Into<String>) -> ContractResult<Self> {
+        let name = name.into();
+        if name.is_empty()
+            || name.chars().any(char::is_whitespace)
+            || name.contains('/')
+            || name.contains('\\')
+            || name.contains('[')
+            || name.contains(']')
+        {
+            return Err(Error::InvalidRepositoryName { name });
+        }
+        Ok(Self(name))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for RepositoryName {
+    type Error = Error;
+
+    fn try_from(name: String) -> ContractResult<Self> {
+        Self::from_text(name)
+    }
+}
+
+impl TryFrom<&str> for RepositoryName {
+    type Error = Error;
+
+    fn try_from(name: &str) -> ContractResult<Self> {
+        Self::from_text(name)
+    }
+}
+
+impl AsRef<str> for RepositoryName {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+validated_string_nota_codec!(RepositoryName, RepositoryName::from_text);
+
+/// The feature/`next` branch a worktree carries — the `<name>`
+/// segment of the worktree path and the jj bookmark name.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord,
+)]
+pub struct BranchName(String);
+
+impl BranchName {
+    pub fn try_new(branch: String) -> ContractResult<Self> {
+        Self::from_text(branch)
+    }
+
+    pub fn from_text(branch: impl Into<String>) -> ContractResult<Self> {
+        let branch = branch.into();
+        if branch.is_empty()
+            || branch.chars().any(char::is_whitespace)
+            || branch.contains('[')
+            || branch.contains(']')
+        {
+            return Err(Error::InvalidBranchName { branch });
+        }
+        Ok(Self(branch))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for BranchName {
+    type Error = Error;
+
+    fn try_from(branch: String) -> ContractResult<Self> {
+        Self::from_text(branch)
+    }
+}
+
+impl TryFrom<&str> for BranchName {
+    type Error = Error;
+
+    fn try_from(branch: &str) -> ContractResult<Self> {
+        Self::from_text(branch)
+    }
+}
+
+impl AsRef<str> for BranchName {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+validated_string_nota_codec!(BranchName, BranchName::from_text);
+
+/// The lane that owns a worktree (the harness window's exact
+/// role-name, e.g. `designer`, `second-operator`). Same shape
+/// as [`LaneIdentifier`] but named for its worktree-ownership
+/// role.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord,
+)]
+pub struct LaneName(String);
+
+impl LaneName {
+    pub fn try_new(lane: String) -> ContractResult<Self> {
+        Self::from_text(lane)
+    }
+
+    pub fn from_text(lane: impl Into<String>) -> ContractResult<Self> {
+        let lane = lane.into();
+        if lane.is_empty()
+            || lane.chars().any(char::is_whitespace)
+            || lane.contains('/')
+            || lane.contains('\\')
+            || lane.contains('[')
+            || lane.contains(']')
+        {
+            return Err(Error::InvalidLaneName { lane });
+        }
+        Ok(Self(lane))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for LaneName {
+    type Error = Error;
+
+    fn try_from(lane: String) -> ContractResult<Self> {
+        Self::from_text(lane)
+    }
+}
+
+impl TryFrom<&str> for LaneName {
+    type Error = Error;
+
+    fn try_from(lane: &str) -> ContractResult<Self> {
+        Self::from_text(lane)
+    }
+}
+
+impl AsRef<str> for LaneName {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+validated_string_nota_codec!(LaneName, LaneName::from_text);
+
+/// Free-text purpose of a worktree — what the branch is for.
+/// Single-line like [`ScopeReason`].
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct PurposeText(String);
+
+impl PurposeText {
+    pub fn try_new(purpose: String) -> ContractResult<Self> {
+        Self::from_text(purpose)
+    }
+
+    pub fn from_text(purpose: impl Into<String>) -> ContractResult<Self> {
+        let purpose = purpose.into();
+        if purpose.is_empty() || purpose.contains('\n') || purpose.contains('\r') {
+            return Err(Error::InvalidPurposeText { purpose });
+        }
+        Ok(Self(purpose))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for PurposeText {
+    type Error = Error;
+
+    fn try_from(purpose: String) -> ContractResult<Self> {
+        Self::from_text(purpose)
+    }
+}
+
+impl TryFrom<&str> for PurposeText {
+    type Error = Error;
+
+    fn try_from(purpose: &str) -> ContractResult<Self> {
+        Self::from_text(purpose)
+    }
+}
+
+impl AsRef<str> for PurposeText {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+validated_string_nota_codec!(PurposeText, PurposeText::from_text);
+
+/// Worktree lifecycle state. `Active` while in use; `Merged`
+/// once integrated; `Archived` retained as a GC-manifest record;
+/// `Recycled` when the worktree slot was reclaimed.
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub enum WorktreeStatus {
+    Active,
+    Merged,
+    Archived,
+    Recycled,
+}
+
+/// How a worktree's branch relates to its remote and to `main`.
+/// `Unpushed` — local-only, no remote tracking; `Pushed` — has a
+/// real remote ref; `AncestorOfMain` — already an ancestor of
+/// `main` (merge complete, safe to GC). Derived by the daemon
+/// scanner from `jj`, never agent-supplied.
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub enum PushedState {
+    Unpushed,
+    Pushed,
+    AncestorOfMain,
+}
+
+/// One registered worktree. `last_activity` is store/scanner
+/// supplied (the worktree's newest commit time), never
+/// agent-supplied. The `(repository, branch)` pair is the
+/// identity.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct Worktree {
+    pub repository: RepositoryName,
+    pub branch: BranchName,
+    pub path: WirePath,
+    pub owning_lane: LaneName,
+    pub status: WorktreeStatus,
+    pub purpose: PurposeText,
+    pub last_activity: TimestampNanos,
+    pub pushed_state: PushedState,
+}
 
 #[derive(
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
@@ -714,6 +1008,7 @@ pub enum HandoffRejectionReason {
 pub enum Observation {
     Roles,
     Lanes,
+    Worktrees,
 }
 
 /// Legacy empty payload kept for older callers while the `Observe`
@@ -745,6 +1040,13 @@ pub struct RoleSnapshot {
 )]
 pub struct LanesObserved {
     pub lanes: Vec<LaneRegistration>,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorktreesObserved {
+    pub worktrees: Vec<Worktree>,
 }
 
 #[derive(
@@ -1068,6 +1370,7 @@ signal_channel! {
         HandoffRejection(HandoffRejection),
         RoleSnapshot(RoleSnapshot),
         LanesObserved(LanesObserved),
+        WorktreesObserved(WorktreesObserved),
         ActivityAcknowledgment(ActivityAcknowledgment),
         ActivityList(ActivityList),
         PartialApplied(PartialApplied),

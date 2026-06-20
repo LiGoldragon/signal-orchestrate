@@ -29,7 +29,7 @@ fn signal_orchestrate_schema_lowers_ordinary_routes_and_streams() {
     let output = root_enum(schema.output());
 
     assert_eq!(input.variants.len(), 8);
-    assert_eq!(output.variants.len(), 12);
+    assert_eq!(output.variants.len(), 13);
     assert_eq!(schema.streams().len(), 1);
 
     let claim = &input.variants[0];

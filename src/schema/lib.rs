@@ -117,6 +117,77 @@ pub struct TimestampNanos(Integer);
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RepositoryName(String);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct BranchName(String);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LaneName(String);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct PurposeText(String);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum WorktreeStatus {
+    Active,
+    Merged,
+    Archived,
+    Recycled,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum PushedState {
+    Unpushed,
+    Pushed,
+    AncestorOfMain,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct Worktree {
+    pub repository: RepositoryName,
+    pub branch: BranchName,
+    pub path: WirePath,
+    pub owning_lane: LaneName,
+    pub worktree_status: WorktreeStatus,
+    pub purpose: PurposeText,
+    pub last_activity: TimestampNanos,
+    pub pushed_state: PushedState,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ScopeReferences(Vec<ScopeReference>);
 
 #[rustfmt::skip]
@@ -133,6 +204,11 @@ pub struct ScopeConflicts(Vec<ScopeConflict>);
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LaneRegistrations(Vec<LaneRegistration>);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct Worktrees(Vec<Worktree>);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -198,6 +274,7 @@ pub struct RoleHandoff {
 pub enum Observation {
     Roles,
     Lanes,
+    Worktrees,
 }
 
 #[rustfmt::skip]
@@ -310,6 +387,11 @@ pub struct RoleSnapshot {
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LanesObserved(LaneRegistrations);
+
+#[rustfmt::skip]
+#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorktreesObserved(Worktrees);
 
 #[rustfmt::skip]
 #[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
@@ -516,6 +598,7 @@ pub enum Output {
     HandoffRejection(HandoffRejection),
     RoleSnapshot(RoleSnapshot),
     LanesObserved(LanesObserved),
+    WorktreesObserved(WorktreesObserved),
     ActivityAcknowledgment(ActivityAcknowledgment),
     ActivityList(ActivityList),
     PartialApplied(PartialApplied),
@@ -539,24 +622,6 @@ impl RoleIdentifier {
 impl From<String> for RoleIdentifier {
     fn from(payload: String) -> Self {
         Self::new(payload)
-    }
-}
-#[rustfmt::skip]
-impl std::fmt::Display for RoleIdentifier {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
-    }
-}
-#[rustfmt::skip]
-impl AsRef<str> for RoleIdentifier {
-    fn as_ref(&self) -> &str {
-        self.payload().as_str()
-    }
-}
-#[rustfmt::skip]
-impl PartialEq<&str> for RoleIdentifier {
-    fn eq(&self, other: &&str) -> bool {
-        self.payload() == other
     }
 }
 
@@ -595,24 +660,6 @@ impl RoleToken {
 impl From<String> for RoleToken {
     fn from(payload: String) -> Self {
         Self::new(payload)
-    }
-}
-#[rustfmt::skip]
-impl std::fmt::Display for RoleToken {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
-    }
-}
-#[rustfmt::skip]
-impl AsRef<str> for RoleToken {
-    fn as_ref(&self) -> &str {
-        self.payload().as_str()
-    }
-}
-#[rustfmt::skip]
-impl PartialEq<&str> for RoleToken {
-    fn eq(&self, other: &&str) -> bool {
-        self.payload() == other
     }
 }
 
@@ -672,24 +719,6 @@ impl From<String> for LaneIdentifier {
         Self::new(payload)
     }
 }
-#[rustfmt::skip]
-impl std::fmt::Display for LaneIdentifier {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
-    }
-}
-#[rustfmt::skip]
-impl AsRef<str> for LaneIdentifier {
-    fn as_ref(&self) -> &str {
-        self.payload().as_str()
-    }
-}
-#[rustfmt::skip]
-impl PartialEq<&str> for LaneIdentifier {
-    fn eq(&self, other: &&str) -> bool {
-        self.payload() == other
-    }
-}
 
 #[rustfmt::skip]
 impl WirePath {
@@ -707,24 +736,6 @@ impl WirePath {
 impl From<String> for WirePath {
     fn from(payload: String) -> Self {
         Self::new(payload)
-    }
-}
-#[rustfmt::skip]
-impl std::fmt::Display for WirePath {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
-    }
-}
-#[rustfmt::skip]
-impl AsRef<str> for WirePath {
-    fn as_ref(&self) -> &str {
-        self.payload().as_str()
-    }
-}
-#[rustfmt::skip]
-impl PartialEq<&str> for WirePath {
-    fn eq(&self, other: &&str) -> bool {
-        self.payload() == other
     }
 }
 
@@ -746,24 +757,6 @@ impl From<String> for TaskToken {
         Self::new(payload)
     }
 }
-#[rustfmt::skip]
-impl std::fmt::Display for TaskToken {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
-    }
-}
-#[rustfmt::skip]
-impl AsRef<str> for TaskToken {
-    fn as_ref(&self) -> &str {
-        self.payload().as_str()
-    }
-}
-#[rustfmt::skip]
-impl PartialEq<&str> for TaskToken {
-    fn eq(&self, other: &&str) -> bool {
-        self.payload() == other
-    }
-}
 
 #[rustfmt::skip]
 impl ScopeReason {
@@ -781,24 +774,6 @@ impl ScopeReason {
 impl From<String> for ScopeReason {
     fn from(payload: String) -> Self {
         Self::new(payload)
-    }
-}
-#[rustfmt::skip]
-impl std::fmt::Display for ScopeReason {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
-    }
-}
-#[rustfmt::skip]
-impl AsRef<str> for ScopeReason {
-    fn as_ref(&self) -> &str {
-        self.payload().as_str()
-    }
-}
-#[rustfmt::skip]
-impl PartialEq<&str> for ScopeReason {
-    fn eq(&self, other: &&str) -> bool {
-        self.payload() == other
     }
 }
 
@@ -820,22 +795,80 @@ impl From<Integer> for TimestampNanos {
         Self::new(payload)
     }
 }
+
 #[rustfmt::skip]
-impl std::fmt::Display for TimestampNanos {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
+impl RepositoryName {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
     }
 }
 #[rustfmt::skip]
-impl PartialEq<u64> for TimestampNanos {
-    fn eq(&self, other: &u64) -> bool {
-        self.payload() == other
+impl From<String> for RepositoryName {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl BranchName {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
     }
 }
 #[rustfmt::skip]
-impl PartialOrd<u64> for TimestampNanos {
-    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
-        self.payload().partial_cmp(other)
+impl From<String> for BranchName {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl LaneName {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for LaneName {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl PurposeText {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for PurposeText {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
     }
 }
 
@@ -911,6 +944,25 @@ impl LaneRegistrations {
 #[rustfmt::skip]
 impl From<Vec<LaneRegistration>> for LaneRegistrations {
     fn from(payload: Vec<LaneRegistration>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl Worktrees {
+    pub fn new(payload: Vec<Worktree>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<Worktree> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<Worktree> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<Worktree>> for Worktrees {
+    fn from(payload: Vec<Worktree>) -> Self {
         Self::new(payload)
     }
 }
@@ -1047,24 +1099,6 @@ impl From<Integer> for ObservationToken {
         Self::new(payload)
     }
 }
-#[rustfmt::skip]
-impl std::fmt::Display for ObservationToken {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
-    }
-}
-#[rustfmt::skip]
-impl PartialEq<u64> for ObservationToken {
-    fn eq(&self, other: &u64) -> bool {
-        self.payload() == other
-    }
-}
-#[rustfmt::skip]
-impl PartialOrd<u64> for ObservationToken {
-    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
-        self.payload().partial_cmp(other)
-    }
-}
 
 #[rustfmt::skip]
 impl LanesObserved {
@@ -1086,6 +1120,25 @@ impl From<LaneRegistrations> for LanesObserved {
 }
 
 #[rustfmt::skip]
+impl WorktreesObserved {
+    pub fn new(payload: Worktrees) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Worktrees {
+        &self.0
+    }
+    pub fn into_payload(self) -> Worktrees {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Worktrees> for WorktreesObserved {
+    fn from(payload: Worktrees) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl ActivityAcknowledgment {
     pub fn new(payload: Integer) -> Self {
         Self(payload)
@@ -1101,24 +1154,6 @@ impl ActivityAcknowledgment {
 impl From<Integer> for ActivityAcknowledgment {
     fn from(payload: Integer) -> Self {
         Self::new(payload)
-    }
-}
-#[rustfmt::skip]
-impl std::fmt::Display for ActivityAcknowledgment {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.payload().fmt(formatter)
-    }
-}
-#[rustfmt::skip]
-impl PartialEq<u64> for ActivityAcknowledgment {
-    fn eq(&self, other: &u64) -> bool {
-        self.payload() == other
-    }
-}
-#[rustfmt::skip]
-impl PartialOrd<u64> for ActivityAcknowledgment {
-    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
-        self.payload().partial_cmp(other)
     }
 }
 
@@ -1288,6 +1323,9 @@ impl Output {
     }
     pub fn lanes_observed(payload: LaneRegistrations) -> Self {
         Self::LanesObserved(LanesObserved::new(payload))
+    }
+    pub fn worktrees_observed(payload: Worktrees) -> Self {
+        Self::WorktreesObserved(WorktreesObserved::new(payload))
     }
     pub fn activity_acknowledgment(payload: Integer) -> Self {
         Self::ActivityAcknowledgment(ActivityAcknowledgment::new(payload))
@@ -1468,6 +1506,13 @@ impl From<LanesObserved> for Output {
 }
 
 #[rustfmt::skip]
+impl From<WorktreesObserved> for Output {
+    fn from(payload: WorktreesObserved) -> Self {
+        Self::WorktreesObserved(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<ActivityAcknowledgment> for Output {
     fn from(payload: ActivityAcknowledgment) -> Self {
         Self::ActivityAcknowledgment(payload)
@@ -1551,11 +1596,12 @@ pub mod short_header {
     pub const OUTPUT_HANDOFF_REJECTION: u64 = 0x0104000000000000;
     pub const OUTPUT_ROLE_SNAPSHOT: u64 = 0x0105000000000000;
     pub const OUTPUT_LANES_OBSERVED: u64 = 0x0106000000000000;
-    pub const OUTPUT_ACTIVITY_ACKNOWLEDGMENT: u64 = 0x0107000000000000;
-    pub const OUTPUT_ACTIVITY_LIST: u64 = 0x0108000000000000;
-    pub const OUTPUT_PARTIAL_APPLIED: u64 = 0x0109000000000000;
-    pub const OUTPUT_OBSERVATION_OPENED: u64 = 0x010A000000000000;
-    pub const OUTPUT_OBSERVATION_CLOSED: u64 = 0x010B000000000000;
+    pub const OUTPUT_WORKTREES_OBSERVED: u64 = 0x0107000000000000;
+    pub const OUTPUT_ACTIVITY_ACKNOWLEDGMENT: u64 = 0x0108000000000000;
+    pub const OUTPUT_ACTIVITY_LIST: u64 = 0x0109000000000000;
+    pub const OUTPUT_PARTIAL_APPLIED: u64 = 0x010A000000000000;
+    pub const OUTPUT_OBSERVATION_OPENED: u64 = 0x010B000000000000;
+    pub const OUTPUT_OBSERVATION_CLOSED: u64 = 0x010C000000000000;
 }
 
 #[rustfmt::skip]
@@ -1636,6 +1682,7 @@ pub enum OutputRoute {
     HandoffRejection,
     RoleSnapshot,
     LanesObserved,
+    WorktreesObserved,
     ActivityAcknowledgment,
     ActivityList,
     PartialApplied,
@@ -1736,6 +1783,7 @@ impl Output {
             Self::HandoffRejection(_) => OutputRoute::HandoffRejection,
             Self::RoleSnapshot(_) => OutputRoute::RoleSnapshot,
             Self::LanesObserved(_) => OutputRoute::LanesObserved,
+            Self::WorktreesObserved(_) => OutputRoute::WorktreesObserved,
             Self::ActivityAcknowledgment(_) => OutputRoute::ActivityAcknowledgment,
             Self::ActivityList(_) => OutputRoute::ActivityList,
             Self::PartialApplied(_) => OutputRoute::PartialApplied,
@@ -1752,6 +1800,7 @@ impl Output {
             Self::HandoffRejection(_) => short_header::OUTPUT_HANDOFF_REJECTION,
             Self::RoleSnapshot(_) => short_header::OUTPUT_ROLE_SNAPSHOT,
             Self::LanesObserved(_) => short_header::OUTPUT_LANES_OBSERVED,
+            Self::WorktreesObserved(_) => short_header::OUTPUT_WORKTREES_OBSERVED,
             Self::ActivityAcknowledgment(_) => {
                 short_header::OUTPUT_ACTIVITY_ACKNOWLEDGMENT
             }
@@ -1774,6 +1823,7 @@ impl Output {
             short_header::OUTPUT_HANDOFF_REJECTION => Ok(OutputRoute::HandoffRejection),
             short_header::OUTPUT_ROLE_SNAPSHOT => Ok(OutputRoute::RoleSnapshot),
             short_header::OUTPUT_LANES_OBSERVED => Ok(OutputRoute::LanesObserved),
+            short_header::OUTPUT_WORKTREES_OBSERVED => Ok(OutputRoute::WorktreesObserved),
             short_header::OUTPUT_ACTIVITY_ACKNOWLEDGMENT => {
                 Ok(OutputRoute::ActivityAcknowledgment)
             }
