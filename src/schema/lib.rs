@@ -179,7 +179,7 @@ pub struct Worktree {
     pub branch: BranchName,
     pub path: WirePath,
     pub owning_lane: LaneName,
-    pub worktree_status: WorktreeStatus,
+    pub status: WorktreeStatus,
     pub purpose: PurposeText,
     pub last_activity: TimestampNanos,
     pub pushed_state: PushedState,

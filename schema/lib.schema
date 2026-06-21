@@ -42,7 +42,7 @@
   PurposeText String
   WorktreeStatus [Active Merged Archived Recycled]
   PushedState [Unpushed Pushed AncestorOfMain]
-  Worktree { repository.RepositoryName branch.BranchName path.WirePath owning_lane.LaneName WorktreeStatus purpose.PurposeText last_activity.TimestampNanos PushedState }
+  Worktree { repository.RepositoryName branch.BranchName path.WirePath owning_lane.LaneName status.WorktreeStatus purpose.PurposeText last_activity.TimestampNanos PushedState }
 
   ScopeReferences (Vector ScopeReference)
   ActivityFilters (Vector ActivityFilter)

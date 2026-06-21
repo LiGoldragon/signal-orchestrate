@@ -20,7 +20,8 @@ use signal_orchestrate::{
     OperationReceived, OrchestrateEvent, OrchestrateFrame, OrchestrateFrameBody, OrchestrateReply,
     OrchestrateRequest, PartialApplied, ReleaseAcknowledgment, Role, RoleClaim, RoleHandoff,
     RoleName, RoleRelease, RoleSnapshot, RoleStatus, RoleToken, ScopeConflict, ScopeReason,
-    ScopeReference, TaskToken, TimestampNanos, WirePath,
+    ScopeReference, TaskToken, TimestampNanos, WirePath, Worktree, WorktreeStatus,
+    WorktreesObserved,
 };
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -402,6 +403,51 @@ fn lane_registry_records_round_trip() {
     });
     let decoded = round_trip_reply(reply.clone());
     assert_eq!(decoded, reply);
+}
+
+#[test]
+fn worktree_registry_records_round_trip() {
+    let reply = OrchestrateReply::WorktreesObserved(WorktreesObserved {
+        worktrees: vec![Worktree {
+            repository: signal_orchestrate::RepositoryName::from_text("signal-orchestrate")
+                .expect("repository name"),
+            branch: signal_orchestrate::BranchName::from_text("main").expect("branch name"),
+            path: WirePath::from_absolute_path(
+                "/home/li/wt/github.com/LiGoldragon/signal-orchestrate/main",
+            )
+            .expect("worktree path"),
+            owning_lane: signal_orchestrate::LaneName::from_text("operator").expect("owning lane"),
+            status: WorktreeStatus::Active,
+            purpose: signal_orchestrate::PurposeText::from_text(
+                "signal-orchestrate worktree contract fidelity",
+            )
+            .expect("purpose"),
+            last_activity: TimestampNanos::new(1_730_000_002_000_000_000),
+            pushed_state: signal_orchestrate::PushedState::Pushed,
+        }],
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}
+
+#[test]
+fn generated_worktree_mirror_uses_canonical_status_field_name() {
+    use signal_orchestrate::schema::lib as generated;
+
+    let worktree = generated::Worktree {
+        repository: generated::RepositoryName::new("signal-orchestrate"),
+        branch: generated::BranchName::new("main"),
+        path: generated::WirePath::new(
+            "/home/li/wt/github.com/LiGoldragon/signal-orchestrate/main",
+        ),
+        owning_lane: generated::LaneName::new("operator"),
+        status: generated::WorktreeStatus::Active,
+        purpose: generated::PurposeText::new("schema mirror should match canonical field names"),
+        last_activity: generated::TimestampNanos::new(1_730_000_002_000_000_000),
+        pushed_state: generated::PushedState::Pushed,
+    };
+
+    assert_eq!(worktree.status, generated::WorktreeStatus::Active);
 }
 
 #[test]

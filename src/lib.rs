@@ -62,9 +62,7 @@ pub enum Error {
         "repository name must be non-empty, unbracketed, and contain no whitespace or path separators: {name}"
     )]
     InvalidRepositoryName { name: String },
-    #[error(
-        "branch name must be non-empty, unbracketed, and contain no whitespace: {branch}"
-    )]
+    #[error("branch name must be non-empty, unbracketed, and contain no whitespace: {branch}")]
     InvalidBranchName { branch: String },
     #[error(
         "lane name must be non-empty, unbracketed, and contain no whitespace or path separators: {lane}"
