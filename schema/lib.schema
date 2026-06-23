@@ -5,6 +5,9 @@
  (Observe Observation)
  (Submit ActivitySubmission)
  (Query ActivityQuery)
+ (RunWorkflow WorkflowRunRequest)
+ (ObserveWorkflowRun WorkflowRunObservation opens WorkflowRunStream)
+ (WorkflowRunObservationRetraction WorkflowRunObservationToken)
  (Watch ObservationSubscription opens ObservationStream)
  (Unwatch ObservationToken)]
 [(ClaimAcceptance ClaimAcceptance)
@@ -17,6 +20,11 @@
  (WorktreesObserved WorktreesObserved)
  (ActivityAcknowledgment ActivityAcknowledgment)
  (ActivityList ActivityList)
+ (WorkflowRunAccepted WorkflowRunAccepted)
+ (WorkflowReceiptProduced WorkflowReceiptProduced)
+ (WorkflowRunLogReported WorkflowRunLogReported)
+ (WorkflowRunObservationOpened WorkflowRunObservationOpened)
+ (WorkflowRunObservationClosed WorkflowRunObservationClosed)
  (PartialApplied PartialApplied)
  (ObservationOpened ObservationOpened)
  (ObservationClosed ObservationClosed)]
@@ -35,6 +43,27 @@
   ScopeReason String
   ScopeReference [(Path WirePath) (Task TaskToken)]
   TimestampNanos Integer
+  WorkflowRunDigest String
+  WorkflowStepName String
+  ProviderName String
+  ModelName String
+  HostName String
+
+  ;; Mirrors imported signal-criome nouns used by src/lib.rs. The source of
+  ;; truth for these types remains signal-criome; they are repeated here only
+  ;; so the generated schema mirror exposes the public shape.
+  ObjectDigest String
+  ContractDigest ObjectDigest
+  OperationDigest ObjectDigest
+  WorkflowDigest ObjectDigest
+  WorkflowProvenanceDigest ObjectDigest
+  AuthorizedObjectKind [Operation Contract Agreement Time Head]
+  ComponentKind [Spirit Criome Router Mirror Lojix Persona Agent]
+  AuthorizedObjectReference { component.ComponentKind digest.ObjectDigest kind.AuthorizedObjectKind }
+  EvaluationRejectionReason [OutsideTimeWindow TimeNotProven AgreementMissing]
+  EscalationTarget [Psyche (Workflow WorkflowDigest)]
+  EvaluationDecision [Authorized Deferred NonJudgement (Escalate EscalationTarget) (Rejected EvaluationRejectionReason)]
+  WorkflowReceipt { workflow.WorkflowDigest operation.OperationDigest outcome.EvaluationDecision provenance.WorkflowProvenanceDigest }
 
   RepositoryName String
   BranchName String
@@ -81,6 +110,26 @@
   ActivityAcknowledgment Integer
   ActivityList Activities
 
+  WorkflowRunRequest { workflow.WorkflowDigest operation.AuthorizedObjectReference contract.ContractDigest }
+  WorkflowRunObservation { run.WorkflowRunDigest }
+  WorkflowRunObservationToken { run.WorkflowRunDigest }
+  WorkflowRunHandle { run.WorkflowRunDigest }
+  WorkflowRunAccepted { handle.WorkflowRunHandle }
+  WorkflowReceiptProduced { handle.WorkflowRunHandle receipt.WorkflowReceipt }
+  WorkflowRunLogReported { log.WorkflowRunLog }
+  WorkflowRunLog { run.WorkflowRunDigest step_logs.(Vector StepLog) }
+  StepLog { step.WorkflowStepName attestation.ModelAttestation outcome.StepOutcome }
+  ModelAttestation { provider.ProviderName model.ModelName host.HostName call.OperationDigest }
+  StepOutcome [(Produced EvaluationDecision) (Failed ScopeReason)]
+  WorkflowDefinition { steps.(Vector WorkflowStep) combination.CombinationRule escalation.(Optional EscalationTarget) }
+  WorkflowStep { name.WorkflowStepName prompt.ObjectDigest provider.(Optional ProviderName) dependencies.(Vector WorkflowStepName) }
+  CombinationRule [(Threshold StepThreshold) Unanimous AnyApprove]
+  StepThreshold Integer
+  WorkflowRunSnapshot { handle.WorkflowRunHandle latest_log.(Optional WorkflowRunLog) receipt.(Optional WorkflowReceipt) }
+  WorkflowRunObservationOpened { token.WorkflowRunObservationToken snapshot.WorkflowRunSnapshot }
+  WorkflowRunObservationClosed { token.WorkflowRunObservationToken }
+  WorkflowRunUpdate { run.WorkflowRunDigest log.(Optional WorkflowRunLog) receipt.(Optional WorkflowReceipt) }
+
   DownstreamComponent [Router Harness Terminal Message Mind System Introspect]
   ApplicationFailureReason [Unreachable Rejected Unimplemented TimedOut Unknown]
   ApplicationSuccess { component.DownstreamComponent detail.ScopeReason }
@@ -89,11 +138,13 @@
 
   ObservationOpened ObservationToken
   ObservationClosed ObservationToken
-  OperationKind [Claim Release Handoff Observe Submit Query Watch Unwatch]
+  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch]
   EffectOutcome [Applied Removed Changed Observed StreamOpened StreamClosed NoChange]
   OperationReceived OperationKind
   EffectEmitted { operation.OperationKind outcome.EffectOutcome }
+  WorkflowRunEvent [(WorkflowRunUpdated WorkflowRunUpdate belongs WorkflowRunStream)]
   ObservationEvent [(OperationReceived OperationReceived belongs ObservationStream)
                     (EffectEmitted EffectEmitted belongs ObservationStream)]
-  ObservationStream (Stream { token ObservationToken opened ObservationOpened event ObservationEvent close ObservationToken })
+  WorkflowRunStream (Stream { token.WorkflowRunObservationToken opened.WorkflowRunObservationOpened event.WorkflowRunEvent close.WorkflowRunObservationToken })
+  ObservationStream (Stream { token.ObservationToken opened.ObservationOpened event.ObservationEvent close.ObservationToken })
 }

@@ -16,8 +16,9 @@ policy stays in `meta-signal-orchestrate`.
 
 `signal-orchestrate` is the **ordinary peer-callable wire contract** for the
 `orchestrate` daemon. It carries the role-lifecycle relation (claim, release,
-handoff, observation) and the activity-log relation (submit, query). It contains
-no daemon, actor, database, CLI parser, or transport policy — the daemon lowers
+handoff, observation), the activity-log relation (submit, query), and the
+workflow-execution relation used by criome guard contracts. It contains no
+daemon, actor, database, CLI parser, or transport policy — the daemon lowers
 these public operations to component-local commands and effect observations
 internally.
 Meta orchestration policy (lane registry, scheduling, supervision policy)
@@ -31,13 +32,26 @@ The Orchestrate channel carries:
 - **Role lifecycle:** `Claim(RoleClaim)`, `Release(RoleRelease)`,
   `Handoff(RoleHandoff)`, `Observe(Observation)`.
 - **Activity log:** `Submit(ActivitySubmission)`, `Query(ActivityQuery)`.
+- **Workflow execution:** `RunWorkflow(WorkflowRunRequest)` names a
+  content-addressed workflow, criome contract, and authorized object reference;
+  `ObserveWorkflowRun` / `WorkflowRunObservationRetraction` subscribe to and
+  close the run stream.
 - **Observation subscription:** `Watch(ObservationSubscription)` opening an
   `ObservationStream`, `Unwatch(ObservationToken)` closing it.
 - **Replies:** `ClaimAcceptance` / `ClaimRejection` (carrying typed
   `ScopeConflict` records), `ReleaseAcknowledgment`, `HandoffAcceptance` /
   `HandoffRejection`, `RoleSnapshot`, `LanesObserved`, `ActivityAcknowledgment`,
-  `ActivityList`, `PartialApplied`, and the observation open/close replies.
-- **Events:** `Observed(ObservationEvent)` on the `ObservationStream`.
+  `ActivityList`, workflow acceptance / receipt / log replies,
+  `PartialApplied`, and the observation open/close replies.
+- **Events:** `WorkflowRunUpdated(WorkflowRunUpdate)` on the
+  `WorkflowRunStream`; `Observed(ObservationEvent)` on the
+  `ObservationStream`.
+
+The workflow surface is the local execution-chamber half of criome guard
+contracts. Orchestrate runs or coordinates agent/model steps and returns
+content-addressed logs and `signal-criome::WorkflowReceipt` values. Criome owns
+the guard contract and authorization verdict adoption; this crate only names
+the public wire shape for starting, observing, and reporting a workflow run.
 
 The wire vocabulary is contract-local: the daemon lowers these public operations
 into component-local Nexus commands and SEMA reads or writes. Database-action

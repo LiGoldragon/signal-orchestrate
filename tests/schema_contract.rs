@@ -21,16 +21,16 @@ fn signal_orchestrate_schema_lowers_ordinary_routes_and_streams() {
         .source()
         .lower(
             &SchemaEngine::default(),
-            SchemaIdentity::new("signal-orchestrate:lib", "0.2.0"),
+            SchemaIdentity::new("signal-orchestrate:lib", "0.4.0"),
         )
         .expect("schema lowers");
 
     let input = root_enum(schema.input());
     let output = root_enum(schema.output());
 
-    assert_eq!(input.variants.len(), 8);
-    assert_eq!(output.variants.len(), 13);
-    assert_eq!(schema.streams().len(), 1);
+    assert_eq!(input.variants.len(), 11);
+    assert_eq!(output.variants.len(), 18);
+    assert_eq!(schema.streams().len(), 2);
 
     let claim = &input.variants[0];
     assert_eq!(claim.name.as_str(), "Claim");
@@ -43,7 +43,18 @@ fn signal_orchestrate_schema_lowers_ordinary_routes_and_streams() {
         Some("RoleClaim")
     );
 
-    let watch = &input.variants[6];
+    let workflow_observation = &input.variants[7];
+    assert_eq!(workflow_observation.name.as_str(), "ObserveWorkflowRun");
+    let relation = workflow_observation
+        .stream_relation
+        .as_ref()
+        .expect("ObserveWorkflowRun opens stream");
+    assert!(matches!(
+        relation,
+        StreamRelation::Opens(name) if name.as_str() == "WorkflowRunStream"
+    ));
+
+    let watch = &input.variants[9];
     assert_eq!(watch.name.as_str(), "Watch");
     let relation = watch.stream_relation.as_ref().expect("Watch opens stream");
     assert!(matches!(
@@ -52,5 +63,8 @@ fn signal_orchestrate_schema_lowers_ordinary_routes_and_streams() {
     ));
 
     let stream = &schema.streams()[0];
+    assert_eq!(stream.name.as_str(), "WorkflowRunStream");
+
+    let stream = &schema.streams()[1];
     assert_eq!(stream.name.as_str(), "ObservationStream");
 }

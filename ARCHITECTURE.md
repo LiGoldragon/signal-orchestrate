@@ -14,6 +14,11 @@ The channel is declared by one `signal_channel!` invocation in
 daemon lowers those operations to internal commands and publishes
 contract-owned effect observations.
 
+The contract also carries the first workflow-execution surface for criome guard
+contracts. A caller submits a content-addressed workflow digest, criome
+contract digest, and authorized-object reference; orchestrate returns a run
+handle, step logs, and eventually a `signal-criome::WorkflowReceipt`.
+
 ## Contract Operation Heads
 
 The public request surface is:
@@ -24,6 +29,9 @@ The public request surface is:
 - `Observe(RoleObservation)`
 - `Submit(ActivitySubmission)`
 - `Query(ActivityQuery)`
+- `RunWorkflow(WorkflowRunRequest)`
+- `ObserveWorkflowRun(WorkflowRunObservation)`
+- `WorkflowRunObservationRetraction(WorkflowRunObservationToken)`
 - `Watch(ObservationSubscription)`
 - `Unwatch(ObservationToken)`
 
@@ -74,8 +82,14 @@ OrchestrateRequest                 OrchestrateReply
 ├─ Observe(RoleObservation)        ├─ HandoffAcceptance
 ├─ Submit(ActivitySubmission)      ├─ HandoffRejection
 ├─ Query(ActivityQuery)            ├─ RoleSnapshot
-├─ Watch(ObservationSubscription)  ├─ ActivityAcknowledgment
-└─ Unwatch(ObservationToken)       ├─ ActivityList
+├─ RunWorkflow(WorkflowRunRequest) ├─ ActivityAcknowledgment
+├─ ObserveWorkflowRun(...)         ├─ ActivityList
+├─ WorkflowRunObservationRetraction
+├─ Watch(ObservationSubscription)  ├─ WorkflowRunAccepted
+└─ Unwatch(ObservationToken)       ├─ WorkflowReceiptProduced
+                                   ├─ WorkflowRunLogReported
+                                   ├─ WorkflowRunObservationOpened
+                                   ├─ WorkflowRunObservationClosed
                                    ├─ PartialApplied
                                    ├─ ObservationOpened
                                    └─ ObservationClosed
@@ -102,6 +116,9 @@ This contract owns:
 - `PartialApplied`, `ApplicationSuccess`, `ApplicationFailure`,
   `DownstreamComponent`, and `ApplicationFailureReason`: typed
   record-divergence reply vocabulary for fanned-out Mutate chains.
+- `WorkflowRunRequest`, `WorkflowRunHandle`, `WorkflowRunLog`,
+  `ModelAttestation`, `WorkflowDefinition`, and related step/log records:
+  the public workflow execution and observation surface.
 
 `RoleIdentifier`, `WirePath`, `TaskToken`, and `ScopeReason` are
 validated newtypes. Construct them through `from_wire_token`,
@@ -120,6 +137,11 @@ crate has no `signal-sema` dependency.
 `OrchestrateRequest::operation_kind()` exposes the contract operation without
 asking consumers to know any daemon storage plan.
 
+`RunWorkflow` lowers to the daemon-owned workflow runner. This contract does
+not decide how to schedule a DAG, which agent/provider executes a step, or
+where logs are stored. It only defines the content-addressed request and the
+observable outputs: handle, logs, and criome-compatible receipt.
+
 ## 5 · Non-Ownership
 
 This crate does not own:
@@ -130,6 +152,8 @@ This crate does not own:
 - CLI argv parsing or NOTA rendering policy;
 - socket paths, reconnect policy, or transport lifecycle;
 - meta orchestration orders.
+- LLM providers, workflow scheduling, retry policy, or criome verdict
+  adoption.
 
 Meta orders belong in a `meta-signal-orchestrate` contract. This ordinary
 contract is the peer/CLI surface.
@@ -145,6 +169,8 @@ contract is the peer/CLI surface.
 - operation roots encode as contract-local NOTA heads;
 - dynamic role identifiers round-trip as ordinary payload data;
 - observer events round-trip through the streaming frame shape;
+- workflow run requests, logs, receipts, and stream updates round-trip through
+  the same frame shape;
 - invalid scope primitives are rejected.
 
 ## Code Map

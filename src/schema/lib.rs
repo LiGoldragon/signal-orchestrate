@@ -14,32 +14,50 @@ pub type Path = std::string::String;
 pub use nota_next::{NotaDecodeError, NotaEncode, NotaSource};
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleIdentifier(String);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleName(RoleIdentifier);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleToken(String);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleTokens(Vec<RoleToken>);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Role(RoleTokens);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -56,12 +74,18 @@ pub enum LaneAuthority {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LaneIdentifier(String);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LaneRegistration {
     pub lane: LaneIdentifier,
@@ -70,7 +94,10 @@ pub struct LaneRegistration {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -87,22 +114,34 @@ pub enum HarnessKind {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WirePath(String);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct TaskToken(String);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ScopeReason(String);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum ScopeReference {
     Path(WirePath),
@@ -110,32 +149,249 @@ pub enum ScopeReference {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct TimestampNanos(Integer);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunDigest(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowStepName(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ProviderName(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ModelName(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct HostName(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ObjectDigest(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ContractDigest(ObjectDigest);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OperationDigest(ObjectDigest);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowDigest(ObjectDigest);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowProvenanceDigest(ObjectDigest);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum AuthorizedObjectKind {
+    Operation,
+    Contract,
+    Agreement,
+    Time,
+    Head,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum ComponentKind {
+    Spirit,
+    Criome,
+    Router,
+    Mirror,
+    Lojix,
+    Persona,
+    Agent,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct AuthorizedObjectReference {
+    pub component: ComponentKind,
+    pub digest: ObjectDigest,
+    pub kind: AuthorizedObjectKind,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum EvaluationRejectionReason {
+    OutsideTimeWindow,
+    TimeNotProven,
+    AgreementMissing,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum EscalationTarget {
+    Psyche,
+    Workflow(WorkflowDigest),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum EvaluationDecision {
+    Authorized,
+    Deferred,
+    NonJudgement,
+    Escalate(EscalationTarget),
+    Rejected(EvaluationRejectionReason),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowReceipt {
+    pub workflow: WorkflowDigest,
+    pub operation: OperationDigest,
+    pub outcome: EvaluationDecision,
+    pub provenance: WorkflowProvenanceDigest,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RepositoryName(String);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct BranchName(String);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LaneName(String);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct PurposeText(String);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -154,7 +410,10 @@ pub enum WorktreeStatus {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -172,7 +431,10 @@ pub enum PushedState {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Worktree {
     pub repository: RepositoryName,
@@ -186,57 +448,90 @@ pub struct Worktree {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ScopeReferences(Vec<ScopeReference>);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ActivityFilters(Vec<ActivityFilter>);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ScopeConflicts(Vec<ScopeConflict>);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LaneRegistrations(Vec<LaneRegistration>);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Worktrees(Vec<Worktree>);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleStatuses(Vec<RoleStatus>);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Activities(Vec<Activity>);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ClaimEntries(Vec<ClaimEntry>);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ApplicationSuccesses(Vec<ApplicationSuccess>);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ApplicationFailures(Vec<ApplicationFailure>);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleClaim {
     pub role: RoleName,
@@ -245,12 +540,18 @@ pub struct RoleClaim {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleRelease(RoleName);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleHandoff {
     pub from: RoleName,
@@ -260,7 +561,10 @@ pub struct RoleHandoff {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -278,7 +582,10 @@ pub enum Observation {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ActivitySubmission {
     pub role: RoleName,
@@ -287,7 +594,10 @@ pub struct ActivitySubmission {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ActivityQuery {
     pub limit: Integer,
@@ -295,7 +605,10 @@ pub struct ActivityQuery {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum ActivityFilter {
     RoleFilter(RoleName),
@@ -304,7 +617,10 @@ pub enum ActivityFilter {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ObservationSubscription {
     pub include_operations: Boolean,
@@ -312,12 +628,18 @@ pub struct ObservationSubscription {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ObservationToken(Integer);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ClaimAcceptance {
     pub role: RoleName,
@@ -325,7 +647,10 @@ pub struct ClaimAcceptance {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ClaimRejection {
     pub role: RoleName,
@@ -333,7 +658,10 @@ pub struct ClaimRejection {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ScopeConflict {
     pub scope: ScopeReference,
@@ -342,7 +670,10 @@ pub struct ScopeConflict {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ReleaseAcknowledgment {
     pub role: RoleName,
@@ -350,7 +681,10 @@ pub struct ReleaseAcknowledgment {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct HandoffAcceptance {
     pub from: RoleName,
@@ -359,7 +693,10 @@ pub struct HandoffAcceptance {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct HandoffRejection {
     pub from: RoleName,
@@ -368,7 +705,10 @@ pub struct HandoffRejection {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum HandoffRejectionReason {
     SourceRoleDoesNotHold,
@@ -376,7 +716,10 @@ pub enum HandoffRejectionReason {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleSnapshot {
     pub roles: RoleStatuses,
@@ -384,17 +727,26 @@ pub struct RoleSnapshot {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LanesObserved(LaneRegistrations);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorktreesObserved(Worktrees);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleStatus {
     pub role: RoleName,
@@ -403,7 +755,10 @@ pub struct RoleStatus {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ClaimEntry {
     pub scope: ScopeReference,
@@ -411,7 +766,10 @@ pub struct ClaimEntry {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Activity {
     pub role: RoleName,
@@ -421,17 +779,224 @@ pub struct Activity {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ActivityAcknowledgment(Integer);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ActivityList(Activities);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunRequest {
+    pub workflow: WorkflowDigest,
+    pub operation: AuthorizedObjectReference,
+    pub contract: ContractDigest,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunObservation(WorkflowRunDigest);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunObservationToken(WorkflowRunDigest);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunHandle(WorkflowRunDigest);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunAccepted(WorkflowRunHandle);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowReceiptProduced {
+    pub handle: WorkflowRunHandle,
+    pub receipt: WorkflowReceipt,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunLogReported(WorkflowRunLog);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunLog {
+    pub run: WorkflowRunDigest,
+    pub step_logs: Vec<StepLog>,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct StepLog {
+    pub step: WorkflowStepName,
+    pub attestation: ModelAttestation,
+    pub outcome: StepOutcome,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ModelAttestation {
+    pub provider: ProviderName,
+    pub model: ModelName,
+    pub host: HostName,
+    pub call: OperationDigest,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum StepOutcome {
+    Produced(EvaluationDecision),
+    Failed(ScopeReason),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowDefinition {
+    pub steps: Vec<WorkflowStep>,
+    pub combination: CombinationRule,
+    pub escalation: Option<EscalationTarget>,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowStep {
+    pub name: WorkflowStepName,
+    pub prompt: ObjectDigest,
+    pub provider: Option<ProviderName>,
+    pub dependencies: Vec<WorkflowStepName>,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum CombinationRule {
+    Threshold(StepThreshold),
+    Unanimous,
+    AnyApprove,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct StepThreshold(Integer);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunSnapshot {
+    pub handle: WorkflowRunHandle,
+    pub latest_log: Option<WorkflowRunLog>,
+    pub receipt: Option<WorkflowReceipt>,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunObservationOpened {
+    pub token: WorkflowRunObservationToken,
+    pub snapshot: WorkflowRunSnapshot,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunObservationClosed(WorkflowRunObservationToken);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunUpdate {
+    pub run: WorkflowRunDigest,
+    pub log: Option<WorkflowRunLog>,
+    pub receipt: Option<WorkflowReceipt>,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -453,7 +1018,10 @@ pub enum DownstreamComponent {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -473,7 +1041,10 @@ pub enum ApplicationFailureReason {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ApplicationSuccess {
     pub component: DownstreamComponent,
@@ -481,7 +1052,10 @@ pub struct ApplicationSuccess {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ApplicationFailure {
     pub component: DownstreamComponent,
@@ -490,7 +1064,10 @@ pub struct ApplicationFailure {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct PartialApplied {
     pub succeeded: ApplicationSuccesses,
@@ -498,17 +1075,26 @@ pub struct PartialApplied {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ObservationOpened(ObservationToken);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ObservationClosed(ObservationToken);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -526,12 +1112,18 @@ pub enum OperationKind {
     Observe,
     Submit,
     Query,
+    RunWorkflow,
+    ObserveWorkflowRun,
+    WorkflowRunObservationRetraction,
     Watch,
     Unwatch,
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -553,12 +1145,18 @@ pub enum EffectOutcome {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OperationReceived(OperationKind);
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct EffectEmitted {
     pub operation: OperationKind,
@@ -566,7 +1164,20 @@ pub struct EffectEmitted {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum WorkflowRunEvent {
+    WorkflowRunUpdated(WorkflowRunUpdate),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum ObservationEvent {
     OperationReceived(OperationReceived),
@@ -574,7 +1185,10 @@ pub enum ObservationEvent {
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Input {
     Claim(RoleClaim),
@@ -583,12 +1197,18 @@ pub enum Input {
     Observe(Observation),
     Submit(ActivitySubmission),
     Query(ActivityQuery),
+    RunWorkflow(WorkflowRunRequest),
+    ObserveWorkflowRun(WorkflowRunObservation),
+    WorkflowRunObservationRetraction(WorkflowRunObservationToken),
     Watch(ObservationSubscription),
     Unwatch(ObservationToken),
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Output {
     ClaimAcceptance(ClaimAcceptance),
@@ -601,6 +1221,11 @@ pub enum Output {
     WorktreesObserved(WorktreesObserved),
     ActivityAcknowledgment(ActivityAcknowledgment),
     ActivityList(ActivityList),
+    WorkflowRunAccepted(WorkflowRunAccepted),
+    WorkflowReceiptProduced(WorkflowReceiptProduced),
+    WorkflowRunLogReported(WorkflowRunLogReported),
+    WorkflowRunObservationOpened(WorkflowRunObservationOpened),
+    WorkflowRunObservationClosed(WorkflowRunObservationClosed),
     PartialApplied(PartialApplied),
     ObservationOpened(ObservationOpened),
     ObservationClosed(ObservationClosed),
@@ -792,6 +1417,196 @@ impl TimestampNanos {
 #[rustfmt::skip]
 impl From<Integer> for TimestampNanos {
     fn from(payload: Integer) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WorkflowRunDigest {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for WorkflowRunDigest {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WorkflowStepName {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for WorkflowStepName {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ProviderName {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for ProviderName {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ModelName {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for ModelName {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl HostName {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for HostName {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ObjectDigest {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for ObjectDigest {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ContractDigest {
+    pub fn new(payload: ObjectDigest) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &ObjectDigest {
+        &self.0
+    }
+    pub fn into_payload(self) -> ObjectDigest {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<ObjectDigest> for ContractDigest {
+    fn from(payload: ObjectDigest) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl OperationDigest {
+    pub fn new(payload: ObjectDigest) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &ObjectDigest {
+        &self.0
+    }
+    pub fn into_payload(self) -> ObjectDigest {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<ObjectDigest> for OperationDigest {
+    fn from(payload: ObjectDigest) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WorkflowDigest {
+    pub fn new(payload: ObjectDigest) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &ObjectDigest {
+        &self.0
+    }
+    pub fn into_payload(self) -> ObjectDigest {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<ObjectDigest> for WorkflowDigest {
+    fn from(payload: ObjectDigest) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WorkflowProvenanceDigest {
+    pub fn new(payload: ObjectDigest) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &ObjectDigest {
+        &self.0
+    }
+    pub fn into_payload(self) -> ObjectDigest {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<ObjectDigest> for WorkflowProvenanceDigest {
+    fn from(payload: ObjectDigest) -> Self {
         Self::new(payload)
     }
 }
@@ -1177,6 +1992,139 @@ impl From<Activities> for ActivityList {
 }
 
 #[rustfmt::skip]
+impl WorkflowRunObservation {
+    pub fn new(payload: WorkflowRunDigest) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &WorkflowRunDigest {
+        &self.0
+    }
+    pub fn into_payload(self) -> WorkflowRunDigest {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<WorkflowRunDigest> for WorkflowRunObservation {
+    fn from(payload: WorkflowRunDigest) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WorkflowRunObservationToken {
+    pub fn new(payload: WorkflowRunDigest) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &WorkflowRunDigest {
+        &self.0
+    }
+    pub fn into_payload(self) -> WorkflowRunDigest {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<WorkflowRunDigest> for WorkflowRunObservationToken {
+    fn from(payload: WorkflowRunDigest) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WorkflowRunHandle {
+    pub fn new(payload: WorkflowRunDigest) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &WorkflowRunDigest {
+        &self.0
+    }
+    pub fn into_payload(self) -> WorkflowRunDigest {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<WorkflowRunDigest> for WorkflowRunHandle {
+    fn from(payload: WorkflowRunDigest) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WorkflowRunAccepted {
+    pub fn new(payload: WorkflowRunHandle) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &WorkflowRunHandle {
+        &self.0
+    }
+    pub fn into_payload(self) -> WorkflowRunHandle {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<WorkflowRunHandle> for WorkflowRunAccepted {
+    fn from(payload: WorkflowRunHandle) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WorkflowRunLogReported {
+    pub fn new(payload: WorkflowRunLog) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &WorkflowRunLog {
+        &self.0
+    }
+    pub fn into_payload(self) -> WorkflowRunLog {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<WorkflowRunLog> for WorkflowRunLogReported {
+    fn from(payload: WorkflowRunLog) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl StepThreshold {
+    pub fn new(payload: Integer) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Integer {
+        &self.0
+    }
+    pub fn into_payload(self) -> Integer {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Integer> for StepThreshold {
+    fn from(payload: Integer) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WorkflowRunObservationClosed {
+    pub fn new(payload: WorkflowRunObservationToken) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &WorkflowRunObservationToken {
+        &self.0
+    }
+    pub fn into_payload(self) -> WorkflowRunObservationToken {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<WorkflowRunObservationToken> for WorkflowRunObservationClosed {
+    fn from(payload: WorkflowRunObservationToken) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl ObservationOpened {
     pub fn new(payload: ObservationToken) -> Self {
         Self(payload)
@@ -1244,6 +2192,23 @@ impl ScopeReference {
 }
 
 #[rustfmt::skip]
+impl EscalationTarget {
+    pub fn workflow(payload: ObjectDigest) -> Self {
+        Self::Workflow(WorkflowDigest::new(payload))
+    }
+}
+
+#[rustfmt::skip]
+impl EvaluationDecision {
+    pub fn escalate(payload: EscalationTarget) -> Self {
+        Self::Escalate(payload)
+    }
+    pub fn rejected(payload: EvaluationRejectionReason) -> Self {
+        Self::Rejected(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl ActivityFilter {
     pub fn role_filter(payload: RoleIdentifier) -> Self {
         Self::RoleFilter(RoleName::new(payload))
@@ -1260,6 +2225,30 @@ impl ActivityFilter {
 impl HandoffRejectionReason {
     pub fn target_role_conflict(payload: Vec<ScopeConflict>) -> Self {
         Self::TargetRoleConflict(ScopeConflicts::new(payload))
+    }
+}
+
+#[rustfmt::skip]
+impl StepOutcome {
+    pub fn produced(payload: EvaluationDecision) -> Self {
+        Self::Produced(payload)
+    }
+    pub fn failed(payload: String) -> Self {
+        Self::Failed(ScopeReason::new(payload))
+    }
+}
+
+#[rustfmt::skip]
+impl CombinationRule {
+    pub fn threshold(payload: Integer) -> Self {
+        Self::Threshold(StepThreshold::new(payload))
+    }
+}
+
+#[rustfmt::skip]
+impl WorkflowRunEvent {
+    pub fn workflow_run_updated(payload: WorkflowRunUpdate) -> Self {
+        Self::WorkflowRunUpdated(payload)
     }
 }
 
@@ -1292,6 +2281,15 @@ impl Input {
     }
     pub fn query(payload: ActivityQuery) -> Self {
         Self::Query(payload)
+    }
+    pub fn run_workflow(payload: WorkflowRunRequest) -> Self {
+        Self::RunWorkflow(payload)
+    }
+    pub fn observe_workflow_run(payload: WorkflowRunDigest) -> Self {
+        Self::ObserveWorkflowRun(WorkflowRunObservation::new(payload))
+    }
+    pub fn workflow_run_observation_retraction(payload: WorkflowRunDigest) -> Self {
+        Self::WorkflowRunObservationRetraction(WorkflowRunObservationToken::new(payload))
     }
     pub fn watch(payload: ObservationSubscription) -> Self {
         Self::Watch(payload)
@@ -1333,6 +2331,25 @@ impl Output {
     pub fn activity_list(payload: Activities) -> Self {
         Self::ActivityList(ActivityList::new(payload))
     }
+    pub fn workflow_run_accepted(payload: WorkflowRunHandle) -> Self {
+        Self::WorkflowRunAccepted(WorkflowRunAccepted::new(payload))
+    }
+    pub fn workflow_receipt_produced(payload: WorkflowReceiptProduced) -> Self {
+        Self::WorkflowReceiptProduced(payload)
+    }
+    pub fn workflow_run_log_reported(payload: WorkflowRunLog) -> Self {
+        Self::WorkflowRunLogReported(WorkflowRunLogReported::new(payload))
+    }
+    pub fn workflow_run_observation_opened(
+        payload: WorkflowRunObservationOpened,
+    ) -> Self {
+        Self::WorkflowRunObservationOpened(payload)
+    }
+    pub fn workflow_run_observation_closed(
+        payload: WorkflowRunObservationToken,
+    ) -> Self {
+        Self::WorkflowRunObservationClosed(WorkflowRunObservationClosed::new(payload))
+    }
     pub fn partial_applied(payload: PartialApplied) -> Self {
         Self::PartialApplied(payload)
     }
@@ -1355,6 +2372,27 @@ impl From<WirePath> for ScopeReference {
 impl From<TaskToken> for ScopeReference {
     fn from(payload: TaskToken) -> Self {
         Self::Task(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorkflowDigest> for EscalationTarget {
+    fn from(payload: WorkflowDigest) -> Self {
+        Self::Workflow(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<EscalationTarget> for EvaluationDecision {
+    fn from(payload: EscalationTarget) -> Self {
+        Self::Escalate(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<EvaluationRejectionReason> for EvaluationDecision {
+    fn from(payload: EvaluationRejectionReason) -> Self {
+        Self::Rejected(payload)
     }
 }
 
@@ -1383,6 +2421,34 @@ impl From<TaskToken> for ActivityFilter {
 impl From<ScopeConflicts> for HandoffRejectionReason {
     fn from(payload: ScopeConflicts) -> Self {
         Self::TargetRoleConflict(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<EvaluationDecision> for StepOutcome {
+    fn from(payload: EvaluationDecision) -> Self {
+        Self::Produced(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<ScopeReason> for StepOutcome {
+    fn from(payload: ScopeReason) -> Self {
+        Self::Failed(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<StepThreshold> for CombinationRule {
+    fn from(payload: StepThreshold) -> Self {
+        Self::Threshold(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorkflowRunUpdate> for WorkflowRunEvent {
+    fn from(payload: WorkflowRunUpdate) -> Self {
+        Self::WorkflowRunUpdated(payload)
     }
 }
 
@@ -1439,6 +2505,27 @@ impl From<ActivitySubmission> for Input {
 impl From<ActivityQuery> for Input {
     fn from(payload: ActivityQuery) -> Self {
         Self::Query(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorkflowRunRequest> for Input {
+    fn from(payload: WorkflowRunRequest) -> Self {
+        Self::RunWorkflow(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorkflowRunObservation> for Input {
+    fn from(payload: WorkflowRunObservation) -> Self {
+        Self::ObserveWorkflowRun(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorkflowRunObservationToken> for Input {
+    fn from(payload: WorkflowRunObservationToken) -> Self {
+        Self::WorkflowRunObservationRetraction(payload)
     }
 }
 
@@ -1527,6 +2614,41 @@ impl From<ActivityList> for Output {
 }
 
 #[rustfmt::skip]
+impl From<WorkflowRunAccepted> for Output {
+    fn from(payload: WorkflowRunAccepted) -> Self {
+        Self::WorkflowRunAccepted(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorkflowReceiptProduced> for Output {
+    fn from(payload: WorkflowReceiptProduced) -> Self {
+        Self::WorkflowReceiptProduced(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorkflowRunLogReported> for Output {
+    fn from(payload: WorkflowRunLogReported) -> Self {
+        Self::WorkflowRunLogReported(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorkflowRunObservationOpened> for Output {
+    fn from(payload: WorkflowRunObservationOpened) -> Self {
+        Self::WorkflowRunObservationOpened(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorkflowRunObservationClosed> for Output {
+    fn from(payload: WorkflowRunObservationClosed) -> Self {
+        Self::WorkflowRunObservationClosed(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<PartialApplied> for Output {
     fn from(payload: PartialApplied) -> Self {
         Self::PartialApplied(payload)
@@ -1587,8 +2709,11 @@ pub mod short_header {
     pub const INPUT_OBSERVE: u64 = 0x0003000000000000;
     pub const INPUT_SUBMIT: u64 = 0x0004000000000000;
     pub const INPUT_QUERY: u64 = 0x0005000000000000;
-    pub const INPUT_WATCH: u64 = 0x0006000000000000;
-    pub const INPUT_UNWATCH: u64 = 0x0007000000000000;
+    pub const INPUT_RUN_WORKFLOW: u64 = 0x0006000000000000;
+    pub const INPUT_OBSERVE_WORKFLOW_RUN: u64 = 0x0007000000000000;
+    pub const INPUT_WORKFLOW_RUN_OBSERVATION_RETRACTION: u64 = 0x0008000000000000;
+    pub const INPUT_WATCH: u64 = 0x0009000000000000;
+    pub const INPUT_UNWATCH: u64 = 0x000A000000000000;
     pub const OUTPUT_CLAIM_ACCEPTANCE: u64 = 0x0100000000000000;
     pub const OUTPUT_CLAIM_REJECTION: u64 = 0x0101000000000000;
     pub const OUTPUT_RELEASE_ACKNOWLEDGMENT: u64 = 0x0102000000000000;
@@ -1599,9 +2724,14 @@ pub mod short_header {
     pub const OUTPUT_WORKTREES_OBSERVED: u64 = 0x0107000000000000;
     pub const OUTPUT_ACTIVITY_ACKNOWLEDGMENT: u64 = 0x0108000000000000;
     pub const OUTPUT_ACTIVITY_LIST: u64 = 0x0109000000000000;
-    pub const OUTPUT_PARTIAL_APPLIED: u64 = 0x010A000000000000;
-    pub const OUTPUT_OBSERVATION_OPENED: u64 = 0x010B000000000000;
-    pub const OUTPUT_OBSERVATION_CLOSED: u64 = 0x010C000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_ACCEPTED: u64 = 0x010A000000000000;
+    pub const OUTPUT_WORKFLOW_RECEIPT_PRODUCED: u64 = 0x010B000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_LOG_REPORTED: u64 = 0x010C000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_OPENED: u64 = 0x010D000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_CLOSED: u64 = 0x010E000000000000;
+    pub const OUTPUT_PARTIAL_APPLIED: u64 = 0x010F000000000000;
+    pub const OUTPUT_OBSERVATION_OPENED: u64 = 0x0110000000000000;
+    pub const OUTPUT_OBSERVATION_CLOSED: u64 = 0x0111000000000000;
 }
 
 #[rustfmt::skip]
@@ -1640,7 +2770,10 @@ impl std::fmt::Display for SignalFrameError {
 impl std::error::Error for SignalFrameError {}
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -1658,12 +2791,18 @@ pub enum InputRoute {
     Observe,
     Submit,
     Query,
+    RunWorkflow,
+    ObserveWorkflowRun,
+    WorkflowRunObservationRetraction,
     Watch,
     Unwatch,
 }
 
 #[rustfmt::skip]
-#[cfg_attr(feature = "nota-text", derive(nota_next::NotaDecode, nota_next::NotaEncode))]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota_next::NotaDecode, nota_next::NotaDecodeTraced, nota_next::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -1685,6 +2824,11 @@ pub enum OutputRoute {
     WorktreesObserved,
     ActivityAcknowledgment,
     ActivityList,
+    WorkflowRunAccepted,
+    WorkflowReceiptProduced,
+    WorkflowRunLogReported,
+    WorkflowRunObservationOpened,
+    WorkflowRunObservationClosed,
     PartialApplied,
     ObservationOpened,
     ObservationClosed,
@@ -1700,6 +2844,11 @@ impl Input {
             Self::Observe(_) => InputRoute::Observe,
             Self::Submit(_) => InputRoute::Submit,
             Self::Query(_) => InputRoute::Query,
+            Self::RunWorkflow(_) => InputRoute::RunWorkflow,
+            Self::ObserveWorkflowRun(_) => InputRoute::ObserveWorkflowRun,
+            Self::WorkflowRunObservationRetraction(_) => {
+                InputRoute::WorkflowRunObservationRetraction
+            }
             Self::Watch(_) => InputRoute::Watch,
             Self::Unwatch(_) => InputRoute::Unwatch,
         }
@@ -1712,6 +2861,11 @@ impl Input {
             Self::Observe(_) => short_header::INPUT_OBSERVE,
             Self::Submit(_) => short_header::INPUT_SUBMIT,
             Self::Query(_) => short_header::INPUT_QUERY,
+            Self::RunWorkflow(_) => short_header::INPUT_RUN_WORKFLOW,
+            Self::ObserveWorkflowRun(_) => short_header::INPUT_OBSERVE_WORKFLOW_RUN,
+            Self::WorkflowRunObservationRetraction(_) => {
+                short_header::INPUT_WORKFLOW_RUN_OBSERVATION_RETRACTION
+            }
             Self::Watch(_) => short_header::INPUT_WATCH,
             Self::Unwatch(_) => short_header::INPUT_UNWATCH,
         }
@@ -1724,6 +2878,13 @@ impl Input {
             short_header::INPUT_OBSERVE => Ok(InputRoute::Observe),
             short_header::INPUT_SUBMIT => Ok(InputRoute::Submit),
             short_header::INPUT_QUERY => Ok(InputRoute::Query),
+            short_header::INPUT_RUN_WORKFLOW => Ok(InputRoute::RunWorkflow),
+            short_header::INPUT_OBSERVE_WORKFLOW_RUN => {
+                Ok(InputRoute::ObserveWorkflowRun)
+            }
+            short_header::INPUT_WORKFLOW_RUN_OBSERVATION_RETRACTION => {
+                Ok(InputRoute::WorkflowRunObservationRetraction)
+            }
             short_header::INPUT_WATCH => Ok(InputRoute::Watch),
             short_header::INPUT_UNWATCH => Ok(InputRoute::Unwatch),
             _ => {
@@ -1786,6 +2947,15 @@ impl Output {
             Self::WorktreesObserved(_) => OutputRoute::WorktreesObserved,
             Self::ActivityAcknowledgment(_) => OutputRoute::ActivityAcknowledgment,
             Self::ActivityList(_) => OutputRoute::ActivityList,
+            Self::WorkflowRunAccepted(_) => OutputRoute::WorkflowRunAccepted,
+            Self::WorkflowReceiptProduced(_) => OutputRoute::WorkflowReceiptProduced,
+            Self::WorkflowRunLogReported(_) => OutputRoute::WorkflowRunLogReported,
+            Self::WorkflowRunObservationOpened(_) => {
+                OutputRoute::WorkflowRunObservationOpened
+            }
+            Self::WorkflowRunObservationClosed(_) => {
+                OutputRoute::WorkflowRunObservationClosed
+            }
             Self::PartialApplied(_) => OutputRoute::PartialApplied,
             Self::ObservationOpened(_) => OutputRoute::ObservationOpened,
             Self::ObservationClosed(_) => OutputRoute::ObservationClosed,
@@ -1805,6 +2975,19 @@ impl Output {
                 short_header::OUTPUT_ACTIVITY_ACKNOWLEDGMENT
             }
             Self::ActivityList(_) => short_header::OUTPUT_ACTIVITY_LIST,
+            Self::WorkflowRunAccepted(_) => short_header::OUTPUT_WORKFLOW_RUN_ACCEPTED,
+            Self::WorkflowReceiptProduced(_) => {
+                short_header::OUTPUT_WORKFLOW_RECEIPT_PRODUCED
+            }
+            Self::WorkflowRunLogReported(_) => {
+                short_header::OUTPUT_WORKFLOW_RUN_LOG_REPORTED
+            }
+            Self::WorkflowRunObservationOpened(_) => {
+                short_header::OUTPUT_WORKFLOW_RUN_OBSERVATION_OPENED
+            }
+            Self::WorkflowRunObservationClosed(_) => {
+                short_header::OUTPUT_WORKFLOW_RUN_OBSERVATION_CLOSED
+            }
             Self::PartialApplied(_) => short_header::OUTPUT_PARTIAL_APPLIED,
             Self::ObservationOpened(_) => short_header::OUTPUT_OBSERVATION_OPENED,
             Self::ObservationClosed(_) => short_header::OUTPUT_OBSERVATION_CLOSED,
@@ -1828,6 +3011,21 @@ impl Output {
                 Ok(OutputRoute::ActivityAcknowledgment)
             }
             short_header::OUTPUT_ACTIVITY_LIST => Ok(OutputRoute::ActivityList),
+            short_header::OUTPUT_WORKFLOW_RUN_ACCEPTED => {
+                Ok(OutputRoute::WorkflowRunAccepted)
+            }
+            short_header::OUTPUT_WORKFLOW_RECEIPT_PRODUCED => {
+                Ok(OutputRoute::WorkflowReceiptProduced)
+            }
+            short_header::OUTPUT_WORKFLOW_RUN_LOG_REPORTED => {
+                Ok(OutputRoute::WorkflowRunLogReported)
+            }
+            short_header::OUTPUT_WORKFLOW_RUN_OBSERVATION_OPENED => {
+                Ok(OutputRoute::WorkflowRunObservationOpened)
+            }
+            short_header::OUTPUT_WORKFLOW_RUN_OBSERVATION_CLOSED => {
+                Ok(OutputRoute::WorkflowRunObservationClosed)
+            }
             short_header::OUTPUT_PARTIAL_APPLIED => Ok(OutputRoute::PartialApplied),
             short_header::OUTPUT_OBSERVATION_OPENED => Ok(OutputRoute::ObservationOpened),
             short_header::OUTPUT_OBSERVATION_CLOSED => Ok(OutputRoute::ObservationClosed),
@@ -1888,6 +3086,9 @@ impl signal_frame::SignalOperationHeads for Input {
         "Observe",
         "Submit",
         "Query",
+        "RunWorkflow",
+        "ObserveWorkflowRun",
+        "WorkflowRunObservationRetraction",
         "Watch",
         "Unwatch",
     ];

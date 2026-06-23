@@ -26,6 +26,10 @@
 
 use nota_next::{Block, Delimiter, NotaBlock, NotaDecode, NotaDecodeError, NotaEncode};
 use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
+use signal_criome::{
+    AuthorizedObjectReference, ContractDigest, EvaluationDecision, ObjectDigest, OperationDigest,
+    WorkflowDigest, WorkflowReceipt,
+};
 use signal_frame::signal_channel;
 use std::fmt;
 use std::str::FromStr;
@@ -70,6 +74,18 @@ pub enum Error {
     InvalidLaneName { lane: String },
     #[error("worktree purpose must be non-empty and single-line: {purpose}")]
     InvalidPurposeText { purpose: String },
+    #[error(
+        "workflow run digest must be non-empty, unbracketed, and contain no whitespace: {digest}"
+    )]
+    InvalidWorkflowRunDigest { digest: String },
+    #[error("workflow step name must be non-empty, unbracketed, and contain no whitespace: {name}")]
+    InvalidWorkflowStepName { name: String },
+    #[error("provider name must be non-empty, unbracketed, and contain no whitespace: {name}")]
+    InvalidProviderName { name: String },
+    #[error("model name must be non-empty, unbracketed, and contain no whitespace: {name}")]
+    InvalidModelName { name: String },
+    #[error("host name must be non-empty, unbracketed, and contain no whitespace: {name}")]
+    InvalidHostName { name: String },
 }
 
 macro_rules! validated_string_nota_codec {
@@ -182,6 +198,70 @@ impl AsRef<str> for RoleIdentifier {
 }
 
 validated_string_nota_codec!(RoleIdentifier, RoleIdentifier::from_wire_token);
+
+macro_rules! validated_token_type {
+    ($type:ident, $constructor:ident, $error:ident, $field:ident) => {
+        #[derive(
+            Archive,
+            RkyvSerialize,
+            RkyvDeserialize,
+            Debug,
+            Clone,
+            PartialEq,
+            Eq,
+            Hash,
+            PartialOrd,
+            Ord,
+        )]
+        pub struct $type(String);
+
+        impl $type {
+            pub fn try_new(value: String) -> ContractResult<Self> {
+                Self::$constructor(value)
+            }
+
+            pub fn $constructor(value: impl Into<String>) -> ContractResult<Self> {
+                let value = value.into();
+                if value.is_empty()
+                    || value.chars().any(char::is_whitespace)
+                    || value.contains('[')
+                    || value.contains(']')
+                {
+                    return Err(Error::$error { $field: value });
+                }
+                Ok(Self(value))
+            }
+
+            pub fn as_str(&self) -> &str {
+                &self.0
+            }
+        }
+
+        impl TryFrom<String> for $type {
+            type Error = Error;
+
+            fn try_from(value: String) -> ContractResult<Self> {
+                Self::$constructor(value)
+            }
+        }
+
+        impl TryFrom<&str> for $type {
+            type Error = Error;
+
+            fn try_from(value: &str) -> ContractResult<Self> {
+                Self::$constructor(value)
+            }
+        }
+
+        impl AsRef<str> for $type {
+            fn as_ref(&self) -> &str {
+                self.as_str()
+            }
+        }
+
+        validated_string_nota_codec!($type, $type::$constructor);
+    };
+}
 
 /// One token in a role vector.
 #[derive(
@@ -885,6 +965,201 @@ impl TimestampNanos {
     }
 }
 
+// ─── Workflow execution ───────────────────────────────────
+
+validated_token_type!(
+    WorkflowRunDigest,
+    from_wire_token,
+    InvalidWorkflowRunDigest,
+    digest
+);
+validated_token_type!(
+    WorkflowStepName,
+    from_wire_token,
+    InvalidWorkflowStepName,
+    name
+);
+validated_token_type!(ProviderName, from_wire_token, InvalidProviderName, name);
+validated_token_type!(ModelName, from_wire_token, InvalidModelName, name);
+validated_token_type!(HostName, from_wire_token, InvalidHostName, name);
+
+/// Request to run one content-addressed adjudication workflow for one
+/// content-addressed operation under one criome contract.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowRunRequest {
+    pub workflow: WorkflowDigest,
+    pub operation: AuthorizedObjectReference,
+    pub contract: ContractDigest,
+}
+
+/// Subscribe to one workflow run's lifecycle.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowRunObservation {
+    pub run: WorkflowRunDigest,
+}
+
+/// Close one workflow-run subscription.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowRunObservationToken {
+    pub run: WorkflowRunDigest,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowRunHandle {
+    pub run: WorkflowRunDigest,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowRunAccepted {
+    pub handle: WorkflowRunHandle,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowReceiptProduced {
+    pub handle: WorkflowRunHandle,
+    pub receipt: WorkflowReceipt,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowRunLogReported {
+    pub log: WorkflowRunLog,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowRunLog {
+    pub run: WorkflowRunDigest,
+    pub step_logs: Vec<StepLog>,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct StepLog {
+    pub step: WorkflowStepName,
+    pub attestation: ModelAttestation,
+    pub outcome: StepOutcome,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct ModelAttestation {
+    pub provider: ProviderName,
+    pub model: ModelName,
+    pub host: HostName,
+    pub call: OperationDigest,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub enum StepOutcome {
+    Produced(EvaluationDecision),
+    Failed(ScopeReason),
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowDefinition {
+    pub steps: Vec<WorkflowStep>,
+    pub combination: CombinationRule,
+    pub escalation: Option<signal_criome::EscalationTarget>,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowStep {
+    pub name: WorkflowStepName,
+    pub prompt: ObjectDigest,
+    pub provider: Option<ProviderName>,
+    pub dependencies: Vec<WorkflowStepName>,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub enum CombinationRule {
+    Threshold(StepThreshold),
+    Unanimous,
+    AnyApprove,
+}
+
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub struct StepThreshold(u64);
+
+impl StepThreshold {
+    pub const fn new(value: u64) -> Self {
+        Self(value)
+    }
+
+    pub const fn value(self) -> u64 {
+        self.0
+    }
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowRunSnapshot {
+    pub handle: WorkflowRunHandle,
+    pub latest_log: Option<WorkflowRunLog>,
+    pub receipt: Option<WorkflowReceipt>,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowRunObservationOpened {
+    pub token: WorkflowRunObservationToken,
+    pub snapshot: WorkflowRunSnapshot,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowRunObservationClosed {
+    pub token: WorkflowRunObservationToken,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowRunUpdate {
+    pub run: WorkflowRunDigest,
+    pub log: Option<WorkflowRunLog>,
+    pub receipt: Option<WorkflowReceipt>,
+}
+
 // ─── Claim verbs ──────────────────────────────────────────
 
 /// A role asks to claim one or more scopes with a short
@@ -1357,6 +1632,9 @@ signal_channel! {
         operation Observe(Observation),
         operation Submit(ActivitySubmission),
         operation Query(ActivityQuery),
+        operation RunWorkflow(WorkflowRunRequest),
+        operation ObserveWorkflowRun(WorkflowRunObservation) opens WorkflowRunStream,
+        operation WorkflowRunObservationRetraction(WorkflowRunObservationToken),
         operation Watch(ObservationSubscription) opens ObservationStream,
         operation Unwatch(ObservationToken),
     }
@@ -1371,12 +1649,24 @@ signal_channel! {
         WorktreesObserved(WorktreesObserved),
         ActivityAcknowledgment(ActivityAcknowledgment),
         ActivityList(ActivityList),
+        WorkflowRunAccepted(WorkflowRunAccepted),
+        WorkflowReceiptProduced(WorkflowReceiptProduced),
+        WorkflowRunLogReported(WorkflowRunLogReported),
+        WorkflowRunObservationOpened(WorkflowRunObservationOpened),
+        WorkflowRunObservationClosed(WorkflowRunObservationClosed),
         PartialApplied(PartialApplied),
         ObservationOpened(ObservationOpened),
         ObservationClosed(ObservationClosed),
     }
     event Event {
+        WorkflowRunUpdated(WorkflowRunUpdate) belongs WorkflowRunStream,
         Observed(ObservationEvent) belongs ObservationStream,
+    }
+    stream WorkflowRunStream {
+        token WorkflowRunObservationToken;
+        opened WorkflowRunObservationOpened;
+        event WorkflowRunUpdated;
+        close WorkflowRunObservationRetraction;
     }
     stream ObservationStream {
         token ObservationToken;

@@ -7,6 +7,9 @@
   (Observe [Observation])
   (Submit [ActivitySubmission])
   (Query [ActivityQuery])
+  (RunWorkflow [WorkflowRunRequest])
+  (ObserveWorkflowRun [WorkflowRunObservation])
+  (WorkflowRunObservationRetraction [WorkflowRunObservationToken])
   (Watch [ObservationSubscription])
   (Unwatch [ObservationToken])
 ]
@@ -22,6 +25,9 @@
   Observe [(Observation Observation)]
   Submit [(ActivitySubmission ActivitySubmission)]
   Query [(ActivityQuery ActivityQuery)]
+  RunWorkflow [(WorkflowRunRequest WorkflowRunRequest)]
+  ObserveWorkflowRun [(WorkflowRunObservation WorkflowRunObservation)]
+  WorkflowRunObservationRetraction [(WorkflowRunObservationToken WorkflowRunObservationToken)]
   Watch [(ObservationSubscription ObservationSubscription)]
   Unwatch [(ObservationToken ObservationToken)]
 
@@ -38,6 +44,23 @@
   ScopeReason (String)
   ScopeReference [(Path WirePath) (Task TaskToken)]
   TimestampNanos (u64)
+  WorkflowRunDigest (String)
+  WorkflowStepName (String)
+  ProviderName (String)
+  ModelName (String)
+  HostName (String)
+  ObjectDigest (String)
+  ContractDigest (ObjectDigest)
+  OperationDigest (ObjectDigest)
+  WorkflowDigest (ObjectDigest)
+  WorkflowProvenanceDigest (ObjectDigest)
+  AuthorizedObjectKind [Operation Contract Agreement Time Head]
+  ComponentKind [Spirit Criome Router Mirror Lojix Persona Agent]
+  AuthorizedObjectReference (ComponentKind ObjectDigest AuthorizedObjectKind)
+  EvaluationRejectionReason [OutsideTimeWindow TimeNotProven AgreementMissing]
+  EscalationTarget [Psyche (Workflow WorkflowDigest)]
+  EvaluationDecision [Authorized Deferred NonJudgement (Escalate EscalationTarget) (Rejected EvaluationRejectionReason)]
+  WorkflowReceipt (WorkflowDigest OperationDigest EvaluationDecision WorkflowProvenanceDigest)
 
   RoleClaim (RoleName (Vec ScopeReference) ScopeReason)
   RoleRelease (RoleName)
@@ -63,6 +86,25 @@
   Activity (RoleName ScopeReference ScopeReason TimestampNanos)
   ActivityAcknowledgment (u64)
   ActivityList ((Vec Activity))
+  WorkflowRunRequest (WorkflowDigest AuthorizedObjectReference ContractDigest)
+  WorkflowRunObservation (WorkflowRunDigest)
+  WorkflowRunObservationToken (WorkflowRunDigest)
+  WorkflowRunHandle (WorkflowRunDigest)
+  WorkflowRunAccepted (WorkflowRunHandle)
+  WorkflowReceiptProduced (WorkflowRunHandle WorkflowReceipt)
+  WorkflowRunLogReported (WorkflowRunLog)
+  WorkflowRunLog (WorkflowRunDigest (Vec StepLog))
+  StepLog (WorkflowStepName ModelAttestation StepOutcome)
+  ModelAttestation (ProviderName ModelName HostName OperationDigest)
+  StepOutcome [(Produced EvaluationDecision) (Failed ScopeReason)]
+  WorkflowDefinition ((Vec WorkflowStep) CombinationRule (Option EscalationTarget))
+  WorkflowStep (WorkflowStepName ObjectDigest (Option ProviderName) (Vec WorkflowStepName))
+  CombinationRule [(Threshold StepThreshold) Unanimous AnyApprove]
+  StepThreshold (u64)
+  WorkflowRunSnapshot (WorkflowRunHandle (Option WorkflowRunLog) (Option WorkflowReceipt))
+  WorkflowRunObservationOpened (WorkflowRunObservationToken WorkflowRunSnapshot)
+  WorkflowRunObservationClosed (WorkflowRunObservationToken)
+  WorkflowRunUpdate (WorkflowRunDigest (Option WorkflowRunLog) (Option WorkflowReceipt))
   DownstreamComponent [Router Harness Terminal Message Mind System Introspect]
   ApplicationFailureReason [Unreachable Rejected Unimplemented TimedOut Unknown]
   ApplicationSuccess (DownstreamComponent ScopeReason)
@@ -73,9 +115,10 @@
 
   OperationReceived (OperationKind)
   EffectEmitted (OperationKind EffectOutcome)
+  WorkflowRunUpdated (WorkflowRunUpdate)
   ObservationEvent [(OperationReceived OperationReceived) (EffectEmitted EffectEmitted)]
   Observed (ObservationEvent)
-  OperationKind [Claim Release Handoff Observe Submit Query Watch Unwatch]
+  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch]
   EffectOutcome [Applied Removed Changed Observed StreamOpened StreamClosed NoChange]
 }
 
@@ -90,9 +133,17 @@
     LanesObserved
     ActivityAcknowledgment
     ActivityList
+    WorkflowRunAccepted
+    WorkflowReceiptProduced
+    WorkflowRunLogReported
+    WorkflowRunObservationOpened
+    WorkflowRunObservationClosed
     PartialApplied
     ObservationOpened
     ObservationClosed)
+
+  (Event (belongs WorkflowRunStream)
+    WorkflowRunUpdated)
 
   (Event (belongs ObservationStream)
     Observed)

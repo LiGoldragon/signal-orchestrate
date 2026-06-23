@@ -6,6 +6,11 @@
 //! proves the macro-emitted type round-trips through a
 //! length-prefixed Frame.
 
+use signal_criome::{
+    AuthorizedObjectKind, AuthorizedObjectReference, ComponentKind, ContractDigest,
+    EscalationTarget, EvaluationDecision, ObjectDigest, OperationDigest, WorkflowDigest,
+    WorkflowProvenanceDigest, WorkflowReceipt,
+};
 use signal_frame::{
     ExchangeIdentifier, ExchangeLane, LaneSequence, NonEmpty, Reply, RequestPayload, SessionEpoch,
     SignalOperationHeads, SubReply,
@@ -13,15 +18,20 @@ use signal_frame::{
 use signal_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
     ActivitySubmission, ApplicationFailure, ApplicationFailureReason, ApplicationSuccess,
-    ClaimAcceptance, ClaimEntry, ClaimRejection, DownstreamComponent, EffectEmitted, EffectOutcome,
-    Error, HandoffAcceptance, HandoffRejection, HandoffRejectionReason, HarnessKind, LaneAuthority,
-    LaneIdentifier, LaneRegistration, LanesObserved, Observation, ObservationClosed,
-    ObservationEvent, ObservationOpened, ObservationSubscription, ObservationToken, OperationKind,
-    OperationReceived, OrchestrateEvent, OrchestrateFrame, OrchestrateFrameBody, OrchestrateReply,
-    OrchestrateRequest, PartialApplied, ReleaseAcknowledgment, Role, RoleClaim, RoleHandoff,
-    RoleName, RoleRelease, RoleSnapshot, RoleStatus, RoleToken, ScopeConflict, ScopeReason,
-    ScopeReference, TaskToken, TimestampNanos, WirePath, Worktree, WorktreeStatus,
-    WorktreesObserved,
+    ClaimAcceptance, ClaimEntry, ClaimRejection, CombinationRule, DownstreamComponent,
+    EffectEmitted, EffectOutcome, Error, HandoffAcceptance, HandoffRejection,
+    HandoffRejectionReason, HarnessKind, HostName, LaneAuthority, LaneIdentifier, LaneRegistration,
+    LanesObserved, ModelAttestation, ModelName, Observation, ObservationClosed, ObservationEvent,
+    ObservationOpened, ObservationSubscription, ObservationToken, OperationKind, OperationReceived,
+    OrchestrateEvent, OrchestrateFrame, OrchestrateFrameBody, OrchestrateReply, OrchestrateRequest,
+    PartialApplied, ProviderName, ReleaseAcknowledgment, Role, RoleClaim, RoleHandoff, RoleName,
+    RoleRelease, RoleSnapshot, RoleStatus, RoleToken, ScopeConflict, ScopeReason, ScopeReference,
+    StepLog, StepOutcome, StepThreshold, TaskToken, TimestampNanos, WirePath, WorkflowDefinition,
+    WorkflowReceiptProduced, WorkflowRunAccepted, WorkflowRunDigest, WorkflowRunHandle,
+    WorkflowRunLog, WorkflowRunLogReported, WorkflowRunObservation, WorkflowRunObservationClosed,
+    WorkflowRunObservationOpened, WorkflowRunObservationToken, WorkflowRunRequest,
+    WorkflowRunSnapshot, WorkflowRunUpdate, WorkflowStep, WorkflowStepName, Worktree,
+    WorktreeStatus, WorktreesObserved,
 };
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -168,6 +178,73 @@ fn lane_identifier(token: &str) -> LaneIdentifier {
     LaneIdentifier::from_wire_token(token).expect("lane identifier")
 }
 
+fn object_digest(text: &str) -> ObjectDigest {
+    ObjectDigest::from_bytes(text.as_bytes())
+}
+
+fn workflow_digest() -> WorkflowDigest {
+    WorkflowDigest::from_bytes(b"guardian-workflow")
+}
+
+fn contract_digest() -> ContractDigest {
+    ContractDigest::from_bytes(b"criome-contract")
+}
+
+fn operation_digest() -> OperationDigest {
+    OperationDigest::from_bytes(b"spirit-head-record")
+}
+
+fn workflow_run_digest() -> WorkflowRunDigest {
+    WorkflowRunDigest::from_wire_token("workflow-run-1").expect("workflow run digest")
+}
+
+fn workflow_run_handle() -> WorkflowRunHandle {
+    WorkflowRunHandle {
+        run: workflow_run_digest(),
+    }
+}
+
+fn authorized_object_reference() -> AuthorizedObjectReference {
+    AuthorizedObjectReference {
+        component: ComponentKind::Spirit,
+        digest: operation_digest().object_digest().clone(),
+        kind: AuthorizedObjectKind::Head,
+    }
+}
+
+fn workflow_receipt() -> WorkflowReceipt {
+    WorkflowReceipt {
+        workflow: workflow_digest(),
+        operation: operation_digest(),
+        outcome: EvaluationDecision::Authorized,
+        provenance: WorkflowProvenanceDigest::from_bytes(b"workflow-provenance"),
+    }
+}
+
+fn model_attestation() -> ModelAttestation {
+    ModelAttestation {
+        provider: ProviderName::from_wire_token("local-provider").expect("provider"),
+        model: ModelName::from_wire_token("guardian-model").expect("model"),
+        host: HostName::from_wire_token("localhost").expect("host"),
+        call: OperationDigest::from_bytes(b"llm-call"),
+    }
+}
+
+fn step_log() -> StepLog {
+    StepLog {
+        step: WorkflowStepName::from_wire_token("guardian").expect("step"),
+        attestation: model_attestation(),
+        outcome: StepOutcome::Produced(EvaluationDecision::Authorized),
+    }
+}
+
+fn workflow_run_log() -> WorkflowRunLog {
+    WorkflowRunLog {
+        run: workflow_run_digest(),
+        step_logs: vec![step_log()],
+    }
+}
+
 // ─── Request variants ─────────────────────────────────────
 
 #[test]
@@ -265,6 +342,33 @@ fn activity_query_with_task_filter_round_trips() {
         limit: 100,
         filters: vec![ActivityFilter::TaskToken(sample_task())],
     });
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+}
+
+#[test]
+fn workflow_run_request_round_trips() {
+    let request = OrchestrateRequest::RunWorkflow(WorkflowRunRequest {
+        workflow: workflow_digest(),
+        operation: authorized_object_reference(),
+        contract: contract_digest(),
+    });
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+}
+
+#[test]
+fn workflow_run_observation_round_trips() {
+    let request = OrchestrateRequest::ObserveWorkflowRun(WorkflowRunObservation {
+        run: workflow_run_digest(),
+    });
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+
+    let request =
+        OrchestrateRequest::WorkflowRunObservationRetraction(WorkflowRunObservationToken {
+            run: workflow_run_digest(),
+        });
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
 }
@@ -491,6 +595,76 @@ fn activity_list_round_trips() {
 }
 
 #[test]
+fn workflow_run_replies_round_trip() {
+    let accepted = OrchestrateReply::WorkflowRunAccepted(WorkflowRunAccepted {
+        handle: workflow_run_handle(),
+    });
+    assert_eq!(round_trip_reply(accepted.clone()), accepted);
+
+    let receipt = OrchestrateReply::WorkflowReceiptProduced(WorkflowReceiptProduced {
+        handle: workflow_run_handle(),
+        receipt: workflow_receipt(),
+    });
+    assert_eq!(round_trip_reply(receipt.clone()), receipt);
+
+    let log = OrchestrateReply::WorkflowRunLogReported(WorkflowRunLogReported {
+        log: workflow_run_log(),
+    });
+    assert_eq!(round_trip_reply(log.clone()), log);
+}
+
+#[test]
+fn workflow_run_observation_replies_round_trip() {
+    let opened = OrchestrateReply::WorkflowRunObservationOpened(WorkflowRunObservationOpened {
+        token: WorkflowRunObservationToken {
+            run: workflow_run_digest(),
+        },
+        snapshot: WorkflowRunSnapshot {
+            handle: workflow_run_handle(),
+            latest_log: Some(workflow_run_log()),
+            receipt: Some(workflow_receipt()),
+        },
+    });
+    assert_eq!(round_trip_reply(opened.clone()), opened);
+
+    let closed = OrchestrateReply::WorkflowRunObservationClosed(WorkflowRunObservationClosed {
+        token: WorkflowRunObservationToken {
+            run: workflow_run_digest(),
+        },
+    });
+    assert_eq!(round_trip_reply(closed.clone()), closed);
+}
+
+#[test]
+fn workflow_definition_carries_dag_and_escalation_shape() {
+    let definition = WorkflowDefinition {
+        steps: vec![
+            WorkflowStep {
+                name: WorkflowStepName::from_wire_token("guardian").expect("step"),
+                prompt: object_digest("guardian-prompt-template"),
+                provider: Some(ProviderName::from_wire_token("local-provider").expect("provider")),
+                dependencies: vec![],
+            },
+            WorkflowStep {
+                name: WorkflowStepName::from_wire_token("psyche-check").expect("step"),
+                prompt: object_digest("psyche-escalation-template"),
+                provider: None,
+                dependencies: vec![WorkflowStepName::from_wire_token("guardian").expect("step")],
+            },
+        ],
+        combination: CombinationRule::Threshold(StepThreshold::new(2)),
+        escalation: Some(EscalationTarget::Psyche),
+    };
+
+    assert_eq!(definition.steps.len(), 2);
+    assert_eq!(
+        definition.combination,
+        CombinationRule::Threshold(StepThreshold::new(2))
+    );
+    assert_eq!(definition.escalation, Some(EscalationTarget::Psyche));
+}
+
+#[test]
 fn partial_applied_round_trips() {
     let reply = OrchestrateReply::PartialApplied(PartialApplied {
         succeeded: vec![ApplicationSuccess {
@@ -522,6 +696,13 @@ fn observation_replies_round_trip() {
 
 #[test]
 fn observation_events_round_trip() {
+    let workflow = OrchestrateEvent::WorkflowRunUpdated(WorkflowRunUpdate {
+        run: workflow_run_digest(),
+        log: Some(workflow_run_log()),
+        receipt: Some(workflow_receipt()),
+    });
+    assert_eq!(round_trip_event(workflow.clone()), workflow);
+
     let operation =
         OrchestrateEvent::Observed(ObservationEvent::OperationReceived(OperationReceived {
             operation: OperationKind::Claim,
@@ -626,6 +807,26 @@ fn orchestrate_request_exposes_contract_owned_operation_kind() {
                 filters: vec![ActivityFilter::RoleFilter(operator())],
             }),
             OperationKind::Query,
+        ),
+        (
+            OrchestrateRequest::RunWorkflow(WorkflowRunRequest {
+                workflow: workflow_digest(),
+                operation: authorized_object_reference(),
+                contract: contract_digest(),
+            }),
+            OperationKind::RunWorkflow,
+        ),
+        (
+            OrchestrateRequest::ObserveWorkflowRun(WorkflowRunObservation {
+                run: workflow_run_digest(),
+            }),
+            OperationKind::ObserveWorkflowRun,
+        ),
+        (
+            OrchestrateRequest::WorkflowRunObservationRetraction(WorkflowRunObservationToken {
+                run: workflow_run_digest(),
+            }),
+            OperationKind::WorkflowRunObservationRetraction,
         ),
         (
             OrchestrateRequest::Watch(ObservationSubscription {

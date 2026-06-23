@@ -1,6 +1,6 @@
 [package]
 name         = "signal-orchestrate"
-version      = "0.3.0"
+version      = "0.4.0"
 edition      = "2024"
 rust-version = "1.89"
 license      = "MIT OR Apache-2.0"
@@ -20,6 +20,7 @@ nota-text = ["signal-frame/nota-text"]
 
 [dependencies]
 signal-frame = { git = "https://github.com/LiGoldragon/signal-frame.git", branch = "main", default-features = false }
+signal-criome = { git = "https://github.com/LiGoldragon/signal-criome.git", branch = "main", default-features = false, features = ["nota-text"] }
 nota-next   = { git = "https://github.com/LiGoldragon/nota-next.git", branch = "main" }
 rkyv        = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 thiserror   = "2"
