@@ -69,8 +69,10 @@ contract-owned `EffectOutcome`.
 | Wire type | `OrchestrateFrame` / `OrchestrateRequest` / `OrchestrateReply`. |
 
 The channel is request/reply for ordinary operations and stream-capable
-for observation. Activity timestamps are not accepted from callers; the
-daemon store supplies them when committing `ActivitySubmission`.
+for observation. Request payloads do not mint activity timestamps, claim
+sequence, or daemon identity; the daemon store supplies them at commit.
+Request records carry the claimed scopes, the role, and the submitted
+activity body only.
 
 ## 2 · Requests And Replies
 
@@ -142,7 +144,14 @@ not decide how to schedule a DAG, which agent/provider executes a step, or
 where logs are stored. It only defines the content-addressed request and the
 observable outputs: handle, logs, and criome-compatible receipt.
 
-## 5 · Non-Ownership
+## 5 · Constraints
+
+- Wire enums are closed. There is no `Unknown` escape hatch; partial
+  application is a typed `PartialApplied` reply, not an open escape.
+- No stringly-typed dispatch. Scope references, role names, and rejection
+  reasons are typed closed enums.
+
+## 6 · Non-Ownership
 
 This crate does not own:
 
@@ -158,7 +167,7 @@ This crate does not own:
 Meta orders belong in a `meta-signal-orchestrate` contract. This ordinary
 contract is the peer/CLI surface.
 
-## 6 · Witness Tests
+## 7 · Witness Tests
 
 `tests/round_trip.rs` proves:
 
