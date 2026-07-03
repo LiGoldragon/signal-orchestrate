@@ -1,4 +1,4 @@
-use schema_next::{
+use schema::{
     EnumDeclaration, Root, SchemaEngine, SchemaIdentity, SchemaSourceArtifact, StreamRelation,
 };
 use std::path::PathBuf;
@@ -38,8 +38,8 @@ fn signal_orchestrate_schema_lowers_ordinary_routes_and_streams() {
         claim
             .payload
             .as_ref()
-            .and_then(schema_next::TypeReference::plain_name)
-            .map(schema_next::Name::as_str),
+            .and_then(schema::TypeReference::plain_name)
+            .map(schema::Name::as_str),
         Some("RoleClaim")
     );
 

@@ -556,7 +556,7 @@ fn generated_worktree_mirror_uses_canonical_status_field_name() {
 
 #[test]
 fn role_vector_round_trips_through_nota() {
-    use nota_next::{NotaEncode, NotaSource};
+    use nota::{NotaEncode, NotaSource};
 
     let role = role_vector(&["PersonaSignal", "Designer"]);
     let text = role.to_nota();
@@ -884,7 +884,7 @@ fn orchestrate_contract_has_no_sema_observation_or_classification_roots() {
 #[test]
 #[cfg(feature = "nota-text")]
 fn orchestrate_operations_encode_as_contract_local_nota_heads() {
-    use nota_next::{NotaEncode, NotaSource};
+    use nota::{NotaEncode, NotaSource};
 
     let request = OrchestrateRequest::Query(ActivityQuery {
         limit: 8,

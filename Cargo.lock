@@ -209,9 +209,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "nota-next"
+name = "nota"
 version = "0.5.1"
-source = "git+https://github.com/LiGoldragon/nota-next.git?branch=main#4642807e40306a382acbcdcb7c61b5802c7e22f5"
+source = "git+https://github.com/LiGoldragon/nota.git?branch=main#4642807e40306a382acbcdcb7c61b5802c7e22f5"
 dependencies = [
  "nota-next-derive",
  "rkyv",
@@ -220,7 +220,7 @@ dependencies = [
 [[package]]
 name = "nota-next-derive"
 version = "0.3.0"
-source = "git+https://github.com/LiGoldragon/nota-next.git?branch=main#4642807e40306a382acbcdcb7c61b5802c7e22f5"
+source = "git+https://github.com/LiGoldragon/nota.git?branch=main#4642807e40306a382acbcdcb7c61b5802c7e22f5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -360,9 +360,9 @@ checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 [[package]]
 name = "schema-cc"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/schema-next.git?branch=main#6e6d629d63863da3e9b44efcc4111517ce22d5c5"
+source = "git+https://github.com/LiGoldragon/schema.git?branch=main#6e6d629d63863da3e9b44efcc4111517ce22d5c5"
 dependencies = [
- "nota-next",
+ "nota",
  "prettyplease",
  "proc-macro2",
  "quote",
@@ -371,26 +371,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "schema-next"
+name = "schema"
 version = "0.2.0"
-source = "git+https://github.com/LiGoldragon/schema-next.git?branch=main#6e6d629d63863da3e9b44efcc4111517ce22d5c5"
+source = "git+https://github.com/LiGoldragon/schema.git?branch=main#6e6d629d63863da3e9b44efcc4111517ce22d5c5"
 dependencies = [
  "blake3",
- "nota-next",
+ "nota",
  "rkyv",
  "schema-cc",
  "thiserror",
 ]
 
 [[package]]
-name = "schema-rust-next"
+name = "schema-rust"
 version = "0.5.3"
-source = "git+https://github.com/LiGoldragon/schema-rust-next.git?branch=main#e4ac3baf37121b8d7516bc5cdc6bdf026aa5b282"
+source = "git+https://github.com/LiGoldragon/schema-rust.git?branch=main#e4ac3baf37121b8d7516bc5cdc6bdf026aa5b282"
 dependencies = [
  "prettyplease",
  "proc-macro2",
  "quote",
- "schema-next",
+ "schema",
  "syn",
  "thiserror",
 ]
@@ -408,9 +408,9 @@ source = "git+https://github.com/LiGoldragon/signal-criome.git?branch=main#7b3d5
 dependencies = [
  "blake3",
  "blst",
- "nota-next",
+ "nota",
  "rkyv",
- "schema-rust-next",
+ "schema-rust",
  "signal-frame",
  "thiserror",
 ]
@@ -420,7 +420,7 @@ name = "signal-frame"
 version = "0.2.1"
 source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#c75053210b1b1e0d22833f0cfc461363213cf860"
 dependencies = [
- "nota-next",
+ "nota",
  "paste",
  "rkyv",
  "signal-frame-macros",
@@ -441,10 +441,10 @@ dependencies = [
 name = "signal-orchestrate"
 version = "0.4.0"
 dependencies = [
- "nota-next",
+ "nota",
  "rkyv",
- "schema-next",
- "schema-rust-next",
+ "schema",
+ "schema-rust",
  "signal-criome",
  "signal-frame",
  "thiserror",
