@@ -23,7 +23,7 @@ impl SchemaBuild {
         GenerationDriver::new(GenerationPlan::wire_contract(
             &self.crate_root,
             "signal-orchestrate",
-            "0.4.0",
+            "0.5.0",
         ))
         .generate()
         .expect("generate signal-orchestrate schema artifacts")

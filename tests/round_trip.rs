@@ -19,16 +19,18 @@ use signal_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
     ActivitySubmission, ApplicationFailure, ApplicationFailureReason, ApplicationSuccess,
     ClaimAcceptance, ClaimEntry, ClaimRejection, CombinationRule, DownstreamComponent,
-    EffectEmitted, EffectOutcome, Error, HandoffAcceptance, HandoffRejection,
-    HandoffRejectionReason, HarnessKind, HostName, LaneAuthority, LaneIdentifier, LaneRegistration,
+    DurationNanos, EffectEmitted, EffectOutcome, Error, HandoffAcceptance, HandoffRejection,
+    HandoffRejectionReason, HarnessKind, HostName, LaneAssignment, LaneAuthority, LaneDetails,
+    LaneIdentifier, LaneOwner, LaneProjection, LaneRegistration, LaneResourceClaim, LaneStatus,
     LanesObserved, ModelAttestation, ModelName, Observation, ObservationClosed, ObservationEvent,
     ObservationOpened, ObservationSubscription, ObservationToken, OperationKind, OperationReceived,
     OrchestrateEvent, OrchestrateFrame, OrchestrateFrameBody, OrchestrateReply, OrchestrateRequest,
     PartialApplied, ProviderName, ReleaseAcknowledgment, Role, RoleClaim, RoleHandoff, RoleName,
     RoleRelease, RoleSnapshot, RoleStatus, RoleToken, ScopeConflict, ScopeReason, ScopeReference,
-    StepLog, StepOutcome, StepThreshold, TaskToken, TimestampNanos, WirePath, WorkflowDefinition,
-    WorkflowReceiptProduced, WorkflowRunAccepted, WorkflowRunDigest, WorkflowRunHandle,
-    WorkflowRunLog, WorkflowRunLogReported, WorkflowRunObservation, WorkflowRunObservationClosed,
+    SessionIdentifier, SessionProjection, SessionsObserved, StepLog, StepOutcome, StepThreshold,
+    TaskToken, TimestampNanos, WirePath, WorkflowDefinition, WorkflowReceiptProduced,
+    WorkflowRunAccepted, WorkflowRunDigest, WorkflowRunHandle, WorkflowRunLog,
+    WorkflowRunLogReported, WorkflowRunObservation, WorkflowRunObservationClosed,
     WorkflowRunObservationOpened, WorkflowRunObservationToken, WorkflowRunRequest,
     WorkflowRunSnapshot, WorkflowRunUpdate, WorkflowStep, WorkflowStepName, Worktree,
     WorktreeStatus, WorktreesObserved,
@@ -178,6 +180,57 @@ fn lane_identifier(token: &str) -> LaneIdentifier {
     LaneIdentifier::from_wire_token(token).expect("lane identifier")
 }
 
+fn session_identifier(token: &str) -> SessionIdentifier {
+    SessionIdentifier::from_camel_case_name(token).expect("session identifier")
+}
+
+fn lane_details(text: &str) -> LaneDetails {
+    LaneDetails::from_text(text).expect("lane details")
+}
+
+fn lane_owner(tokens: &[&str], authority: LaneAuthority) -> LaneOwner {
+    LaneOwner {
+        role: role_vector(tokens),
+        authority,
+    }
+}
+
+fn lane_registration(
+    session: &str,
+    lane: &str,
+    role_tokens: &[&str],
+    authority: LaneAuthority,
+) -> LaneRegistration {
+    LaneRegistration {
+        assignment: LaneAssignment {
+            session: session_identifier(session),
+            lane: lane_identifier(lane),
+            owner: lane_owner(role_tokens, authority),
+            details: lane_details("orchestrator assigned lane"),
+        },
+        registered_at: TimestampNanos::new(1_730_000_010_000_000_000),
+        status: LaneStatus::Active,
+    }
+}
+
+fn lane_projection(
+    session: &str,
+    lane: &str,
+    role_tokens: &[&str],
+    authority: LaneAuthority,
+) -> LaneProjection {
+    LaneProjection {
+        registration: lane_registration(session, lane, role_tokens, authority),
+        resource_claims: vec![LaneResourceClaim {
+            scope: sample_path_scope(),
+            reason: sample_reason(),
+            claimed_at: TimestampNanos::new(1_730_000_011_000_000_000),
+        }],
+        observed_at: TimestampNanos::new(1_730_000_012_000_000_000),
+        age: DurationNanos::new(2_000_000_000),
+    }
+}
+
 fn object_digest(text: &str) -> ObjectDigest {
     ObjectDigest::from_bytes(text.as_bytes())
 }
@@ -285,7 +338,23 @@ fn role_observation_round_trips() {
 }
 
 #[test]
-fn lane_observation_round_trips() {
+fn sessions_observation_round_trips() {
+    let request = OrchestrateRequest::Observe(Observation::Sessions);
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+}
+
+#[test]
+fn session_lanes_observation_round_trips() {
+    let request = OrchestrateRequest::Observe(Observation::SessionLanes(session_identifier(
+        "SessionLaneProtocolContracts",
+    )));
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+}
+
+#[test]
+fn all_lanes_observation_round_trips() {
     let request = OrchestrateRequest::Observe(Observation::Lanes);
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
@@ -490,19 +559,33 @@ fn role_snapshot_round_trips() {
 }
 
 #[test]
-fn lane_registry_records_round_trip() {
+fn session_registry_records_round_trip() {
+    let reply = OrchestrateReply::SessionsObserved(SessionsObserved {
+        sessions: vec![SessionProjection {
+            session: session_identifier("SessionLaneProtocolContracts"),
+            active_lanes: 2,
+        }],
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}
+
+#[test]
+fn lane_projection_records_round_trip_with_age_status_and_claims() {
     let reply = OrchestrateReply::LanesObserved(LanesObserved {
         lanes: vec![
-            LaneRegistration {
-                lane: lane_identifier("designer"),
-                role: role_vector(&["Designer"]),
-                authority: LaneAuthority::Structural,
-            },
-            LaneRegistration {
-                lane: lane_identifier("persona-signal-designer-assistant"),
-                role: role_vector(&["PersonaSignal", "Designer"]),
-                authority: LaneAuthority::Support,
-            },
+            lane_projection(
+                "SessionLaneProtocolContracts",
+                "contract-implementation",
+                &["Designer"],
+                LaneAuthority::Structural,
+            ),
+            lane_projection(
+                "SessionLaneProtocolContracts",
+                "contract-review",
+                &["PersonaSignal", "Designer"],
+                LaneAuthority::Support,
+            ),
         ],
     });
     let decoded = round_trip_reply(reply.clone());
@@ -922,5 +1005,9 @@ fn scope_primitives_reject_invalid_values() {
     assert!(matches!(
         RoleName::from_wire_token("bad role"),
         Err(Error::InvalidRoleIdentifier { .. })
+    ));
+    assert!(matches!(
+        SessionIdentifier::from_camel_case_name("notCamelCase"),
+        Err(Error::InvalidSessionIdentifier { .. })
     ));
 }

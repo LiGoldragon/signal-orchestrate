@@ -59,6 +59,10 @@ pub enum Error {
     #[error("role vector must contain at least one token")]
     EmptyRole,
     #[error(
+        "session identifier must be CamelCase alphanumeric text with no whitespace or path separators: {session}"
+    )]
+    InvalidSessionIdentifier { session: String },
+    #[error(
         "lane identifier must be non-empty, unbracketed, and contain no whitespace or path separators: {lane}"
     )]
     InvalidLaneIdentifier { lane: String },
@@ -74,6 +78,8 @@ pub enum Error {
     InvalidLaneName { lane: String },
     #[error("worktree purpose must be non-empty and single-line: {purpose}")]
     InvalidPurposeText { purpose: String },
+    #[error("lane details must be non-empty and single-line: {detail}")]
+    InvalidLaneDetails { detail: String },
     #[error(
         "workflow run digest must be non-empty, unbracketed, and contain no whitespace: {digest}"
     )]
@@ -336,6 +342,79 @@ impl Role {
         &self.tokens
     }
 }
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord,
+)]
+pub struct SessionIdentifier(String);
+
+pub type SessionName = SessionIdentifier;
+
+impl SessionIdentifier {
+    pub fn try_new(session: String) -> ContractResult<Self> {
+        Self::from_camel_case_name(session)
+    }
+
+    pub fn from_camel_case_name(session: impl Into<String>) -> ContractResult<Self> {
+        let session = session.into();
+        let mut characters = session.chars();
+        let Some(first) = characters.next() else {
+            return Err(Error::InvalidSessionIdentifier { session });
+        };
+        if !first.is_ascii_uppercase()
+            || !characters.all(|character| character.is_ascii_alphanumeric())
+        {
+            return Err(Error::InvalidSessionIdentifier { session });
+        }
+        Ok(Self(session))
+    }
+
+    pub fn as_wire_token(&self) -> &str {
+        &self.0
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Display for SessionIdentifier {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(self.as_wire_token())
+    }
+}
+
+impl FromStr for SessionIdentifier {
+    type Err = Error;
+
+    fn from_str(session: &str) -> ContractResult<Self> {
+        Self::from_camel_case_name(session)
+    }
+}
+
+impl TryFrom<String> for SessionIdentifier {
+    type Error = Error;
+
+    fn try_from(session: String) -> ContractResult<Self> {
+        Self::from_camel_case_name(session)
+    }
+}
+
+impl TryFrom<&str> for SessionIdentifier {
+    type Error = Error;
+
+    fn try_from(session: &str) -> ContractResult<Self> {
+        Self::from_camel_case_name(session)
+    }
+}
+
+impl AsRef<str> for SessionIdentifier {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+validated_string_nota_codec!(SessionIdentifier, SessionIdentifier::from_camel_case_name);
 
 #[derive(
     Archive,
@@ -698,13 +777,95 @@ pub struct Worktree {
     pub pushed_state: PushedState,
 }
 
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct LaneDetails(String);
+
+impl LaneDetails {
+    pub fn try_new(detail: String) -> ContractResult<Self> {
+        Self::from_text(detail)
+    }
+
+    pub fn from_text(detail: impl Into<String>) -> ContractResult<Self> {
+        let detail = detail.into();
+        if detail.trim().is_empty() || detail.contains('\n') || detail.contains('\r') {
+            return Err(Error::InvalidLaneDetails { detail });
+        }
+        Ok(Self(detail))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for LaneDetails {
+    type Error = Error;
+
+    fn try_from(detail: String) -> ContractResult<Self> {
+        Self::from_text(detail)
+    }
+}
+
+impl TryFrom<&str> for LaneDetails {
+    type Error = Error;
+
+    fn try_from(detail: &str) -> ContractResult<Self> {
+        Self::from_text(detail)
+    }
+}
+
+impl AsRef<str> for LaneDetails {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+validated_string_nota_codec!(LaneDetails, LaneDetails::from_text);
+
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub enum LaneStatus {
+    Active,
+    Released,
+    HandoverEnded,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct LaneOwner {
+    pub role: Role,
+    pub authority: LaneAuthority,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct LaneAssignment {
+    pub session: SessionIdentifier,
+    pub lane: LaneIdentifier,
+    pub owner: LaneOwner,
+    pub details: LaneDetails,
+}
+
 #[derive(
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct LaneRegistration {
-    pub lane: LaneIdentifier,
-    pub role: Role,
-    pub authority: LaneAuthority,
+    pub assignment: LaneAssignment,
+    pub registered_at: TimestampNanos,
+    pub status: LaneStatus,
 }
 
 #[derive(
@@ -956,6 +1117,35 @@ validated_string_nota_codec!(ScopeReason, ScopeReason::from_text);
 pub struct TimestampNanos(u64);
 
 impl TimestampNanos {
+    pub const fn new(value: u64) -> Self {
+        Self(value)
+    }
+
+    pub const fn value(self) -> u64 {
+        self.0
+    }
+}
+
+/// Passive elapsed age in nanoseconds. Age is evidence in observation
+/// replies, not a heartbeat or expiry decision.
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    NotaEncode,
+    NotaDecode,
+)]
+pub struct DurationNanos(u64);
+
+impl DurationNanos {
     pub const fn new(value: u64) -> Self {
         Self(value)
     }
@@ -1267,19 +1457,12 @@ pub enum HandoffRejectionReason {
 
 /// Select what the `Observe` operation reads.
 #[derive(
-    Archive,
-    RkyvSerialize,
-    RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub enum Observation {
     Roles,
+    Sessions,
+    SessionLanes(SessionIdentifier),
     Lanes,
     Worktrees,
 }
@@ -1311,8 +1494,42 @@ pub struct RoleSnapshot {
 #[derive(
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
+pub struct SessionsObserved {
+    pub sessions: Vec<SessionProjection>,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct LanesObserved {
-    pub lanes: Vec<LaneRegistration>,
+    pub lanes: Vec<LaneProjection>,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct SessionProjection {
+    pub session: SessionIdentifier,
+    pub active_lanes: u64,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct LaneProjection {
+    pub registration: LaneRegistration,
+    pub resource_claims: Vec<LaneResourceClaim>,
+    pub observed_at: TimestampNanos,
+    pub age: DurationNanos,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct LaneResourceClaim {
+    pub scope: ScopeReference,
+    pub reason: ScopeReason,
+    pub claimed_at: TimestampNanos,
 }
 
 #[derive(
@@ -1645,6 +1862,7 @@ signal_channel! {
         HandoffAcceptance(HandoffAcceptance),
         HandoffRejection(HandoffRejection),
         RoleSnapshot(RoleSnapshot),
+        SessionsObserved(SessionsObserved),
         LanesObserved(LanesObserved),
         WorktreesObserved(WorktreesObserved),
         ActivityAcknowledgment(ActivityAcknowledgment),

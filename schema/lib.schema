@@ -16,6 +16,7 @@
  (HandoffAcceptance HandoffAcceptance)
  (HandoffRejection HandoffRejection)
  (RoleSnapshot RoleSnapshot)
+ (SessionsObserved SessionsObserved)
  (LanesObserved LanesObserved)
  (WorktreesObserved WorktreesObserved)
  (ActivityAcknowledgment ActivityAcknowledgment)
@@ -34,15 +35,22 @@
   RoleToken String
   RoleTokens (Vector RoleToken)
   Role RoleTokens
+  SessionIdentifier String
+  SessionName SessionIdentifier
   LaneAuthority [Structural Support]
   LaneIdentifier String
-  LaneRegistration { lane.LaneIdentifier Role authority.LaneAuthority }
+  LaneDetails String
+  LaneStatus [Active Released HandoverEnded]
+  LaneOwner { Role authority.LaneAuthority }
+  LaneAssignment { session.SessionIdentifier lane.LaneIdentifier owner.LaneOwner details.LaneDetails }
+  LaneRegistration { assignment.LaneAssignment registered_at.TimestampNanos status.LaneStatus }
   HarnessKind [Codex Claude]
   WirePath String
   TaskToken String
   ScopeReason String
   ScopeReference [(Path WirePath) (Task TaskToken)]
   TimestampNanos Integer
+  DurationNanos Integer
   WorkflowRunDigest String
   WorkflowStepName String
   ProviderName String
@@ -77,6 +85,9 @@
   ActivityFilters (Vector ActivityFilter)
   ScopeConflicts (Vector ScopeConflict)
   LaneRegistrations (Vector LaneRegistration)
+  SessionProjections (Vector SessionProjection)
+  LaneProjections (Vector LaneProjection)
+  LaneResourceClaims (Vector LaneResourceClaim)
   Worktrees (Vector Worktree)
   RoleStatuses (Vector RoleStatus)
   Activities (Vector Activity)
@@ -87,7 +98,7 @@
   RoleClaim { role.RoleName scopes.ScopeReferences reason.ScopeReason }
   RoleRelease RoleName
   RoleHandoff { from.RoleName to.RoleName scopes.ScopeReferences reason.ScopeReason }
-  Observation [Roles Lanes Worktrees]
+  Observation [Roles Sessions (SessionLanes SessionIdentifier) Lanes Worktrees]
   ActivitySubmission { role.RoleName scope.ScopeReference reason.ScopeReason }
   ActivityQuery { limit.Integer filters.ActivityFilters }
   ActivityFilter [(RoleFilter RoleName) (PathPrefix WirePath) (TaskToken TaskToken)]
@@ -102,7 +113,11 @@
   HandoffRejection { from.RoleName to.RoleName reason.HandoffRejectionReason }
   HandoffRejectionReason [SourceRoleDoesNotHold (TargetRoleConflict ScopeConflicts)]
   RoleSnapshot { roles.RoleStatuses recent_activity.Activities }
-  LanesObserved { lanes.LaneRegistrations }
+  SessionsObserved { sessions.SessionProjections }
+  LanesObserved { lanes.LaneProjections }
+  SessionProjection { session.SessionIdentifier active_lanes.Integer }
+  LaneProjection { registration.LaneRegistration resource_claims.LaneResourceClaims observed_at.TimestampNanos age.DurationNanos }
+  LaneResourceClaim { scope.ScopeReference reason.ScopeReason claimed_at.TimestampNanos }
   WorktreesObserved { Worktrees }
   RoleStatus { role.RoleName harness.HarnessKind claims.ClaimEntries }
   ClaimEntry { scope.ScopeReference reason.ScopeReason }

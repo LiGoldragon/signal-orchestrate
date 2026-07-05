@@ -21,7 +21,7 @@ fn signal_orchestrate_schema_lowers_ordinary_routes_and_streams() {
         .source()
         .lower(
             &SchemaEngine::default(),
-            SchemaIdentity::new("signal-orchestrate:lib", "0.4.0"),
+            SchemaIdentity::new("signal-orchestrate:lib", "0.5.0"),
         )
         .expect("schema lowers");
 
@@ -29,7 +29,7 @@ fn signal_orchestrate_schema_lowers_ordinary_routes_and_streams() {
     let output = root_enum(schema.output());
 
     assert_eq!(input.variants.len(), 11);
-    assert_eq!(output.variants.len(), 18);
+    assert_eq!(output.variants.len(), 19);
     assert_eq!(schema.streams().len(), 2);
 
     let claim = &input.variants[0];
