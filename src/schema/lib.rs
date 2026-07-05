@@ -58,6 +58,22 @@ pub struct Role(RoleTokens);
     feature = "nota-text",
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct SessionIdentifier(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct SessionName(SessionIdentifier);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -87,10 +103,63 @@ pub struct LaneIdentifier(String);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct LaneRegistration {
-    pub lane: LaneIdentifier,
+pub struct LaneDetails(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum LaneStatus {
+    Active,
+    Released,
+    HandoverEnded,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LaneOwner {
     pub role: Role,
     pub authority: LaneAuthority,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LaneAssignment {
+    pub session: SessionIdentifier,
+    pub lane: LaneIdentifier,
+    pub owner: LaneOwner,
+    pub details: LaneDetails,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LaneRegistration {
+    pub assignment: LaneAssignment,
+    pub registered_at: TimestampNanos,
+    pub status: LaneStatus,
 }
 
 #[rustfmt::skip]
@@ -155,6 +224,14 @@ pub enum ScopeReference {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct TimestampNanos(Integer);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct DurationNanos(Integer);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -485,6 +562,30 @@ pub struct LaneRegistrations(Vec<LaneRegistration>);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct SessionProjections(Vec<SessionProjection>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LaneProjections(Vec<LaneProjection>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LaneResourceClaims(Vec<LaneResourceClaim>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Worktrees(Vec<Worktree>);
 
 #[rustfmt::skip]
@@ -565,18 +666,11 @@ pub struct RoleHandoff {
     feature = "nota-text",
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
-#[derive(
-    rkyv::Archive,
-    rkyv::Serialize,
-    rkyv::Deserialize,
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Observation {
     Roles,
+    Sessions,
+    SessionLanes(SessionIdentifier),
     Lanes,
     Worktrees,
 }
@@ -732,7 +826,51 @@ pub struct RoleSnapshot {
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct LanesObserved(LaneRegistrations);
+pub struct SessionsObserved(SessionProjections);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LanesObserved(LaneProjections);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct SessionProjection {
+    pub session: SessionIdentifier,
+    pub active_lanes: Integer,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LaneProjection {
+    pub registration: LaneRegistration,
+    pub resource_claims: LaneResourceClaims,
+    pub observed_at: TimestampNanos,
+    pub age: DurationNanos,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LaneResourceClaim {
+    pub scope: ScopeReference,
+    pub reason: ScopeReason,
+    pub claimed_at: TimestampNanos,
+}
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -1217,6 +1355,7 @@ pub enum Output {
     HandoffAcceptance(HandoffAcceptance),
     HandoffRejection(HandoffRejection),
     RoleSnapshot(RoleSnapshot),
+    SessionsObserved(SessionsObserved),
     LanesObserved(LanesObserved),
     WorktreesObserved(WorktreesObserved),
     ActivityAcknowledgment(ActivityAcknowledgment),
@@ -1327,6 +1466,44 @@ impl From<RoleTokens> for Role {
 }
 
 #[rustfmt::skip]
+impl SessionIdentifier {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for SessionIdentifier {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl SessionName {
+    pub fn new(payload: SessionIdentifier) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &SessionIdentifier {
+        &self.0
+    }
+    pub fn into_payload(self) -> SessionIdentifier {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<SessionIdentifier> for SessionName {
+    fn from(payload: SessionIdentifier) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl LaneIdentifier {
     pub fn new(payload: impl Into<String>) -> Self {
         Self(payload.into())
@@ -1340,6 +1517,25 @@ impl LaneIdentifier {
 }
 #[rustfmt::skip]
 impl From<String> for LaneIdentifier {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl LaneDetails {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for LaneDetails {
     fn from(payload: String) -> Self {
         Self::new(payload)
     }
@@ -1416,6 +1612,25 @@ impl TimestampNanos {
 }
 #[rustfmt::skip]
 impl From<Integer> for TimestampNanos {
+    fn from(payload: Integer) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl DurationNanos {
+    pub fn new(payload: Integer) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Integer {
+        &self.0
+    }
+    pub fn into_payload(self) -> Integer {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Integer> for DurationNanos {
     fn from(payload: Integer) -> Self {
         Self::new(payload)
     }
@@ -1764,6 +1979,63 @@ impl From<Vec<LaneRegistration>> for LaneRegistrations {
 }
 
 #[rustfmt::skip]
+impl SessionProjections {
+    pub fn new(payload: Vec<SessionProjection>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<SessionProjection> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<SessionProjection> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<SessionProjection>> for SessionProjections {
+    fn from(payload: Vec<SessionProjection>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl LaneProjections {
+    pub fn new(payload: Vec<LaneProjection>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<LaneProjection> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<LaneProjection> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<LaneProjection>> for LaneProjections {
+    fn from(payload: Vec<LaneProjection>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl LaneResourceClaims {
+    pub fn new(payload: Vec<LaneResourceClaim>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<LaneResourceClaim> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<LaneResourceClaim> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<LaneResourceClaim>> for LaneResourceClaims {
+    fn from(payload: Vec<LaneResourceClaim>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl Worktrees {
     pub fn new(payload: Vec<Worktree>) -> Self {
         Self(payload)
@@ -1916,20 +2188,39 @@ impl From<Integer> for ObservationToken {
 }
 
 #[rustfmt::skip]
-impl LanesObserved {
-    pub fn new(payload: LaneRegistrations) -> Self {
+impl SessionsObserved {
+    pub fn new(payload: SessionProjections) -> Self {
         Self(payload)
     }
-    pub fn payload(&self) -> &LaneRegistrations {
+    pub fn payload(&self) -> &SessionProjections {
         &self.0
     }
-    pub fn into_payload(self) -> LaneRegistrations {
+    pub fn into_payload(self) -> SessionProjections {
         self.0
     }
 }
 #[rustfmt::skip]
-impl From<LaneRegistrations> for LanesObserved {
-    fn from(payload: LaneRegistrations) -> Self {
+impl From<SessionProjections> for SessionsObserved {
+    fn from(payload: SessionProjections) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl LanesObserved {
+    pub fn new(payload: LaneProjections) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &LaneProjections {
+        &self.0
+    }
+    pub fn into_payload(self) -> LaneProjections {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<LaneProjections> for LanesObserved {
+    fn from(payload: LaneProjections) -> Self {
         Self::new(payload)
     }
 }
@@ -2209,6 +2500,13 @@ impl EvaluationDecision {
 }
 
 #[rustfmt::skip]
+impl Observation {
+    pub fn session_lanes(payload: String) -> Self {
+        Self::SessionLanes(SessionIdentifier::new(payload))
+    }
+}
+
+#[rustfmt::skip]
 impl ActivityFilter {
     pub fn role_filter(payload: RoleIdentifier) -> Self {
         Self::RoleFilter(RoleName::new(payload))
@@ -2319,7 +2617,10 @@ impl Output {
     pub fn role_snapshot(payload: RoleSnapshot) -> Self {
         Self::RoleSnapshot(payload)
     }
-    pub fn lanes_observed(payload: LaneRegistrations) -> Self {
+    pub fn sessions_observed(payload: SessionProjections) -> Self {
+        Self::SessionsObserved(SessionsObserved::new(payload))
+    }
+    pub fn lanes_observed(payload: LaneProjections) -> Self {
         Self::LanesObserved(LanesObserved::new(payload))
     }
     pub fn worktrees_observed(payload: Worktrees) -> Self {
@@ -2393,6 +2694,13 @@ impl From<EscalationTarget> for EvaluationDecision {
 impl From<EvaluationRejectionReason> for EvaluationDecision {
     fn from(payload: EvaluationRejectionReason) -> Self {
         Self::Rejected(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<SessionIdentifier> for Observation {
+    fn from(payload: SessionIdentifier) -> Self {
+        Self::SessionLanes(payload)
     }
 }
 
@@ -2586,6 +2894,13 @@ impl From<RoleSnapshot> for Output {
 }
 
 #[rustfmt::skip]
+impl From<SessionsObserved> for Output {
+    fn from(payload: SessionsObserved) -> Self {
+        Self::SessionsObserved(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<LanesObserved> for Output {
     fn from(payload: LanesObserved) -> Self {
         Self::LanesObserved(payload)
@@ -2720,18 +3035,19 @@ pub mod short_header {
     pub const OUTPUT_HANDOFF_ACCEPTANCE: u64 = 0x0103000000000000;
     pub const OUTPUT_HANDOFF_REJECTION: u64 = 0x0104000000000000;
     pub const OUTPUT_ROLE_SNAPSHOT: u64 = 0x0105000000000000;
-    pub const OUTPUT_LANES_OBSERVED: u64 = 0x0106000000000000;
-    pub const OUTPUT_WORKTREES_OBSERVED: u64 = 0x0107000000000000;
-    pub const OUTPUT_ACTIVITY_ACKNOWLEDGMENT: u64 = 0x0108000000000000;
-    pub const OUTPUT_ACTIVITY_LIST: u64 = 0x0109000000000000;
-    pub const OUTPUT_WORKFLOW_RUN_ACCEPTED: u64 = 0x010A000000000000;
-    pub const OUTPUT_WORKFLOW_RECEIPT_PRODUCED: u64 = 0x010B000000000000;
-    pub const OUTPUT_WORKFLOW_RUN_LOG_REPORTED: u64 = 0x010C000000000000;
-    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_OPENED: u64 = 0x010D000000000000;
-    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_CLOSED: u64 = 0x010E000000000000;
-    pub const OUTPUT_PARTIAL_APPLIED: u64 = 0x010F000000000000;
-    pub const OUTPUT_OBSERVATION_OPENED: u64 = 0x0110000000000000;
-    pub const OUTPUT_OBSERVATION_CLOSED: u64 = 0x0111000000000000;
+    pub const OUTPUT_SESSIONS_OBSERVED: u64 = 0x0106000000000000;
+    pub const OUTPUT_LANES_OBSERVED: u64 = 0x0107000000000000;
+    pub const OUTPUT_WORKTREES_OBSERVED: u64 = 0x0108000000000000;
+    pub const OUTPUT_ACTIVITY_ACKNOWLEDGMENT: u64 = 0x0109000000000000;
+    pub const OUTPUT_ACTIVITY_LIST: u64 = 0x010A000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_ACCEPTED: u64 = 0x010B000000000000;
+    pub const OUTPUT_WORKFLOW_RECEIPT_PRODUCED: u64 = 0x010C000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_LOG_REPORTED: u64 = 0x010D000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_OPENED: u64 = 0x010E000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_CLOSED: u64 = 0x010F000000000000;
+    pub const OUTPUT_PARTIAL_APPLIED: u64 = 0x0110000000000000;
+    pub const OUTPUT_OBSERVATION_OPENED: u64 = 0x0111000000000000;
+    pub const OUTPUT_OBSERVATION_CLOSED: u64 = 0x0112000000000000;
 }
 
 #[rustfmt::skip]
@@ -2820,6 +3136,7 @@ pub enum OutputRoute {
     HandoffAcceptance,
     HandoffRejection,
     RoleSnapshot,
+    SessionsObserved,
     LanesObserved,
     WorktreesObserved,
     ActivityAcknowledgment,
@@ -2943,6 +3260,7 @@ impl Output {
             Self::HandoffAcceptance(_) => OutputRoute::HandoffAcceptance,
             Self::HandoffRejection(_) => OutputRoute::HandoffRejection,
             Self::RoleSnapshot(_) => OutputRoute::RoleSnapshot,
+            Self::SessionsObserved(_) => OutputRoute::SessionsObserved,
             Self::LanesObserved(_) => OutputRoute::LanesObserved,
             Self::WorktreesObserved(_) => OutputRoute::WorktreesObserved,
             Self::ActivityAcknowledgment(_) => OutputRoute::ActivityAcknowledgment,
@@ -2969,6 +3287,7 @@ impl Output {
             Self::HandoffAcceptance(_) => short_header::OUTPUT_HANDOFF_ACCEPTANCE,
             Self::HandoffRejection(_) => short_header::OUTPUT_HANDOFF_REJECTION,
             Self::RoleSnapshot(_) => short_header::OUTPUT_ROLE_SNAPSHOT,
+            Self::SessionsObserved(_) => short_header::OUTPUT_SESSIONS_OBSERVED,
             Self::LanesObserved(_) => short_header::OUTPUT_LANES_OBSERVED,
             Self::WorktreesObserved(_) => short_header::OUTPUT_WORKTREES_OBSERVED,
             Self::ActivityAcknowledgment(_) => {
@@ -3005,6 +3324,7 @@ impl Output {
             short_header::OUTPUT_HANDOFF_ACCEPTANCE => Ok(OutputRoute::HandoffAcceptance),
             short_header::OUTPUT_HANDOFF_REJECTION => Ok(OutputRoute::HandoffRejection),
             short_header::OUTPUT_ROLE_SNAPSHOT => Ok(OutputRoute::RoleSnapshot),
+            short_header::OUTPUT_SESSIONS_OBSERVED => Ok(OutputRoute::SessionsObserved),
             short_header::OUTPUT_LANES_OBSERVED => Ok(OutputRoute::LanesObserved),
             short_header::OUTPUT_WORKTREES_OBSERVED => Ok(OutputRoute::WorktreesObserved),
             short_header::OUTPUT_ACTIVITY_ACKNOWLEDGMENT => {

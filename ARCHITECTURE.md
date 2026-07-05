@@ -1,7 +1,8 @@
 # signal-orchestrate — architecture
 
 *The ordinary Signal contract for Persona orchestration: role claims,
-claim release/handoff/observation, and activity log requests.*
+claim release/handoff/observation, session/lane observation projections, and
+activity log requests.*
 
 ## 0 · TL;DR
 
@@ -26,7 +27,7 @@ The public request surface is:
 - `Claim(RoleClaim)`
 - `Release(RoleRelease)`
 - `Handoff(RoleHandoff)`
-- `Observe(RoleObservation)`
+- `Observe(Observation)` for roles, sessions, lanes within one session, all lanes, and worktrees
 - `Submit(ActivitySubmission)`
 - `Query(ActivityQuery)`
 - `RunWorkflow(WorkflowRunRequest)`
@@ -81,14 +82,16 @@ OrchestrateRequest                 OrchestrateReply
 ├─ Claim(RoleClaim)                ├─ ClaimAcceptance
 ├─ Release(RoleRelease)            ├─ ClaimRejection
 ├─ Handoff(RoleHandoff)            ├─ ReleaseAcknowledgment
-├─ Observe(RoleObservation)        ├─ HandoffAcceptance
+├─ Observe(Observation)            ├─ HandoffAcceptance
 ├─ Submit(ActivitySubmission)      ├─ HandoffRejection
 ├─ Query(ActivityQuery)            ├─ RoleSnapshot
-├─ RunWorkflow(WorkflowRunRequest) ├─ ActivityAcknowledgment
-├─ ObserveWorkflowRun(...)         ├─ ActivityList
-├─ WorkflowRunObservationRetraction
-├─ Watch(ObservationSubscription)  ├─ WorkflowRunAccepted
-└─ Unwatch(ObservationToken)       ├─ WorkflowReceiptProduced
+├─ RunWorkflow(WorkflowRunRequest) ├─ SessionsObserved
+├─ ObserveWorkflowRun(...)         ├─ LanesObserved
+├─ WorkflowRunObservationRetraction├─ WorktreesObserved
+├─ Watch(ObservationSubscription)  ├─ ActivityAcknowledgment
+└─ Unwatch(ObservationToken)       ├─ ActivityList
+                                   ├─ WorkflowRunAccepted
+                                   ├─ WorkflowReceiptProduced
                                    ├─ WorkflowRunLogReported
                                    ├─ WorkflowRunObservationOpened
                                    ├─ WorkflowRunObservationClosed
@@ -108,6 +111,12 @@ This contract owns:
 - `RoleIdentifier` / `RoleName`: validated dynamic role token. The
   `RoleName` name remains as a compatibility alias while callers move
   off the old fixed-role enum shape.
+- `SessionIdentifier` / `SessionName`: CamelCase orchestrator-named
+  cognitive grouping. A session is not an edit lock.
+- `LaneIdentifier`, `LaneAssignment`, `LaneOwner`, `LaneRegistration`,
+  `LaneStatus`, `LaneProjection`, and `LaneResourceClaim`: assigned lane
+  ownership and observe projection vocabulary. Lane lifecycle mutation
+  belongs to the meta contract; ordinary observations only project it.
 - `HarnessKind`: Codex or Claude, carried as data in role status
   instead of being hidden in the role string.
 - `ScopeReference`
@@ -122,9 +131,10 @@ This contract owns:
   `ModelAttestation`, `WorkflowDefinition`, and related step/log records:
   the public workflow execution and observation surface.
 
-`RoleIdentifier`, `WirePath`, `TaskToken`, and `ScopeReason` are
+`RoleIdentifier`, `SessionIdentifier`, `WirePath`, `TaskToken`, and `ScopeReason` are
 validated newtypes. Construct them through `from_wire_token`,
-`from_absolute_path`, `from_wire_token`, and `from_text` respectively.
+`from_camel_case_name`, `from_absolute_path`, `from_wire_token`, and
+`from_text` respectively.
 Invalid values are rejected at the contract boundary and also during
 NOTA decode.
 
@@ -177,6 +187,8 @@ contract is the peer/CLI surface.
   typed data, not strings;
 - operation roots encode as contract-local NOTA heads;
 - dynamic role identifiers round-trip as ordinary payload data;
+- sessions, per-session lanes, and all-lane observations round-trip with
+  passive age, lifecycle status, and resource-claim projections;
 - observer events round-trip through the streaming frame shape;
 - workflow run requests, logs, receipts, and stream updates round-trip through
   the same frame shape;
