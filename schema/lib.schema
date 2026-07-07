@@ -6,6 +6,7 @@
  (Submit ActivitySubmission)
  (Query ActivityQuery)
  (RunWorkflow WorkflowRunRequest)
+ (RunResolvedWorkflow ResolvedWorkflowRunRequest)
  (ObserveWorkflowRun WorkflowRunObservation opens WorkflowRunStream)
  (WorkflowRunObservationRetraction WorkflowRunObservationToken)
  (Watch ObservationSubscription opens ObservationStream)
@@ -22,7 +23,10 @@
  (ActivityAcknowledgment ActivityAcknowledgment)
  (ActivityList ActivityList)
  (WorkflowRunAccepted WorkflowRunAccepted)
+ (WorkflowResolutionAccepted WorkflowRunResolution)
+ (WorkflowResolutionUnavailable WorkflowResolutionUnavailable)
  (WorkflowReceiptProduced WorkflowReceiptProduced)
+ (WorkflowResolvedReceiptProduced WorkflowResolvedReceiptProduced)
  (WorkflowRunLogReported WorkflowRunLogReported)
  (WorkflowRunObservationOpened WorkflowRunObservationOpened)
  (WorkflowRunObservationClosed WorkflowRunObservationClosed)
@@ -45,6 +49,22 @@
   LaneAssignment { session.SessionIdentifier lane.LaneIdentifier owner.LaneOwner details.LaneDetails }
   LaneRegistration { assignment.LaneAssignment registered_at.TimestampNanos status.LaneStatus }
   HarnessKind [Codex Claude]
+  HarnessName String
+  NamedModel String
+  CapabilityProfile String
+  ModelSelector [(Exact NamedModel) (CapabilityProfile CapabilityProfile)]
+  EffortRequest [Minimal Low Medium High ExtraHigh Maximum]
+  ModelRequest { selector.ModelSelector effort.EffortRequest }
+  ClaudeSessionIdentifier String
+  CodexContinuationIdentifier String
+  PiContinuationIdentifier String
+  ContinuationHandle [(Claude ClaudeSessionIdentifier) (Codex CodexContinuationIdentifier) (Pi PiContinuationIdentifier)]
+  ContinuationRequest [Fresh (Prefer ContinuationHandle) (Require ContinuationHandle)]
+  ModelResolutionRequest { model.ModelRequest continuation.ContinuationRequest }
+  ResolvedHarnessKind [Codex Claude Pi Fixture]
+  ModelResolved { harness.HarnessName harness_kind.ResolvedHarnessKind model.NamedModel effort.EffortRequest continuation.ContinuationHandle }
+  ModelUnavailableReason [NoConfiguredHarness ModelNotKnown EffortUnsupported CapabilityUnsupported ProviderUnavailable ContinuationUnavailable AdapterConfigurationMissing]
+  ModelUnavailable { request.ModelResolutionRequest reason.ModelUnavailableReason }
   WirePath String
   TaskToken String
   ScopeReason String
@@ -126,11 +146,15 @@
   ActivityList Activities
 
   WorkflowRunRequest { workflow.WorkflowDigest operation.AuthorizedObjectReference contract.ContractDigest }
+  ResolvedWorkflowRunRequest { workflow_run.WorkflowRunRequest model_resolution.ModelResolutionRequest }
   WorkflowRunObservation { run.WorkflowRunDigest }
   WorkflowRunObservationToken { run.WorkflowRunDigest }
   WorkflowRunHandle { run.WorkflowRunDigest }
   WorkflowRunAccepted { handle.WorkflowRunHandle }
+  WorkflowRunResolution { handle.WorkflowRunHandle resolution.ModelResolved }
+  WorkflowResolutionUnavailable { handle.WorkflowRunHandle request.ResolvedWorkflowRunRequest unavailable.ModelUnavailable }
   WorkflowReceiptProduced { handle.WorkflowRunHandle receipt.WorkflowReceipt }
+  WorkflowResolvedReceiptProduced { run.WorkflowRunResolution receipt.WorkflowReceipt }
   WorkflowRunLogReported { log.WorkflowRunLog }
   WorkflowRunLog { run.WorkflowRunDigest step_logs.(Vector StepLog) }
   StepLog { step.WorkflowStepName attestation.ModelAttestation outcome.StepOutcome }
@@ -153,7 +177,7 @@
 
   ObservationOpened ObservationToken
   ObservationClosed ObservationToken
-  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch]
+  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow RunResolvedWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch]
   EffectOutcome [Applied Removed Changed Observed StreamOpened StreamClosed NoChange]
   OperationReceived OperationKind
   EffectEmitted { operation.OperationKind outcome.EffectOutcome }

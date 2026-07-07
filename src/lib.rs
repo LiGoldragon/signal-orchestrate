@@ -31,6 +31,12 @@ use signal_criome::{
     WorkflowDigest, WorkflowReceipt,
 };
 use signal_frame::signal_channel;
+pub use signal_harness::{
+    CapabilityProfile, ClaudeSessionIdentifier, CodexContinuationIdentifier, ContinuationHandle,
+    ContinuationRequest, EffortRequest, HarnessName, ModelRequest, ModelResolutionRequest,
+    ModelResolved, ModelSelector, ModelUnavailable, ModelUnavailableReason, NamedModel,
+    PiContinuationIdentifier,
+};
 use std::fmt;
 use std::str::FromStr;
 
@@ -1184,6 +1190,14 @@ pub struct WorkflowRunRequest {
     pub contract: ContractDigest,
 }
 
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct ResolvedWorkflowRunRequest {
+    pub workflow_run: WorkflowRunRequest,
+    pub model_resolution: ModelResolutionRequest,
+}
+
 /// Subscribe to one workflow run's lifecycle.
 #[derive(
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
@@ -1217,8 +1231,33 @@ pub struct WorkflowRunAccepted {
 #[derive(
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
+pub struct WorkflowRunResolution {
+    pub handle: WorkflowRunHandle,
+    pub resolution: ModelResolved,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowResolutionUnavailable {
+    pub handle: WorkflowRunHandle,
+    pub request: ResolvedWorkflowRunRequest,
+    pub unavailable: ModelUnavailable,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
 pub struct WorkflowReceiptProduced {
     pub handle: WorkflowRunHandle,
+    pub receipt: WorkflowReceipt,
+}
+
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorkflowResolvedReceiptProduced {
+    pub run: WorkflowRunResolution,
     pub receipt: WorkflowReceipt,
 }
 
@@ -1850,6 +1889,7 @@ signal_channel! {
         operation Submit(ActivitySubmission),
         operation Query(ActivityQuery),
         operation RunWorkflow(WorkflowRunRequest),
+        operation RunResolvedWorkflow(ResolvedWorkflowRunRequest),
         operation ObserveWorkflowRun(WorkflowRunObservation) opens WorkflowRunStream,
         operation WorkflowRunObservationRetraction(WorkflowRunObservationToken),
         operation Watch(ObservationSubscription) opens ObservationStream,
@@ -1868,7 +1908,10 @@ signal_channel! {
         ActivityAcknowledgment(ActivityAcknowledgment),
         ActivityList(ActivityList),
         WorkflowRunAccepted(WorkflowRunAccepted),
+        WorkflowResolutionAccepted(WorkflowRunResolution),
+        WorkflowResolutionUnavailable(WorkflowResolutionUnavailable),
         WorkflowReceiptProduced(WorkflowReceiptProduced),
+        WorkflowResolvedReceiptProduced(WorkflowResolvedReceiptProduced),
         WorkflowRunLogReported(WorkflowRunLogReported),
         WorkflowRunObservationOpened(WorkflowRunObservationOpened),
         WorkflowRunObservationClosed(WorkflowRunObservationClosed),

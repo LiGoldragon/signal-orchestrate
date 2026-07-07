@@ -15,25 +15,29 @@ use signal_frame::{
     ExchangeIdentifier, ExchangeLane, LaneSequence, NonEmpty, Reply, RequestPayload, SessionEpoch,
     SignalOperationHeads, SubReply,
 };
+use signal_harness::HarnessKind as ResolvedHarnessKind;
 use signal_orchestrate::{
     Activity, ActivityAcknowledgment, ActivityFilter, ActivityList, ActivityQuery,
     ActivitySubmission, ApplicationFailure, ApplicationFailureReason, ApplicationSuccess,
-    ClaimAcceptance, ClaimEntry, ClaimRejection, CombinationRule, DownstreamComponent,
-    DurationNanos, EffectEmitted, EffectOutcome, Error, HandoffAcceptance, HandoffRejection,
-    HandoffRejectionReason, HarnessKind, HostName, LaneAssignment, LaneAuthority, LaneDetails,
-    LaneIdentifier, LaneOwner, LaneProjection, LaneRegistration, LaneResourceClaim, LaneStatus,
-    LanesObserved, ModelAttestation, ModelName, Observation, ObservationClosed, ObservationEvent,
-    ObservationOpened, ObservationSubscription, ObservationToken, OperationKind, OperationReceived,
-    OrchestrateEvent, OrchestrateFrame, OrchestrateFrameBody, OrchestrateReply, OrchestrateRequest,
-    PartialApplied, ProviderName, ReleaseAcknowledgment, Role, RoleClaim, RoleHandoff, RoleName,
+    CapabilityProfile, ClaimAcceptance, ClaimEntry, ClaimRejection, CodexContinuationIdentifier,
+    CombinationRule, ContinuationHandle, ContinuationRequest, DownstreamComponent, DurationNanos,
+    EffectEmitted, EffectOutcome, EffortRequest, Error, HandoffAcceptance, HandoffRejection,
+    HandoffRejectionReason, HarnessKind, HarnessName, HostName, LaneAssignment, LaneAuthority,
+    LaneDetails, LaneIdentifier, LaneOwner, LaneProjection, LaneRegistration, LaneResourceClaim,
+    LaneStatus, LanesObserved, ModelAttestation, ModelName, ModelRequest, ModelResolutionRequest,
+    ModelResolved, ModelSelector, ModelUnavailable, ModelUnavailableReason, NamedModel,
+    Observation, ObservationClosed, ObservationEvent, ObservationOpened, ObservationSubscription,
+    ObservationToken, OperationKind, OperationReceived, OrchestrateEvent, OrchestrateFrame,
+    OrchestrateFrameBody, OrchestrateReply, OrchestrateRequest, PartialApplied, ProviderName,
+    ReleaseAcknowledgment, ResolvedWorkflowRunRequest, Role, RoleClaim, RoleHandoff, RoleName,
     RoleRelease, RoleSnapshot, RoleStatus, RoleToken, ScopeConflict, ScopeReason, ScopeReference,
     SessionIdentifier, SessionProjection, SessionsObserved, StepLog, StepOutcome, StepThreshold,
     TaskToken, TimestampNanos, WirePath, WorkflowDefinition, WorkflowReceiptProduced,
-    WorkflowRunAccepted, WorkflowRunDigest, WorkflowRunHandle, WorkflowRunLog,
-    WorkflowRunLogReported, WorkflowRunObservation, WorkflowRunObservationClosed,
-    WorkflowRunObservationOpened, WorkflowRunObservationToken, WorkflowRunRequest,
-    WorkflowRunSnapshot, WorkflowRunUpdate, WorkflowStep, WorkflowStepName, Worktree,
-    WorktreeStatus, WorktreesObserved,
+    WorkflowResolutionUnavailable, WorkflowResolvedReceiptProduced, WorkflowRunAccepted,
+    WorkflowRunDigest, WorkflowRunHandle, WorkflowRunLog, WorkflowRunLogReported,
+    WorkflowRunObservation, WorkflowRunObservationClosed, WorkflowRunObservationOpened,
+    WorkflowRunObservationToken, WorkflowRunRequest, WorkflowRunResolution, WorkflowRunSnapshot,
+    WorkflowRunUpdate, WorkflowStep, WorkflowStepName, Worktree, WorktreeStatus, WorktreesObserved,
 };
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -298,6 +302,57 @@ fn workflow_run_log() -> WorkflowRunLog {
     }
 }
 
+fn workflow_run_request() -> WorkflowRunRequest {
+    WorkflowRunRequest {
+        workflow: workflow_digest(),
+        operation: authorized_object_reference(),
+        contract: contract_digest(),
+    }
+}
+
+fn model_resolution_request() -> ModelResolutionRequest {
+    ModelResolutionRequest {
+        model: ModelRequest {
+            selector: ModelSelector::CapabilityProfile(CapabilityProfile::new("orchestrator")),
+            effort: EffortRequest::High,
+        },
+        continuation: ContinuationRequest::Prefer(ContinuationHandle::Codex(
+            CodexContinuationIdentifier::new("codex-turn-7"),
+        )),
+    }
+}
+
+fn resolved_workflow_run_request() -> ResolvedWorkflowRunRequest {
+    ResolvedWorkflowRunRequest {
+        workflow_run: workflow_run_request(),
+        model_resolution: model_resolution_request(),
+    }
+}
+
+fn model_resolved() -> ModelResolved {
+    ModelResolved {
+        harness: HarnessName::new("codex-main"),
+        harness_kind: ResolvedHarnessKind::Codex,
+        model: NamedModel::new("gpt-5-codex"),
+        effort: EffortRequest::High,
+        continuation: ContinuationHandle::Codex(CodexContinuationIdentifier::new("codex-turn-8")),
+    }
+}
+
+fn model_unavailable() -> ModelUnavailable {
+    ModelUnavailable {
+        request: model_resolution_request(),
+        reason: ModelUnavailableReason::CapabilityUnsupported,
+    }
+}
+
+fn workflow_run_resolution() -> WorkflowRunResolution {
+    WorkflowRunResolution {
+        handle: workflow_run_handle(),
+        resolution: model_resolved(),
+    }
+}
+
 // ─── Request variants ─────────────────────────────────────
 
 #[test]
@@ -417,11 +472,14 @@ fn activity_query_with_task_filter_round_trips() {
 
 #[test]
 fn workflow_run_request_round_trips() {
-    let request = OrchestrateRequest::RunWorkflow(WorkflowRunRequest {
-        workflow: workflow_digest(),
-        operation: authorized_object_reference(),
-        contract: contract_digest(),
-    });
+    let request = OrchestrateRequest::RunWorkflow(workflow_run_request());
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+}
+
+#[test]
+fn resolved_workflow_run_request_round_trips() {
+    let request = OrchestrateRequest::RunResolvedWorkflow(resolved_workflow_run_request());
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
 }
@@ -684,11 +742,29 @@ fn workflow_run_replies_round_trip() {
     });
     assert_eq!(round_trip_reply(accepted.clone()), accepted);
 
+    let resolution = OrchestrateReply::WorkflowResolutionAccepted(workflow_run_resolution());
+    assert_eq!(round_trip_reply(resolution.clone()), resolution);
+
+    let unavailable =
+        OrchestrateReply::WorkflowResolutionUnavailable(WorkflowResolutionUnavailable {
+            handle: workflow_run_handle(),
+            request: resolved_workflow_run_request(),
+            unavailable: model_unavailable(),
+        });
+    assert_eq!(round_trip_reply(unavailable.clone()), unavailable);
+
     let receipt = OrchestrateReply::WorkflowReceiptProduced(WorkflowReceiptProduced {
         handle: workflow_run_handle(),
         receipt: workflow_receipt(),
     });
     assert_eq!(round_trip_reply(receipt.clone()), receipt);
+
+    let resolved_receipt =
+        OrchestrateReply::WorkflowResolvedReceiptProduced(WorkflowResolvedReceiptProduced {
+            run: workflow_run_resolution(),
+            receipt: workflow_receipt(),
+        });
+    assert_eq!(round_trip_reply(resolved_receipt.clone()), resolved_receipt);
 
     let log = OrchestrateReply::WorkflowRunLogReported(WorkflowRunLogReported {
         log: workflow_run_log(),

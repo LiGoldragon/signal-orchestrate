@@ -691,6 +691,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "signal-harness"
+version = "0.3.0"
+source = "git+https://github.com/LiGoldragon/signal-harness.git?branch=main#9d173f50aa74c937c11855e0e2dd3c359090b36f"
+dependencies = [
+ "nota",
+ "rkyv",
+ "signal-frame 0.3.0 (git+https://github.com/LiGoldragon/signal-frame.git?branch=main)",
+ "signal-persona",
+ "thiserror",
+]
+
+[[package]]
 name = "signal-orchestrate"
 version = "0.5.0"
 dependencies = [
@@ -700,7 +712,19 @@ dependencies = [
  "schema-rust 0.5.3 (git+https://github.com/LiGoldragon/schema-rust.git?branch=main)",
  "signal-criome",
  "signal-frame 0.3.0 (git+https://github.com/LiGoldragon/signal-frame.git?branch=main)",
+ "signal-harness",
  "thiserror",
+]
+
+[[package]]
+name = "signal-persona"
+version = "0.2.0"
+source = "git+https://github.com/LiGoldragon/signal-persona.git?branch=main#2babf1314e2898d7bdbe75124e00f9129cfb8d43"
+dependencies = [
+ "nota",
+ "rkyv",
+ "schema-rust 0.5.3 (git+https://github.com/LiGoldragon/schema-rust.git?branch=main)",
+ "signal-frame 0.3.0 (git+https://github.com/LiGoldragon/signal-frame.git?branch=main)",
 ]
 
 [[package]]

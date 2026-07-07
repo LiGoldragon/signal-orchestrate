@@ -188,6 +188,207 @@ pub enum HarnessKind {
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct HarnessName(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct NamedModel(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct CapabilityProfile(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum ModelSelector {
+    Exact(NamedModel),
+    CapabilityProfile(CapabilityProfile),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum EffortRequest {
+    Minimal,
+    Low,
+    Medium,
+    High,
+    ExtraHigh,
+    Maximum,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ModelRequest {
+    pub selector: ModelSelector,
+    pub effort: EffortRequest,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ClaudeSessionIdentifier(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct CodexContinuationIdentifier(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct PiContinuationIdentifier(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum ContinuationHandle {
+    Claude(ClaudeSessionIdentifier),
+    Codex(CodexContinuationIdentifier),
+    Pi(PiContinuationIdentifier),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum ContinuationRequest {
+    Fresh,
+    Prefer(ContinuationHandle),
+    Require(ContinuationHandle),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ModelResolutionRequest {
+    pub model: ModelRequest,
+    pub continuation: ContinuationRequest,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum ResolvedHarnessKind {
+    Codex,
+    Claude,
+    Pi,
+    Fixture,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ModelResolved {
+    pub harness: HarnessName,
+    pub harness_kind: ResolvedHarnessKind,
+    pub model: NamedModel,
+    pub effort: EffortRequest,
+    pub continuation: ContinuationHandle,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum ModelUnavailableReason {
+    NoConfiguredHarness,
+    ModelNotKnown,
+    EffortUnsupported,
+    CapabilityUnsupported,
+    ProviderUnavailable,
+    ContinuationUnavailable,
+    AdapterConfigurationMissing,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ModelUnavailable {
+    pub request: ModelResolutionRequest,
+    pub reason: ModelUnavailableReason,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WirePath(String);
 
 #[rustfmt::skip]
@@ -950,6 +1151,17 @@ pub struct WorkflowRunRequest {
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ResolvedWorkflowRunRequest {
+    pub workflow_run: WorkflowRunRequest,
+    pub model_resolution: ModelResolutionRequest,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowRunObservation(WorkflowRunDigest);
 
 #[rustfmt::skip]
@@ -982,8 +1194,42 @@ pub struct WorkflowRunAccepted(WorkflowRunHandle);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowRunResolution {
+    pub handle: WorkflowRunHandle,
+    pub resolution: ModelResolved,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowResolutionUnavailable {
+    pub handle: WorkflowRunHandle,
+    pub request: ResolvedWorkflowRunRequest,
+    pub unavailable: ModelUnavailable,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowReceiptProduced {
     pub handle: WorkflowRunHandle,
+    pub receipt: WorkflowReceipt,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorkflowResolvedReceiptProduced {
+    pub run: WorkflowRunResolution,
     pub receipt: WorkflowReceipt,
 }
 
@@ -1251,6 +1497,7 @@ pub enum OperationKind {
     Submit,
     Query,
     RunWorkflow,
+    RunResolvedWorkflow,
     ObserveWorkflowRun,
     WorkflowRunObservationRetraction,
     Watch,
@@ -1336,6 +1583,7 @@ pub enum Input {
     Submit(ActivitySubmission),
     Query(ActivityQuery),
     RunWorkflow(WorkflowRunRequest),
+    RunResolvedWorkflow(ResolvedWorkflowRunRequest),
     ObserveWorkflowRun(WorkflowRunObservation),
     WorkflowRunObservationRetraction(WorkflowRunObservationToken),
     Watch(ObservationSubscription),
@@ -1361,7 +1609,10 @@ pub enum Output {
     ActivityAcknowledgment(ActivityAcknowledgment),
     ActivityList(ActivityList),
     WorkflowRunAccepted(WorkflowRunAccepted),
+    WorkflowResolutionAccepted(WorkflowRunResolution),
+    WorkflowResolutionUnavailable(WorkflowResolutionUnavailable),
     WorkflowReceiptProduced(WorkflowReceiptProduced),
+    WorkflowResolvedReceiptProduced(WorkflowResolvedReceiptProduced),
     WorkflowRunLogReported(WorkflowRunLogReported),
     WorkflowRunObservationOpened(WorkflowRunObservationOpened),
     WorkflowRunObservationClosed(WorkflowRunObservationClosed),
@@ -1536,6 +1787,120 @@ impl LaneDetails {
 }
 #[rustfmt::skip]
 impl From<String> for LaneDetails {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl HarnessName {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for HarnessName {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl NamedModel {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for NamedModel {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl CapabilityProfile {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for CapabilityProfile {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl ClaudeSessionIdentifier {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for ClaudeSessionIdentifier {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl CodexContinuationIdentifier {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for CodexContinuationIdentifier {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl PiContinuationIdentifier {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for PiContinuationIdentifier {
     fn from(payload: String) -> Self {
         Self::new(payload)
     }
@@ -2473,6 +2838,39 @@ impl From<OperationKind> for OperationReceived {
 }
 
 #[rustfmt::skip]
+impl ModelSelector {
+    pub fn exact(payload: String) -> Self {
+        Self::Exact(NamedModel::new(payload))
+    }
+    pub fn capability_profile(payload: String) -> Self {
+        Self::CapabilityProfile(CapabilityProfile::new(payload))
+    }
+}
+
+#[rustfmt::skip]
+impl ContinuationHandle {
+    pub fn claude(payload: String) -> Self {
+        Self::Claude(ClaudeSessionIdentifier::new(payload))
+    }
+    pub fn codex(payload: String) -> Self {
+        Self::Codex(CodexContinuationIdentifier::new(payload))
+    }
+    pub fn pi(payload: String) -> Self {
+        Self::Pi(PiContinuationIdentifier::new(payload))
+    }
+}
+
+#[rustfmt::skip]
+impl ContinuationRequest {
+    pub fn prefer(payload: ContinuationHandle) -> Self {
+        Self::Prefer(payload)
+    }
+    pub fn require(payload: ContinuationHandle) -> Self {
+        Self::Require(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl ScopeReference {
     pub fn path(payload: String) -> Self {
         Self::Path(WirePath::new(payload))
@@ -2583,6 +2981,9 @@ impl Input {
     pub fn run_workflow(payload: WorkflowRunRequest) -> Self {
         Self::RunWorkflow(payload)
     }
+    pub fn run_resolved_workflow(payload: ResolvedWorkflowRunRequest) -> Self {
+        Self::RunResolvedWorkflow(payload)
+    }
     pub fn observe_workflow_run(payload: WorkflowRunDigest) -> Self {
         Self::ObserveWorkflowRun(WorkflowRunObservation::new(payload))
     }
@@ -2635,8 +3036,21 @@ impl Output {
     pub fn workflow_run_accepted(payload: WorkflowRunHandle) -> Self {
         Self::WorkflowRunAccepted(WorkflowRunAccepted::new(payload))
     }
+    pub fn workflow_resolution_accepted(payload: WorkflowRunResolution) -> Self {
+        Self::WorkflowResolutionAccepted(payload)
+    }
+    pub fn workflow_resolution_unavailable(
+        payload: WorkflowResolutionUnavailable,
+    ) -> Self {
+        Self::WorkflowResolutionUnavailable(payload)
+    }
     pub fn workflow_receipt_produced(payload: WorkflowReceiptProduced) -> Self {
         Self::WorkflowReceiptProduced(payload)
+    }
+    pub fn workflow_resolved_receipt_produced(
+        payload: WorkflowResolvedReceiptProduced,
+    ) -> Self {
+        Self::WorkflowResolvedReceiptProduced(payload)
     }
     pub fn workflow_run_log_reported(payload: WorkflowRunLog) -> Self {
         Self::WorkflowRunLogReported(WorkflowRunLogReported::new(payload))
@@ -2659,6 +3073,41 @@ impl Output {
     }
     pub fn observation_closed(payload: ObservationToken) -> Self {
         Self::ObservationClosed(ObservationClosed::new(payload))
+    }
+}
+
+#[rustfmt::skip]
+impl From<NamedModel> for ModelSelector {
+    fn from(payload: NamedModel) -> Self {
+        Self::Exact(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<CapabilityProfile> for ModelSelector {
+    fn from(payload: CapabilityProfile) -> Self {
+        Self::CapabilityProfile(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<ClaudeSessionIdentifier> for ContinuationHandle {
+    fn from(payload: ClaudeSessionIdentifier) -> Self {
+        Self::Claude(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<CodexContinuationIdentifier> for ContinuationHandle {
+    fn from(payload: CodexContinuationIdentifier) -> Self {
+        Self::Codex(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<PiContinuationIdentifier> for ContinuationHandle {
+    fn from(payload: PiContinuationIdentifier) -> Self {
+        Self::Pi(payload)
     }
 }
 
@@ -2824,6 +3273,13 @@ impl From<WorkflowRunRequest> for Input {
 }
 
 #[rustfmt::skip]
+impl From<ResolvedWorkflowRunRequest> for Input {
+    fn from(payload: ResolvedWorkflowRunRequest) -> Self {
+        Self::RunResolvedWorkflow(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<WorkflowRunObservation> for Input {
     fn from(payload: WorkflowRunObservation) -> Self {
         Self::ObserveWorkflowRun(payload)
@@ -2936,9 +3392,30 @@ impl From<WorkflowRunAccepted> for Output {
 }
 
 #[rustfmt::skip]
+impl From<WorkflowRunResolution> for Output {
+    fn from(payload: WorkflowRunResolution) -> Self {
+        Self::WorkflowResolutionAccepted(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorkflowResolutionUnavailable> for Output {
+    fn from(payload: WorkflowResolutionUnavailable) -> Self {
+        Self::WorkflowResolutionUnavailable(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<WorkflowReceiptProduced> for Output {
     fn from(payload: WorkflowReceiptProduced) -> Self {
         Self::WorkflowReceiptProduced(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorkflowResolvedReceiptProduced> for Output {
+    fn from(payload: WorkflowResolvedReceiptProduced) -> Self {
+        Self::WorkflowResolvedReceiptProduced(payload)
     }
 }
 
@@ -3025,10 +3502,11 @@ pub mod short_header {
     pub const INPUT_SUBMIT: u64 = 0x0004000000000000;
     pub const INPUT_QUERY: u64 = 0x0005000000000000;
     pub const INPUT_RUN_WORKFLOW: u64 = 0x0006000000000000;
-    pub const INPUT_OBSERVE_WORKFLOW_RUN: u64 = 0x0007000000000000;
-    pub const INPUT_WORKFLOW_RUN_OBSERVATION_RETRACTION: u64 = 0x0008000000000000;
-    pub const INPUT_WATCH: u64 = 0x0009000000000000;
-    pub const INPUT_UNWATCH: u64 = 0x000A000000000000;
+    pub const INPUT_RUN_RESOLVED_WORKFLOW: u64 = 0x0007000000000000;
+    pub const INPUT_OBSERVE_WORKFLOW_RUN: u64 = 0x0008000000000000;
+    pub const INPUT_WORKFLOW_RUN_OBSERVATION_RETRACTION: u64 = 0x0009000000000000;
+    pub const INPUT_WATCH: u64 = 0x000A000000000000;
+    pub const INPUT_UNWATCH: u64 = 0x000B000000000000;
     pub const OUTPUT_CLAIM_ACCEPTANCE: u64 = 0x0100000000000000;
     pub const OUTPUT_CLAIM_REJECTION: u64 = 0x0101000000000000;
     pub const OUTPUT_RELEASE_ACKNOWLEDGMENT: u64 = 0x0102000000000000;
@@ -3041,13 +3519,16 @@ pub mod short_header {
     pub const OUTPUT_ACTIVITY_ACKNOWLEDGMENT: u64 = 0x0109000000000000;
     pub const OUTPUT_ACTIVITY_LIST: u64 = 0x010A000000000000;
     pub const OUTPUT_WORKFLOW_RUN_ACCEPTED: u64 = 0x010B000000000000;
-    pub const OUTPUT_WORKFLOW_RECEIPT_PRODUCED: u64 = 0x010C000000000000;
-    pub const OUTPUT_WORKFLOW_RUN_LOG_REPORTED: u64 = 0x010D000000000000;
-    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_OPENED: u64 = 0x010E000000000000;
-    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_CLOSED: u64 = 0x010F000000000000;
-    pub const OUTPUT_PARTIAL_APPLIED: u64 = 0x0110000000000000;
-    pub const OUTPUT_OBSERVATION_OPENED: u64 = 0x0111000000000000;
-    pub const OUTPUT_OBSERVATION_CLOSED: u64 = 0x0112000000000000;
+    pub const OUTPUT_WORKFLOW_RESOLUTION_ACCEPTED: u64 = 0x010C000000000000;
+    pub const OUTPUT_WORKFLOW_RESOLUTION_UNAVAILABLE: u64 = 0x010D000000000000;
+    pub const OUTPUT_WORKFLOW_RECEIPT_PRODUCED: u64 = 0x010E000000000000;
+    pub const OUTPUT_WORKFLOW_RESOLVED_RECEIPT_PRODUCED: u64 = 0x010F000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_LOG_REPORTED: u64 = 0x0110000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_OPENED: u64 = 0x0111000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_CLOSED: u64 = 0x0112000000000000;
+    pub const OUTPUT_PARTIAL_APPLIED: u64 = 0x0113000000000000;
+    pub const OUTPUT_OBSERVATION_OPENED: u64 = 0x0114000000000000;
+    pub const OUTPUT_OBSERVATION_CLOSED: u64 = 0x0115000000000000;
 }
 
 #[rustfmt::skip]
@@ -3108,6 +3589,7 @@ pub enum InputRoute {
     Submit,
     Query,
     RunWorkflow,
+    RunResolvedWorkflow,
     ObserveWorkflowRun,
     WorkflowRunObservationRetraction,
     Watch,
@@ -3142,7 +3624,10 @@ pub enum OutputRoute {
     ActivityAcknowledgment,
     ActivityList,
     WorkflowRunAccepted,
+    WorkflowResolutionAccepted,
+    WorkflowResolutionUnavailable,
     WorkflowReceiptProduced,
+    WorkflowResolvedReceiptProduced,
     WorkflowRunLogReported,
     WorkflowRunObservationOpened,
     WorkflowRunObservationClosed,
@@ -3162,6 +3647,7 @@ impl Input {
             Self::Submit(_) => InputRoute::Submit,
             Self::Query(_) => InputRoute::Query,
             Self::RunWorkflow(_) => InputRoute::RunWorkflow,
+            Self::RunResolvedWorkflow(_) => InputRoute::RunResolvedWorkflow,
             Self::ObserveWorkflowRun(_) => InputRoute::ObserveWorkflowRun,
             Self::WorkflowRunObservationRetraction(_) => {
                 InputRoute::WorkflowRunObservationRetraction
@@ -3179,6 +3665,7 @@ impl Input {
             Self::Submit(_) => short_header::INPUT_SUBMIT,
             Self::Query(_) => short_header::INPUT_QUERY,
             Self::RunWorkflow(_) => short_header::INPUT_RUN_WORKFLOW,
+            Self::RunResolvedWorkflow(_) => short_header::INPUT_RUN_RESOLVED_WORKFLOW,
             Self::ObserveWorkflowRun(_) => short_header::INPUT_OBSERVE_WORKFLOW_RUN,
             Self::WorkflowRunObservationRetraction(_) => {
                 short_header::INPUT_WORKFLOW_RUN_OBSERVATION_RETRACTION
@@ -3196,6 +3683,9 @@ impl Input {
             short_header::INPUT_SUBMIT => Ok(InputRoute::Submit),
             short_header::INPUT_QUERY => Ok(InputRoute::Query),
             short_header::INPUT_RUN_WORKFLOW => Ok(InputRoute::RunWorkflow),
+            short_header::INPUT_RUN_RESOLVED_WORKFLOW => {
+                Ok(InputRoute::RunResolvedWorkflow)
+            }
             short_header::INPUT_OBSERVE_WORKFLOW_RUN => {
                 Ok(InputRoute::ObserveWorkflowRun)
             }
@@ -3266,7 +3756,16 @@ impl Output {
             Self::ActivityAcknowledgment(_) => OutputRoute::ActivityAcknowledgment,
             Self::ActivityList(_) => OutputRoute::ActivityList,
             Self::WorkflowRunAccepted(_) => OutputRoute::WorkflowRunAccepted,
+            Self::WorkflowResolutionAccepted(_) => {
+                OutputRoute::WorkflowResolutionAccepted
+            }
+            Self::WorkflowResolutionUnavailable(_) => {
+                OutputRoute::WorkflowResolutionUnavailable
+            }
             Self::WorkflowReceiptProduced(_) => OutputRoute::WorkflowReceiptProduced,
+            Self::WorkflowResolvedReceiptProduced(_) => {
+                OutputRoute::WorkflowResolvedReceiptProduced
+            }
             Self::WorkflowRunLogReported(_) => OutputRoute::WorkflowRunLogReported,
             Self::WorkflowRunObservationOpened(_) => {
                 OutputRoute::WorkflowRunObservationOpened
@@ -3295,8 +3794,17 @@ impl Output {
             }
             Self::ActivityList(_) => short_header::OUTPUT_ACTIVITY_LIST,
             Self::WorkflowRunAccepted(_) => short_header::OUTPUT_WORKFLOW_RUN_ACCEPTED,
+            Self::WorkflowResolutionAccepted(_) => {
+                short_header::OUTPUT_WORKFLOW_RESOLUTION_ACCEPTED
+            }
+            Self::WorkflowResolutionUnavailable(_) => {
+                short_header::OUTPUT_WORKFLOW_RESOLUTION_UNAVAILABLE
+            }
             Self::WorkflowReceiptProduced(_) => {
                 short_header::OUTPUT_WORKFLOW_RECEIPT_PRODUCED
+            }
+            Self::WorkflowResolvedReceiptProduced(_) => {
+                short_header::OUTPUT_WORKFLOW_RESOLVED_RECEIPT_PRODUCED
             }
             Self::WorkflowRunLogReported(_) => {
                 short_header::OUTPUT_WORKFLOW_RUN_LOG_REPORTED
@@ -3334,8 +3842,17 @@ impl Output {
             short_header::OUTPUT_WORKFLOW_RUN_ACCEPTED => {
                 Ok(OutputRoute::WorkflowRunAccepted)
             }
+            short_header::OUTPUT_WORKFLOW_RESOLUTION_ACCEPTED => {
+                Ok(OutputRoute::WorkflowResolutionAccepted)
+            }
+            short_header::OUTPUT_WORKFLOW_RESOLUTION_UNAVAILABLE => {
+                Ok(OutputRoute::WorkflowResolutionUnavailable)
+            }
             short_header::OUTPUT_WORKFLOW_RECEIPT_PRODUCED => {
                 Ok(OutputRoute::WorkflowReceiptProduced)
+            }
+            short_header::OUTPUT_WORKFLOW_RESOLVED_RECEIPT_PRODUCED => {
+                Ok(OutputRoute::WorkflowResolvedReceiptProduced)
             }
             short_header::OUTPUT_WORKFLOW_RUN_LOG_REPORTED => {
                 Ok(OutputRoute::WorkflowRunLogReported)
@@ -3407,6 +3924,7 @@ impl signal_frame::SignalOperationHeads for Input {
         "Submit",
         "Query",
         "RunWorkflow",
+        "RunResolvedWorkflow",
         "ObserveWorkflowRun",
         "WorkflowRunObservationRetraction",
         "Watch",
