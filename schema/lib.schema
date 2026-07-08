@@ -140,7 +140,7 @@
   LaneResourceClaim { scope.ScopeReference reason.ScopeReason claimed_at.TimestampNanos age.DurationNanos }
   WorktreesObserved { Worktrees }
   RoleStatus { role.RoleName harness.HarnessKind claims.ClaimEntries }
-  ClaimEntry { scope.ScopeReference reason.ScopeReason }
+  ClaimEntry { scope.ScopeReference reason.ScopeReason claimed_at.TimestampNanos age.DurationNanos }
   Activity { role.RoleName scope.ScopeReference reason.ScopeReason stamped_at.TimestampNanos }
   ActivityAcknowledgment Integer
   ActivityList Activities

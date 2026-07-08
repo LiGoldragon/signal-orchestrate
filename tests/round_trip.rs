@@ -598,6 +598,8 @@ fn role_snapshot_round_trips() {
                 claims: vec![ClaimEntry {
                     scope: sample_path_scope(),
                     reason: sample_reason(),
+                    claimed_at: TimestampNanos::new(1_730_000_011_000_000_000),
+                    age: DurationNanos::new(1_000_000_000),
                 }],
             },
             RoleStatus {

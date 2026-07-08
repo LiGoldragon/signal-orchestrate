@@ -1594,6 +1594,8 @@ pub struct RoleStatus {
 pub struct ClaimEntry {
     pub scope: ScopeReference,
     pub reason: ScopeReason,
+    pub claimed_at: TimestampNanos,
+    pub age: DurationNanos,
 }
 
 // ─── Activity log ─────────────────────────────────────────
