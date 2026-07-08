@@ -137,7 +137,7 @@
   LanesObserved { lanes.LaneProjections }
   SessionProjection { session.SessionIdentifier active_lanes.Integer }
   LaneProjection { registration.LaneRegistration resource_claims.LaneResourceClaims observed_at.TimestampNanos age.DurationNanos }
-  LaneResourceClaim { scope.ScopeReference reason.ScopeReason claimed_at.TimestampNanos }
+  LaneResourceClaim { scope.ScopeReference reason.ScopeReason claimed_at.TimestampNanos age.DurationNanos }
   WorktreesObserved { Worktrees }
   RoleStatus { role.RoleName harness.HarnessKind claims.ClaimEntries }
   ClaimEntry { scope.ScopeReference reason.ScopeReason }

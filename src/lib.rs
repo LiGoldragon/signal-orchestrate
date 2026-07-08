@@ -1569,6 +1569,7 @@ pub struct LaneResourceClaim {
     pub scope: ScopeReference,
     pub reason: ScopeReason,
     pub claimed_at: TimestampNanos,
+    pub age: DurationNanos,
 }
 
 #[derive(

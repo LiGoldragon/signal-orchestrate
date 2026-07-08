@@ -229,6 +229,7 @@ fn lane_projection(
             scope: sample_path_scope(),
             reason: sample_reason(),
             claimed_at: TimestampNanos::new(1_730_000_011_000_000_000),
+            age: DurationNanos::new(1_000_000_000),
         }],
         observed_at: TimestampNanos::new(1_730_000_012_000_000_000),
         age: DurationNanos::new(2_000_000_000),
