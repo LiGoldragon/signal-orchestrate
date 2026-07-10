@@ -134,7 +134,7 @@ pub enum LaneStatus {
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LaneOwner {
     pub role: Role,
-    pub authority: LaneAuthority,
+    pub lane_authority: LaneAuthority,
 }
 
 #[rustfmt::skip]
@@ -144,10 +144,10 @@ pub struct LaneOwner {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LaneAssignment {
-    pub session: SessionIdentifier,
-    pub lane: LaneIdentifier,
-    pub owner: LaneOwner,
-    pub details: LaneDetails,
+    pub session_identifier: SessionIdentifier,
+    pub lane_identifier: LaneIdentifier,
+    pub lane_owner: LaneOwner,
+    pub lane_details: LaneDetails,
 }
 
 #[rustfmt::skip]
@@ -157,9 +157,9 @@ pub struct LaneAssignment {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LaneRegistration {
-    pub assignment: LaneAssignment,
-    pub registered_at: TimestampNanos,
-    pub status: LaneStatus,
+    pub lane_assignment: LaneAssignment,
+    pub timestamp_nanos: TimestampNanos,
+    pub lane_status: LaneStatus,
 }
 
 #[rustfmt::skip]
@@ -248,8 +248,8 @@ pub enum EffortRequest {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ModelRequest {
-    pub selector: ModelSelector,
-    pub effort: EffortRequest,
+    pub model_selector: ModelSelector,
+    pub effort_request: EffortRequest,
 }
 
 #[rustfmt::skip]
@@ -307,8 +307,8 @@ pub enum ContinuationRequest {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ModelResolutionRequest {
-    pub model: ModelRequest,
-    pub continuation: ContinuationRequest,
+    pub model_request: ModelRequest,
+    pub continuation_request: ContinuationRequest,
 }
 
 #[rustfmt::skip]
@@ -340,11 +340,11 @@ pub enum ResolvedHarnessKind {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ModelResolved {
-    pub harness: HarnessName,
-    pub harness_kind: ResolvedHarnessKind,
-    pub model: NamedModel,
-    pub effort: EffortRequest,
-    pub continuation: ContinuationHandle,
+    pub harness_name: HarnessName,
+    pub resolved_harness_kind: ResolvedHarnessKind,
+    pub named_model: NamedModel,
+    pub effort_request: EffortRequest,
+    pub continuation_handle: ContinuationHandle,
 }
 
 #[rustfmt::skip]
@@ -379,8 +379,8 @@ pub enum ModelUnavailableReason {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ModelUnavailable {
-    pub request: ModelResolutionRequest,
-    pub reason: ModelUnavailableReason,
+    pub model_resolution_request: ModelResolutionRequest,
+    pub model_unavailable_reason: ModelUnavailableReason,
 }
 
 #[rustfmt::skip]
@@ -569,9 +569,9 @@ pub enum ComponentKind {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct AuthorizedObjectReference {
-    pub component: ComponentKind,
-    pub digest: ObjectDigest,
-    pub kind: AuthorizedObjectKind,
+    pub component_kind: ComponentKind,
+    pub object_digest: ObjectDigest,
+    pub authorized_object_kind: AuthorizedObjectKind,
 }
 
 #[rustfmt::skip]
@@ -627,10 +627,10 @@ pub enum EvaluationDecision {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowReceipt {
-    pub workflow: WorkflowDigest,
-    pub operation: OperationDigest,
-    pub outcome: EvaluationDecision,
-    pub provenance: WorkflowProvenanceDigest,
+    pub workflow_digest: WorkflowDigest,
+    pub operation_digest: OperationDigest,
+    pub evaluation_decision: EvaluationDecision,
+    pub workflow_provenance_digest: WorkflowProvenanceDigest,
 }
 
 #[rustfmt::skip]
@@ -715,13 +715,13 @@ pub enum PushedState {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Worktree {
-    pub repository: RepositoryName,
-    pub branch: BranchName,
-    pub path: WirePath,
-    pub owning_lane: LaneName,
-    pub status: WorktreeStatus,
-    pub purpose: PurposeText,
-    pub last_activity: TimestampNanos,
+    pub repository_name: RepositoryName,
+    pub branch_name: BranchName,
+    pub wire_path: WirePath,
+    pub lane_name: LaneName,
+    pub worktree_status: WorktreeStatus,
+    pub purpose_text: PurposeText,
+    pub timestamp_nanos: TimestampNanos,
     pub pushed_state: PushedState,
 }
 
@@ -772,9 +772,9 @@ pub struct OrchestratorTopicPaths(Vec<OrchestratorTopicPath>);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OrchestratorTopic {
-    pub path: OrchestratorTopicPath,
-    pub name: TopicName,
-    pub parent: Option<OrchestratorTopicPath>,
+    pub orchestrator_topic_path: OrchestratorTopicPath,
+    pub topic_name: TopicName,
+    pub optional_orchestrator_topic_path: Option<OrchestratorTopicPath>,
 }
 
 #[rustfmt::skip]
@@ -812,10 +812,10 @@ pub enum OrchestratorAgentStatus {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OrchestratorAgentSummary {
-    pub agent_identifier: OrchestratorAgentIdentifier,
-    pub mission: MissionDescription,
-    pub topics: OrchestratorTopicPaths,
-    pub status: OrchestratorAgentStatus,
+    pub orchestrator_agent_identifier: OrchestratorAgentIdentifier,
+    pub mission_description: MissionDescription,
+    pub orchestrator_topic_paths: OrchestratorTopicPaths,
+    pub orchestrator_agent_status: OrchestratorAgentStatus,
 }
 
 #[rustfmt::skip]
@@ -872,9 +872,9 @@ pub enum TopicSelection {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OrchestratorAgentRegistration {
-    pub session: SessionIdentifier,
-    pub mission: MissionDescription,
-    pub harness: HarnessKind,
+    pub session_identifier: SessionIdentifier,
+    pub mission_description: MissionDescription,
+    pub harness_kind: HarnessKind,
     pub topic_selection: TopicSelection,
 }
 
@@ -885,9 +885,9 @@ pub struct OrchestratorAgentRegistration {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct AgentRegistered {
-    pub agent_identifier: OrchestratorAgentIdentifier,
-    pub assigned_topics: OrchestratorTopics,
-    pub assignment_source: TopicAssignmentSource,
+    pub orchestrator_agent_identifier: OrchestratorAgentIdentifier,
+    pub orchestrator_topics: OrchestratorTopics,
+    pub topic_assignment_source: TopicAssignmentSource,
 }
 
 #[rustfmt::skip]
@@ -921,8 +921,8 @@ pub enum AgentRegistrationRejectionReason {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct AgentRegistrationRejected {
-    pub reason: AgentRegistrationRejectionReason,
-    pub available_topics: OrchestratorTopics,
+    pub agent_registration_rejection_reason: AgentRegistrationRejectionReason,
+    pub orchestrator_topics: OrchestratorTopics,
 }
 
 #[rustfmt::skip]
@@ -940,8 +940,8 @@ pub struct TopicTree(OrchestratorTopics);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct TopicDetail {
-    pub topic: OrchestratorTopic,
-    pub member_agent_identifiers: OrchestratorAgentIdentifiers,
+    pub orchestrator_topic: OrchestratorTopic,
+    pub orchestrator_agent_identifiers: OrchestratorAgentIdentifiers,
 }
 
 #[rustfmt::skip]
@@ -1063,9 +1063,9 @@ pub struct ApplicationFailures(Vec<ApplicationFailure>);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleClaim {
-    pub role: RoleName,
-    pub scopes: ScopeReferences,
-    pub reason: ScopeReason,
+    pub role_name: RoleName,
+    pub scope_references: ScopeReferences,
+    pub scope_reason: ScopeReason,
 }
 
 #[rustfmt::skip]
@@ -1085,8 +1085,8 @@ pub struct RoleRelease(RoleName);
 pub struct RoleHandoff {
     pub from: RoleName,
     pub to: RoleName,
-    pub scopes: ScopeReferences,
-    pub reason: ScopeReason,
+    pub scope_references: ScopeReferences,
+    pub scope_reason: ScopeReason,
 }
 
 #[rustfmt::skip]
@@ -1113,9 +1113,9 @@ pub enum Observation {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ActivitySubmission {
-    pub role: RoleName,
-    pub scope: ScopeReference,
-    pub reason: ScopeReason,
+    pub role_name: RoleName,
+    pub scope_reference: ScopeReference,
+    pub scope_reason: ScopeReason,
 }
 
 #[rustfmt::skip]
@@ -1125,8 +1125,8 @@ pub struct ActivitySubmission {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ActivityQuery {
-    pub limit: Integer,
-    pub filters: ActivityFilters,
+    pub integer: Integer,
+    pub activity_filters: ActivityFilters,
 }
 
 #[rustfmt::skip]
@@ -1167,8 +1167,8 @@ pub struct ObservationToken(Integer);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ClaimAcceptance {
-    pub role: RoleName,
-    pub scopes: ScopeReferences,
+    pub role_name: RoleName,
+    pub scope_references: ScopeReferences,
 }
 
 #[rustfmt::skip]
@@ -1178,8 +1178,8 @@ pub struct ClaimAcceptance {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ClaimRejection {
-    pub role: RoleName,
-    pub conflicts: ScopeConflicts,
+    pub role_name: RoleName,
+    pub scope_conflicts: ScopeConflicts,
 }
 
 #[rustfmt::skip]
@@ -1189,9 +1189,9 @@ pub struct ClaimRejection {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ScopeConflict {
-    pub scope: ScopeReference,
-    pub held_by: RoleName,
-    pub held_reason: ScopeReason,
+    pub scope_reference: ScopeReference,
+    pub role_name: RoleName,
+    pub scope_reason: ScopeReason,
 }
 
 #[rustfmt::skip]
@@ -1201,8 +1201,8 @@ pub struct ScopeConflict {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ReleaseAcknowledgment {
-    pub role: RoleName,
-    pub released_scopes: ScopeReferences,
+    pub role_name: RoleName,
+    pub scope_references: ScopeReferences,
 }
 
 #[rustfmt::skip]
@@ -1214,7 +1214,7 @@ pub struct ReleaseAcknowledgment {
 pub struct HandoffAcceptance {
     pub from: RoleName,
     pub to: RoleName,
-    pub scopes: ScopeReferences,
+    pub scope_references: ScopeReferences,
 }
 
 #[rustfmt::skip]
@@ -1226,7 +1226,7 @@ pub struct HandoffAcceptance {
 pub struct HandoffRejection {
     pub from: RoleName,
     pub to: RoleName,
-    pub reason: HandoffRejectionReason,
+    pub handoff_rejection_reason: HandoffRejectionReason,
 }
 
 #[rustfmt::skip]
@@ -1247,8 +1247,8 @@ pub enum HandoffRejectionReason {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleSnapshot {
-    pub roles: RoleStatuses,
-    pub recent_activity: Activities,
+    pub role_statuses: RoleStatuses,
+    pub activities: Activities,
 }
 
 #[rustfmt::skip]
@@ -1274,8 +1274,8 @@ pub struct LanesObserved(LaneProjections);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct SessionProjection {
-    pub session: SessionIdentifier,
-    pub active_lanes: Integer,
+    pub session_identifier: SessionIdentifier,
+    pub integer: Integer,
 }
 
 #[rustfmt::skip]
@@ -1285,10 +1285,10 @@ pub struct SessionProjection {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LaneProjection {
-    pub registration: LaneRegistration,
-    pub resource_claims: LaneResourceClaims,
-    pub observed_at: TimestampNanos,
-    pub age: DurationNanos,
+    pub lane_registration: LaneRegistration,
+    pub lane_resource_claims: LaneResourceClaims,
+    pub timestamp_nanos: TimestampNanos,
+    pub duration_nanos: DurationNanos,
 }
 
 #[rustfmt::skip]
@@ -1298,10 +1298,10 @@ pub struct LaneProjection {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LaneResourceClaim {
-    pub scope: ScopeReference,
-    pub reason: ScopeReason,
-    pub claimed_at: TimestampNanos,
-    pub age: DurationNanos,
+    pub scope_reference: ScopeReference,
+    pub scope_reason: ScopeReason,
+    pub timestamp_nanos: TimestampNanos,
+    pub duration_nanos: DurationNanos,
 }
 
 #[rustfmt::skip]
@@ -1319,9 +1319,9 @@ pub struct WorktreesObserved(Worktrees);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleStatus {
-    pub role: RoleName,
-    pub harness: HarnessKind,
-    pub claims: ClaimEntries,
+    pub role_name: RoleName,
+    pub harness_kind: HarnessKind,
+    pub claim_entries: ClaimEntries,
 }
 
 #[rustfmt::skip]
@@ -1331,10 +1331,10 @@ pub struct RoleStatus {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ClaimEntry {
-    pub scope: ScopeReference,
-    pub reason: ScopeReason,
-    pub claimed_at: TimestampNanos,
-    pub age: DurationNanos,
+    pub scope_reference: ScopeReference,
+    pub scope_reason: ScopeReason,
+    pub timestamp_nanos: TimestampNanos,
+    pub duration_nanos: DurationNanos,
 }
 
 #[rustfmt::skip]
@@ -1344,10 +1344,10 @@ pub struct ClaimEntry {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Activity {
-    pub role: RoleName,
-    pub scope: ScopeReference,
-    pub reason: ScopeReason,
-    pub stamped_at: TimestampNanos,
+    pub role_name: RoleName,
+    pub scope_reference: ScopeReference,
+    pub scope_reason: ScopeReason,
+    pub timestamp_nanos: TimestampNanos,
 }
 
 #[rustfmt::skip]
@@ -1373,9 +1373,9 @@ pub struct ActivityList(Activities);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowRunRequest {
-    pub workflow: WorkflowDigest,
-    pub operation: AuthorizedObjectReference,
-    pub contract: ContractDigest,
+    pub workflow_digest: WorkflowDigest,
+    pub authorized_object_reference: AuthorizedObjectReference,
+    pub contract_digest: ContractDigest,
 }
 
 #[rustfmt::skip]
@@ -1385,8 +1385,8 @@ pub struct WorkflowRunRequest {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ResolvedWorkflowRunRequest {
-    pub workflow_run: WorkflowRunRequest,
-    pub model_resolution: ModelResolutionRequest,
+    pub workflow_run_request: WorkflowRunRequest,
+    pub model_resolution_request: ModelResolutionRequest,
 }
 
 #[rustfmt::skip]
@@ -1428,8 +1428,8 @@ pub struct WorkflowRunAccepted(WorkflowRunHandle);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowRunResolution {
-    pub handle: WorkflowRunHandle,
-    pub resolution: ModelResolved,
+    pub workflow_run_handle: WorkflowRunHandle,
+    pub model_resolved: ModelResolved,
 }
 
 #[rustfmt::skip]
@@ -1439,9 +1439,9 @@ pub struct WorkflowRunResolution {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowResolutionUnavailable {
-    pub handle: WorkflowRunHandle,
-    pub request: ResolvedWorkflowRunRequest,
-    pub unavailable: ModelUnavailable,
+    pub workflow_run_handle: WorkflowRunHandle,
+    pub resolved_workflow_run_request: ResolvedWorkflowRunRequest,
+    pub model_unavailable: ModelUnavailable,
 }
 
 #[rustfmt::skip]
@@ -1451,8 +1451,8 @@ pub struct WorkflowResolutionUnavailable {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowReceiptProduced {
-    pub handle: WorkflowRunHandle,
-    pub receipt: WorkflowReceipt,
+    pub workflow_run_handle: WorkflowRunHandle,
+    pub workflow_receipt: WorkflowReceipt,
 }
 
 #[rustfmt::skip]
@@ -1462,8 +1462,8 @@ pub struct WorkflowReceiptProduced {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowResolvedReceiptProduced {
-    pub run: WorkflowRunResolution,
-    pub receipt: WorkflowReceipt,
+    pub workflow_run_resolution: WorkflowRunResolution,
+    pub workflow_receipt: WorkflowReceipt,
 }
 
 #[rustfmt::skip]
@@ -1481,8 +1481,8 @@ pub struct WorkflowRunLogReported(WorkflowRunLog);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowRunLog {
-    pub run: WorkflowRunDigest,
-    pub step_logs: Vec<StepLog>,
+    pub workflow_run_digest: WorkflowRunDigest,
+    pub step_log_vector: Vec<StepLog>,
 }
 
 #[rustfmt::skip]
@@ -1492,9 +1492,9 @@ pub struct WorkflowRunLog {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct StepLog {
-    pub step: WorkflowStepName,
-    pub attestation: ModelAttestation,
-    pub outcome: StepOutcome,
+    pub workflow_step_name: WorkflowStepName,
+    pub model_attestation: ModelAttestation,
+    pub step_outcome: StepOutcome,
 }
 
 #[rustfmt::skip]
@@ -1504,10 +1504,10 @@ pub struct StepLog {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ModelAttestation {
-    pub provider: ProviderName,
-    pub model: ModelName,
-    pub host: HostName,
-    pub call: OperationDigest,
+    pub provider_name: ProviderName,
+    pub model_name: ModelName,
+    pub host_name: HostName,
+    pub operation_digest: OperationDigest,
 }
 
 #[rustfmt::skip]
@@ -1528,9 +1528,9 @@ pub enum StepOutcome {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowDefinition {
-    pub steps: Vec<WorkflowStep>,
-    pub combination: CombinationRule,
-    pub escalation: Option<EscalationTarget>,
+    pub workflow_step_vector: Vec<WorkflowStep>,
+    pub combination_rule: CombinationRule,
+    pub optional_escalation_target: Option<EscalationTarget>,
 }
 
 #[rustfmt::skip]
@@ -1540,10 +1540,10 @@ pub struct WorkflowDefinition {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowStep {
-    pub name: WorkflowStepName,
-    pub prompt: ObjectDigest,
-    pub provider: Option<ProviderName>,
-    pub dependencies: Vec<WorkflowStepName>,
+    pub workflow_step_name: WorkflowStepName,
+    pub object_digest: ObjectDigest,
+    pub optional_provider_name: Option<ProviderName>,
+    pub workflow_step_name_vector: Vec<WorkflowStepName>,
 }
 
 #[rustfmt::skip]
@@ -1573,9 +1573,9 @@ pub struct StepThreshold(Integer);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowRunSnapshot {
-    pub handle: WorkflowRunHandle,
-    pub latest_log: Option<WorkflowRunLog>,
-    pub receipt: Option<WorkflowReceipt>,
+    pub workflow_run_handle: WorkflowRunHandle,
+    pub optional_workflow_run_log: Option<WorkflowRunLog>,
+    pub optional_workflow_receipt: Option<WorkflowReceipt>,
 }
 
 #[rustfmt::skip]
@@ -1585,8 +1585,8 @@ pub struct WorkflowRunSnapshot {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowRunObservationOpened {
-    pub token: WorkflowRunObservationToken,
-    pub snapshot: WorkflowRunSnapshot,
+    pub workflow_run_observation_token: WorkflowRunObservationToken,
+    pub workflow_run_snapshot: WorkflowRunSnapshot,
 }
 
 #[rustfmt::skip]
@@ -1604,9 +1604,9 @@ pub struct WorkflowRunObservationClosed(WorkflowRunObservationToken);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorkflowRunUpdate {
-    pub run: WorkflowRunDigest,
-    pub log: Option<WorkflowRunLog>,
-    pub receipt: Option<WorkflowReceipt>,
+    pub workflow_run_digest: WorkflowRunDigest,
+    pub optional_workflow_run_log: Option<WorkflowRunLog>,
+    pub optional_workflow_receipt: Option<WorkflowReceipt>,
 }
 
 #[rustfmt::skip]
@@ -1664,8 +1664,8 @@ pub enum ApplicationFailureReason {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ApplicationSuccess {
-    pub component: DownstreamComponent,
-    pub detail: ScopeReason,
+    pub downstream_component: DownstreamComponent,
+    pub scope_reason: ScopeReason,
 }
 
 #[rustfmt::skip]
@@ -1675,9 +1675,9 @@ pub struct ApplicationSuccess {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ApplicationFailure {
-    pub component: DownstreamComponent,
-    pub reason: ApplicationFailureReason,
-    pub detail: ScopeReason,
+    pub downstream_component: DownstreamComponent,
+    pub application_failure_reason: ApplicationFailureReason,
+    pub scope_reason: ScopeReason,
 }
 
 #[rustfmt::skip]
@@ -1687,8 +1687,8 @@ pub struct ApplicationFailure {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct PartialApplied {
-    pub succeeded: ApplicationSuccesses,
-    pub failed: ApplicationFailures,
+    pub application_successes: ApplicationSuccesses,
+    pub application_failures: ApplicationFailures,
 }
 
 #[rustfmt::skip]
@@ -1778,8 +1778,8 @@ pub struct OperationReceived(OperationKind);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct EffectEmitted {
-    pub operation: OperationKind,
-    pub outcome: EffectOutcome,
+    pub operation_kind: OperationKind,
+    pub effect_outcome: EffectOutcome,
 }
 
 #[rustfmt::skip]

@@ -270,18 +270,18 @@ fn workflow_run_handle() -> WorkflowRunHandle {
 
 fn authorized_object_reference() -> AuthorizedObjectReference {
     AuthorizedObjectReference {
-        component: ComponentKind::Spirit,
-        digest: operation_digest().object_digest().clone(),
-        kind: AuthorizedObjectKind::Head,
+        component_kind: ComponentKind::Spirit,
+        object_digest: operation_digest().object_digest().clone(),
+        authorized_object_kind: AuthorizedObjectKind::Head,
     }
 }
 
 fn workflow_receipt() -> WorkflowReceipt {
     WorkflowReceipt {
-        workflow: workflow_digest(),
-        operation: operation_digest(),
-        outcome: EvaluationDecision::Authorized,
-        provenance: WorkflowProvenanceDigest::from_bytes(b"workflow-provenance"),
+        workflow_digest: workflow_digest(),
+        operation_digest: operation_digest(),
+        evaluation_decision: EvaluationDecision::Authorized,
+        workflow_provenance_digest: WorkflowProvenanceDigest::from_bytes(b"workflow-provenance"),
     }
 }
 
@@ -689,19 +689,21 @@ fn generated_worktree_mirror_uses_canonical_status_field_name() {
     use signal_orchestrate::schema::lib as generated;
 
     let worktree = generated::Worktree {
-        repository: generated::RepositoryName::new("signal-orchestrate"),
-        branch: generated::BranchName::new("main"),
-        path: generated::WirePath::new(
+        repository_name: generated::RepositoryName::new("signal-orchestrate"),
+        branch_name: generated::BranchName::new("main"),
+        wire_path: generated::WirePath::new(
             "/home/li/wt/github.com/LiGoldragon/signal-orchestrate/main",
         ),
-        owning_lane: generated::LaneName::new("operator"),
-        status: generated::WorktreeStatus::Active,
-        purpose: generated::PurposeText::new("schema mirror should match canonical field names"),
-        last_activity: generated::TimestampNanos::new(1_730_000_002_000_000_000),
+        lane_name: generated::LaneName::new("operator"),
+        worktree_status: generated::WorktreeStatus::Active,
+        purpose_text: generated::PurposeText::new(
+            "schema mirror should match canonical field names",
+        ),
+        timestamp_nanos: generated::TimestampNanos::new(1_730_000_002_000_000_000),
         pushed_state: generated::PushedState::Pushed,
     };
 
-    assert_eq!(worktree.status, generated::WorktreeStatus::Active);
+    assert_eq!(worktree.worktree_status, generated::WorktreeStatus::Active);
 }
 
 #[test]

@@ -51,26 +51,26 @@
   LaneIdentifier String
   LaneDetails String
   LaneStatus [Active Released HandoverEnded]
-  LaneOwner { Role authority.LaneAuthority }
-  LaneAssignment { session.SessionIdentifier lane.LaneIdentifier owner.LaneOwner details.LaneDetails }
-  LaneRegistration { assignment.LaneAssignment registered_at.TimestampNanos status.LaneStatus }
+  LaneOwner { Role LaneAuthority }
+  LaneAssignment { SessionIdentifier LaneIdentifier LaneOwner LaneDetails }
+  LaneRegistration { LaneAssignment TimestampNanos LaneStatus }
   HarnessKind [Codex Claude]
   HarnessName String
   NamedModel String
   CapabilityProfile String
   ModelSelector [(Exact NamedModel) (CapabilityProfile CapabilityProfile)]
   EffortRequest [Minimal Low Medium High ExtraHigh Maximum]
-  ModelRequest { selector.ModelSelector effort.EffortRequest }
+  ModelRequest { ModelSelector EffortRequest }
   ClaudeSessionIdentifier String
   CodexContinuationIdentifier String
   PiContinuationIdentifier String
   ContinuationHandle [(Claude ClaudeSessionIdentifier) (Codex CodexContinuationIdentifier) (Pi PiContinuationIdentifier)]
   ContinuationRequest [Fresh (Prefer ContinuationHandle) (Require ContinuationHandle)]
-  ModelResolutionRequest { model.ModelRequest continuation.ContinuationRequest }
+  ModelResolutionRequest { ModelRequest ContinuationRequest }
   ResolvedHarnessKind [Codex Claude Pi Fixture]
-  ModelResolved { harness.HarnessName harness_kind.ResolvedHarnessKind model.NamedModel effort.EffortRequest continuation.ContinuationHandle }
+  ModelResolved { HarnessName ResolvedHarnessKind NamedModel EffortRequest ContinuationHandle }
   ModelUnavailableReason [NoConfiguredHarness ModelNotKnown EffortUnsupported CapabilityUnsupported ProviderUnavailable ContinuationUnavailable AdapterConfigurationMissing]
-  ModelUnavailable { request.ModelResolutionRequest reason.ModelUnavailableReason }
+  ModelUnavailable { ModelResolutionRequest ModelUnavailableReason }
   WirePath String
   TaskToken String
   ScopeReason String
@@ -93,11 +93,11 @@
   WorkflowProvenanceDigest ObjectDigest
   AuthorizedObjectKind [Operation Contract Agreement Time Head]
   ComponentKind [Spirit Criome Router Mirror Lojix Persona Agent]
-  AuthorizedObjectReference { component.ComponentKind digest.ObjectDigest kind.AuthorizedObjectKind }
+  AuthorizedObjectReference { ComponentKind ObjectDigest AuthorizedObjectKind }
   EvaluationRejectionReason [OutsideTimeWindow TimeNotProven AgreementMissing]
   EscalationTarget [Psyche (Workflow WorkflowDigest)]
   EvaluationDecision [Authorized Deferred NonJudgement (Escalate EscalationTarget) (Rejected EvaluationRejectionReason)]
-  WorkflowReceipt { workflow.WorkflowDigest operation.OperationDigest outcome.EvaluationDecision provenance.WorkflowProvenanceDigest }
+  WorkflowReceipt { WorkflowDigest OperationDigest EvaluationDecision WorkflowProvenanceDigest }
 
   RepositoryName String
   BranchName String
@@ -105,28 +105,28 @@
   PurposeText String
   WorktreeStatus [Active Merged Archived Recycled]
   PushedState [Unpushed Pushed AncestorOfMain]
-  Worktree { repository.RepositoryName branch.BranchName path.WirePath owning_lane.LaneName status.WorktreeStatus purpose.PurposeText last_activity.TimestampNanos PushedState }
+  Worktree { RepositoryName BranchName WirePath LaneName WorktreeStatus PurposeText TimestampNanos PushedState }
 
   OrchestratorAgentIdentifier String
   OrchestratorTopicPath String
   TopicName String
   MissionDescription String
   OrchestratorTopicPaths (Vector OrchestratorTopicPath)
-  OrchestratorTopic { path.OrchestratorTopicPath name.TopicName parent.(Optional OrchestratorTopicPath) }
+  OrchestratorTopic { OrchestratorTopicPath TopicName (Optional OrchestratorTopicPath) }
   OrchestratorTopics (Vector OrchestratorTopic)
   OrchestratorAgentStatus [Active Retired]
-  OrchestratorAgentSummary { agent_identifier.OrchestratorAgentIdentifier mission.MissionDescription topics.OrchestratorTopicPaths status.OrchestratorAgentStatus }
+  OrchestratorAgentSummary { OrchestratorAgentIdentifier MissionDescription OrchestratorTopicPaths OrchestratorAgentStatus }
   OrchestratorAgentSummaries (Vector OrchestratorAgentSummary)
   OrchestratorAgentIdentifiers (Vector OrchestratorAgentIdentifier)
   TopicAssignmentSource [Judge Explicit]
   TopicSelection [Automatic (Explicit OrchestratorTopicPaths)]
-  OrchestratorAgentRegistration { session.SessionIdentifier mission.MissionDescription harness.HarnessKind TopicSelection }
-  AgentRegistered { agent_identifier.OrchestratorAgentIdentifier assigned_topics.OrchestratorTopics assignment_source.TopicAssignmentSource }
+  OrchestratorAgentRegistration { SessionIdentifier MissionDescription HarnessKind TopicSelection }
+  AgentRegistered { OrchestratorAgentIdentifier OrchestratorTopics TopicAssignmentSource }
   AgentRegistrationRejectionReason [MissionEmpty MissionTooVague UnknownTopic JudgeUnavailable JudgeMalformed JudgeTimedOut]
-  AgentRegistrationRejected { reason.AgentRegistrationRejectionReason available_topics.OrchestratorTopics }
-  TopicTree { topics.OrchestratorTopics }
-  TopicDetail { topic.OrchestratorTopic member_agent_identifiers.OrchestratorAgentIdentifiers }
-  AgentDirectory { agents.OrchestratorAgentSummaries }
+  AgentRegistrationRejected { AgentRegistrationRejectionReason OrchestratorTopics }
+  TopicTree { OrchestratorTopics }
+  TopicDetail { OrchestratorTopic OrchestratorAgentIdentifiers }
+  AgentDirectory { OrchestratorAgentSummaries }
 
   ScopeReferences (Vector ScopeReference)
   ActivityFilters (Vector ActivityFilter)
@@ -142,72 +142,72 @@
   ApplicationSuccesses (Vector ApplicationSuccess)
   ApplicationFailures (Vector ApplicationFailure)
 
-  RoleClaim { role.RoleName scopes.ScopeReferences reason.ScopeReason }
+  RoleClaim { RoleName ScopeReferences ScopeReason }
   RoleRelease RoleName
-  RoleHandoff { from.RoleName to.RoleName scopes.ScopeReferences reason.ScopeReason }
+  RoleHandoff { from.RoleName to.RoleName ScopeReferences ScopeReason }
   Observation [Roles Sessions (SessionLanes SessionIdentifier) Lanes Worktrees Topics (Topic OrchestratorTopicPath) Agents]
-  ActivitySubmission { role.RoleName scope.ScopeReference reason.ScopeReason }
-  ActivityQuery { limit.Integer filters.ActivityFilters }
+  ActivitySubmission { RoleName ScopeReference ScopeReason }
+  ActivityQuery { Integer ActivityFilters }
   ActivityFilter [(RoleFilter RoleName) (PathPrefix WirePath) (TaskToken TaskToken)]
   ObservationSubscription { include_operations.Boolean include_effects.Boolean }
   ObservationToken Integer
 
-  ClaimAcceptance { role.RoleName scopes.ScopeReferences }
-  ClaimRejection { role.RoleName conflicts.ScopeConflicts }
-  ScopeConflict { scope.ScopeReference held_by.RoleName held_reason.ScopeReason }
-  ReleaseAcknowledgment { role.RoleName released_scopes.ScopeReferences }
-  HandoffAcceptance { from.RoleName to.RoleName scopes.ScopeReferences }
-  HandoffRejection { from.RoleName to.RoleName reason.HandoffRejectionReason }
+  ClaimAcceptance { RoleName ScopeReferences }
+  ClaimRejection { RoleName ScopeConflicts }
+  ScopeConflict { ScopeReference RoleName ScopeReason }
+  ReleaseAcknowledgment { RoleName ScopeReferences }
+  HandoffAcceptance { from.RoleName to.RoleName ScopeReferences }
+  HandoffRejection { from.RoleName to.RoleName HandoffRejectionReason }
   HandoffRejectionReason [SourceRoleDoesNotHold (TargetRoleConflict ScopeConflicts)]
-  RoleSnapshot { roles.RoleStatuses recent_activity.Activities }
-  SessionsObserved { sessions.SessionProjections }
-  LanesObserved { lanes.LaneProjections }
-  SessionProjection { session.SessionIdentifier active_lanes.Integer }
-  LaneProjection { registration.LaneRegistration resource_claims.LaneResourceClaims observed_at.TimestampNanos age.DurationNanos }
-  LaneResourceClaim { scope.ScopeReference reason.ScopeReason claimed_at.TimestampNanos age.DurationNanos }
+  RoleSnapshot { RoleStatuses Activities }
+  SessionsObserved { SessionProjections }
+  LanesObserved { LaneProjections }
+  SessionProjection { SessionIdentifier Integer }
+  LaneProjection { LaneRegistration LaneResourceClaims TimestampNanos DurationNanos }
+  LaneResourceClaim { ScopeReference ScopeReason TimestampNanos DurationNanos }
   WorktreesObserved { Worktrees }
-  RoleStatus { role.RoleName harness.HarnessKind claims.ClaimEntries }
-  ClaimEntry { scope.ScopeReference reason.ScopeReason claimed_at.TimestampNanos age.DurationNanos }
-  Activity { role.RoleName scope.ScopeReference reason.ScopeReason stamped_at.TimestampNanos }
+  RoleStatus { RoleName HarnessKind ClaimEntries }
+  ClaimEntry { ScopeReference ScopeReason TimestampNanos DurationNanos }
+  Activity { RoleName ScopeReference ScopeReason TimestampNanos }
   ActivityAcknowledgment Integer
   ActivityList Activities
 
-  WorkflowRunRequest { workflow.WorkflowDigest operation.AuthorizedObjectReference contract.ContractDigest }
-  ResolvedWorkflowRunRequest { workflow_run.WorkflowRunRequest model_resolution.ModelResolutionRequest }
-  WorkflowRunObservation { run.WorkflowRunDigest }
-  WorkflowRunObservationToken { run.WorkflowRunDigest }
-  WorkflowRunHandle { run.WorkflowRunDigest }
-  WorkflowRunAccepted { handle.WorkflowRunHandle }
-  WorkflowRunResolution { handle.WorkflowRunHandle resolution.ModelResolved }
-  WorkflowResolutionUnavailable { handle.WorkflowRunHandle request.ResolvedWorkflowRunRequest unavailable.ModelUnavailable }
-  WorkflowReceiptProduced { handle.WorkflowRunHandle receipt.WorkflowReceipt }
-  WorkflowResolvedReceiptProduced { run.WorkflowRunResolution receipt.WorkflowReceipt }
-  WorkflowRunLogReported { log.WorkflowRunLog }
-  WorkflowRunLog { run.WorkflowRunDigest step_logs.(Vector StepLog) }
-  StepLog { step.WorkflowStepName attestation.ModelAttestation outcome.StepOutcome }
-  ModelAttestation { provider.ProviderName model.ModelName host.HostName call.OperationDigest }
+  WorkflowRunRequest { WorkflowDigest AuthorizedObjectReference ContractDigest }
+  ResolvedWorkflowRunRequest { WorkflowRunRequest ModelResolutionRequest }
+  WorkflowRunObservation { WorkflowRunDigest }
+  WorkflowRunObservationToken { WorkflowRunDigest }
+  WorkflowRunHandle { WorkflowRunDigest }
+  WorkflowRunAccepted { WorkflowRunHandle }
+  WorkflowRunResolution { WorkflowRunHandle ModelResolved }
+  WorkflowResolutionUnavailable { WorkflowRunHandle ResolvedWorkflowRunRequest ModelUnavailable }
+  WorkflowReceiptProduced { WorkflowRunHandle WorkflowReceipt }
+  WorkflowResolvedReceiptProduced { WorkflowRunResolution WorkflowReceipt }
+  WorkflowRunLogReported { WorkflowRunLog }
+  WorkflowRunLog { WorkflowRunDigest (Vector StepLog) }
+  StepLog { WorkflowStepName ModelAttestation StepOutcome }
+  ModelAttestation { ProviderName ModelName HostName OperationDigest }
   StepOutcome [(Produced EvaluationDecision) (Failed ScopeReason)]
-  WorkflowDefinition { steps.(Vector WorkflowStep) combination.CombinationRule escalation.(Optional EscalationTarget) }
-  WorkflowStep { name.WorkflowStepName prompt.ObjectDigest provider.(Optional ProviderName) dependencies.(Vector WorkflowStepName) }
+  WorkflowDefinition { (Vector WorkflowStep) CombinationRule (Optional EscalationTarget) }
+  WorkflowStep { WorkflowStepName ObjectDigest (Optional ProviderName) (Vector WorkflowStepName) }
   CombinationRule [(Threshold StepThreshold) Unanimous AnyApprove]
   StepThreshold Integer
-  WorkflowRunSnapshot { handle.WorkflowRunHandle latest_log.(Optional WorkflowRunLog) receipt.(Optional WorkflowReceipt) }
-  WorkflowRunObservationOpened { token.WorkflowRunObservationToken snapshot.WorkflowRunSnapshot }
-  WorkflowRunObservationClosed { token.WorkflowRunObservationToken }
-  WorkflowRunUpdate { run.WorkflowRunDigest log.(Optional WorkflowRunLog) receipt.(Optional WorkflowReceipt) }
+  WorkflowRunSnapshot { WorkflowRunHandle (Optional WorkflowRunLog) (Optional WorkflowReceipt) }
+  WorkflowRunObservationOpened { WorkflowRunObservationToken WorkflowRunSnapshot }
+  WorkflowRunObservationClosed { WorkflowRunObservationToken }
+  WorkflowRunUpdate { WorkflowRunDigest (Optional WorkflowRunLog) (Optional WorkflowReceipt) }
 
   DownstreamComponent [Router Harness Terminal Message Mind System Introspect]
   ApplicationFailureReason [Unreachable Rejected Unimplemented TimedOut Unknown]
-  ApplicationSuccess { component.DownstreamComponent detail.ScopeReason }
-  ApplicationFailure { component.DownstreamComponent reason.ApplicationFailureReason detail.ScopeReason }
-  PartialApplied { succeeded.ApplicationSuccesses failed.ApplicationFailures }
+  ApplicationSuccess { DownstreamComponent ScopeReason }
+  ApplicationFailure { DownstreamComponent ApplicationFailureReason ScopeReason }
+  PartialApplied { ApplicationSuccesses ApplicationFailures }
 
   ObservationOpened ObservationToken
   ObservationClosed ObservationToken
   OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow RunResolvedWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch RegisterAgent]
   EffectOutcome [Applied Removed Changed Observed StreamOpened StreamClosed NoChange]
   OperationReceived OperationKind
-  EffectEmitted { operation.OperationKind outcome.EffectOutcome }
+  EffectEmitted { OperationKind EffectOutcome }
   WorkflowRunEvent [(WorkflowRunUpdated WorkflowRunUpdate belongs WorkflowRunStream)]
   ObservationEvent [(OperationReceived OperationReceived belongs ObservationStream)
                     (EffectEmitted EffectEmitted belongs ObservationStream)]
