@@ -39,6 +39,12 @@ use signal_orchestrate::{
     WorkflowRunObservationToken, WorkflowRunRequest, WorkflowRunResolution, WorkflowRunSnapshot,
     WorkflowRunUpdate, WorkflowStep, WorkflowStepName, Worktree, WorktreeStatus, WorktreesObserved,
 };
+use signal_orchestrate::{
+    AgentDirectory, AgentRegistered, AgentRegistrationRejected, AgentRegistrationRejectionReason,
+    MissionDescription, OrchestratorAgentIdentifier, OrchestratorAgentRegistration,
+    OrchestratorAgentStatus, OrchestratorAgentSummary, OrchestratorTopic, OrchestratorTopicPath,
+    TopicAssignmentSource, TopicDetail, TopicName, TopicSelection, TopicTree,
+};
 
 // ─── Helpers ──────────────────────────────────────────────
 
@@ -1089,4 +1095,164 @@ fn scope_primitives_reject_invalid_values() {
         SessionIdentifier::from_camel_case_name("notCamelCase"),
         Err(Error::InvalidSessionIdentifier { .. })
     ));
+}
+
+// ─── Orchestrator seat ────────────────────────────────────
+
+fn agent_identifier(token: &str) -> OrchestratorAgentIdentifier {
+    OrchestratorAgentIdentifier::from_wire_token(token).expect("agent identifier")
+}
+
+fn topic_path(path: &str) -> OrchestratorTopicPath {
+    OrchestratorTopicPath::from_wire_token(path).expect("topic path")
+}
+
+fn mission(text: &str) -> MissionDescription {
+    MissionDescription::from_text(text).expect("mission")
+}
+
+fn topic(path: &str, name: &str, parent: Option<&str>) -> OrchestratorTopic {
+    OrchestratorTopic {
+        path: topic_path(path),
+        name: TopicName::from_text(name).expect("topic name"),
+        parent: parent.map(topic_path),
+    }
+}
+
+fn sample_topics() -> Vec<OrchestratorTopic> {
+    vec![
+        topic("infrastructure", "Infrastructure", None),
+        topic("infrastructure/nix", "Nix", Some("infrastructure")),
+    ]
+}
+
+#[test]
+fn register_agent_automatic_round_trips() {
+    let request = OrchestrateRequest::RegisterAgent(OrchestratorAgentRegistration {
+        session: session_identifier("OrchestratorMessaging"),
+        mission: mission("Design the orchestrator messaging wire contracts."),
+        harness: HarnessKind::Claude,
+        topic_selection: TopicSelection::Automatic,
+    });
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+}
+
+#[test]
+fn register_agent_explicit_round_trips() {
+    let request = OrchestrateRequest::RegisterAgent(OrchestratorAgentRegistration {
+        session: session_identifier("OrchestratorMessaging"),
+        mission: mission("Author the judge crate."),
+        harness: HarnessKind::Codex,
+        topic_selection: TopicSelection::Explicit(vec![
+            topic_path("infrastructure/nix"),
+            topic_path("contracts"),
+        ]),
+    });
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+}
+
+#[test]
+fn topic_and_agent_observations_round_trip() {
+    for observation in [
+        Observation::Topics,
+        Observation::Topic(topic_path("infrastructure/nix")),
+        Observation::Agents,
+    ] {
+        let request = OrchestrateRequest::Observe(observation);
+        let decoded = round_trip_request(request.clone());
+        assert_eq!(decoded, request);
+    }
+}
+
+#[test]
+fn register_agent_exposes_operation_kind() {
+    let request = OrchestrateRequest::RegisterAgent(OrchestratorAgentRegistration {
+        session: session_identifier("OrchestratorMessaging"),
+        mission: mission("kind witness"),
+        harness: HarnessKind::Claude,
+        topic_selection: TopicSelection::Automatic,
+    });
+    assert_eq!(request.operation_kind(), OperationKind::RegisterAgent);
+}
+
+#[test]
+fn agent_registered_round_trips() {
+    let reply = OrchestrateReply::AgentRegistered(AgentRegistered {
+        agent_identifier: agent_identifier("4zqk"),
+        assigned_topics: sample_topics(),
+        assignment_source: TopicAssignmentSource::Judge,
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+
+    let explicit = OrchestrateReply::AgentRegistered(AgentRegistered {
+        agent_identifier: agent_identifier("7mtp"),
+        assigned_topics: vec![topic("contracts", "Contracts", None)],
+        assignment_source: TopicAssignmentSource::Explicit,
+    });
+    let decoded = round_trip_reply(explicit.clone());
+    assert_eq!(decoded, explicit);
+}
+
+#[test]
+fn agent_registration_rejected_round_trips_for_every_reason() {
+    let reasons = [
+        AgentRegistrationRejectionReason::MissionEmpty,
+        AgentRegistrationRejectionReason::MissionTooVague,
+        AgentRegistrationRejectionReason::UnknownTopic,
+        AgentRegistrationRejectionReason::JudgeUnavailable,
+        AgentRegistrationRejectionReason::JudgeMalformed,
+        AgentRegistrationRejectionReason::JudgeTimedOut,
+    ];
+    for reason in reasons {
+        let reply = OrchestrateReply::AgentRegistrationRejected(AgentRegistrationRejected {
+            reason,
+            available_topics: sample_topics(),
+        });
+        let decoded = round_trip_reply(reply.clone());
+        assert_eq!(decoded, reply);
+    }
+}
+
+#[test]
+fn topic_tree_round_trips() {
+    let reply = OrchestrateReply::TopicTree(TopicTree {
+        topics: sample_topics(),
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}
+
+#[test]
+fn topic_detail_round_trips() {
+    let reply = OrchestrateReply::TopicDetail(TopicDetail {
+        topic: topic("infrastructure/nix", "Nix", Some("infrastructure")),
+        member_agent_identifiers: vec![agent_identifier("4zqk"), agent_identifier("7mtp")],
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}
+
+#[test]
+fn agent_directory_round_trips() {
+    let reply = OrchestrateReply::AgentDirectory(AgentDirectory {
+        agents: vec![
+            OrchestratorAgentSummary {
+                agent_identifier: agent_identifier("4zqk"),
+                mission: mission("Author contracts."),
+                topics: vec![topic_path("contracts")],
+                status: OrchestratorAgentStatus::Active,
+            },
+            OrchestratorAgentSummary {
+                agent_identifier: agent_identifier("7mtp"),
+                mission: mission("Retired worker."),
+                topics: vec![],
+                status: OrchestratorAgentStatus::Retired,
+            },
+        ],
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
 }

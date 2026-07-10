@@ -731,6 +731,233 @@ pub struct Worktree {
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorAgentIdentifier(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorTopicPath(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct TopicName(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MissionDescription(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorTopicPaths(Vec<OrchestratorTopicPath>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorTopic {
+    pub path: OrchestratorTopicPath,
+    pub name: TopicName,
+    pub parent: Option<OrchestratorTopicPath>,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorTopics(Vec<OrchestratorTopic>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum OrchestratorAgentStatus {
+    Active,
+    Retired,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorAgentSummary {
+    pub agent_identifier: OrchestratorAgentIdentifier,
+    pub mission: MissionDescription,
+    pub topics: OrchestratorTopicPaths,
+    pub status: OrchestratorAgentStatus,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorAgentSummaries(Vec<OrchestratorAgentSummary>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorAgentIdentifiers(Vec<OrchestratorAgentIdentifier>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum TopicAssignmentSource {
+    Judge,
+    Explicit,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum TopicSelection {
+    Automatic,
+    Explicit(OrchestratorTopicPaths),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorAgentRegistration {
+    pub session: SessionIdentifier,
+    pub mission: MissionDescription,
+    pub harness: HarnessKind,
+    pub topic_selection: TopicSelection,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct AgentRegistered {
+    pub agent_identifier: OrchestratorAgentIdentifier,
+    pub assigned_topics: OrchestratorTopics,
+    pub assignment_source: TopicAssignmentSource,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum AgentRegistrationRejectionReason {
+    MissionEmpty,
+    MissionTooVague,
+    UnknownTopic,
+    JudgeUnavailable,
+    JudgeMalformed,
+    JudgeTimedOut,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct AgentRegistrationRejected {
+    pub reason: AgentRegistrationRejectionReason,
+    pub available_topics: OrchestratorTopics,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct TopicTree(OrchestratorTopics);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct TopicDetail {
+    pub topic: OrchestratorTopic,
+    pub member_agent_identifiers: OrchestratorAgentIdentifiers,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct AgentDirectory(OrchestratorAgentSummaries);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ScopeReferences(Vec<ScopeReference>);
 
 #[rustfmt::skip]
@@ -874,6 +1101,9 @@ pub enum Observation {
     SessionLanes(SessionIdentifier),
     Lanes,
     Worktrees,
+    Topics,
+    Topic(OrchestratorTopicPath),
+    Agents,
 }
 
 #[rustfmt::skip]
@@ -1505,6 +1735,7 @@ pub enum OperationKind {
     WorkflowRunObservationRetraction,
     Watch,
     Unwatch,
+    RegisterAgent,
 }
 
 #[rustfmt::skip]
@@ -1591,6 +1822,7 @@ pub enum Input {
     WorkflowRunObservationRetraction(WorkflowRunObservationToken),
     Watch(ObservationSubscription),
     Unwatch(ObservationToken),
+    RegisterAgent(OrchestratorAgentRegistration),
 }
 
 #[rustfmt::skip]
@@ -1622,6 +1854,11 @@ pub enum Output {
     PartialApplied(PartialApplied),
     ObservationOpened(ObservationOpened),
     ObservationClosed(ObservationClosed),
+    AgentRegistered(AgentRegistered),
+    AgentRegistrationRejected(AgentRegistrationRejected),
+    TopicTree(TopicTree),
+    TopicDetail(TopicDetail),
+    AgentDirectory(AgentDirectory),
 }
 
 #[rustfmt::skip]
@@ -2271,6 +2508,196 @@ impl From<String> for PurposeText {
 }
 
 #[rustfmt::skip]
+impl OrchestratorAgentIdentifier {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for OrchestratorAgentIdentifier {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl OrchestratorTopicPath {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for OrchestratorTopicPath {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl TopicName {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for TopicName {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl MissionDescription {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for MissionDescription {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl OrchestratorTopicPaths {
+    pub fn new(payload: Vec<OrchestratorTopicPath>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<OrchestratorTopicPath> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<OrchestratorTopicPath> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<OrchestratorTopicPath>> for OrchestratorTopicPaths {
+    fn from(payload: Vec<OrchestratorTopicPath>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl OrchestratorTopics {
+    pub fn new(payload: Vec<OrchestratorTopic>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<OrchestratorTopic> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<OrchestratorTopic> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<OrchestratorTopic>> for OrchestratorTopics {
+    fn from(payload: Vec<OrchestratorTopic>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl OrchestratorAgentSummaries {
+    pub fn new(payload: Vec<OrchestratorAgentSummary>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<OrchestratorAgentSummary> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<OrchestratorAgentSummary> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<OrchestratorAgentSummary>> for OrchestratorAgentSummaries {
+    fn from(payload: Vec<OrchestratorAgentSummary>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl OrchestratorAgentIdentifiers {
+    pub fn new(payload: Vec<OrchestratorAgentIdentifier>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<OrchestratorAgentIdentifier> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<OrchestratorAgentIdentifier> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<OrchestratorAgentIdentifier>> for OrchestratorAgentIdentifiers {
+    fn from(payload: Vec<OrchestratorAgentIdentifier>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl TopicTree {
+    pub fn new(payload: OrchestratorTopics) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &OrchestratorTopics {
+        &self.0
+    }
+    pub fn into_payload(self) -> OrchestratorTopics {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<OrchestratorTopics> for TopicTree {
+    fn from(payload: OrchestratorTopics) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl AgentDirectory {
+    pub fn new(payload: OrchestratorAgentSummaries) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &OrchestratorAgentSummaries {
+        &self.0
+    }
+    pub fn into_payload(self) -> OrchestratorAgentSummaries {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<OrchestratorAgentSummaries> for AgentDirectory {
+    fn from(payload: OrchestratorAgentSummaries) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl ScopeReferences {
     pub fn new(payload: Vec<ScopeReference>) -> Self {
         Self(payload)
@@ -2901,9 +3328,19 @@ impl EvaluationDecision {
 }
 
 #[rustfmt::skip]
+impl TopicSelection {
+    pub fn explicit(payload: Vec<OrchestratorTopicPath>) -> Self {
+        Self::Explicit(OrchestratorTopicPaths::new(payload))
+    }
+}
+
+#[rustfmt::skip]
 impl Observation {
     pub fn session_lanes(payload: String) -> Self {
         Self::SessionLanes(SessionIdentifier::new(payload))
+    }
+    pub fn topic(payload: String) -> Self {
+        Self::Topic(OrchestratorTopicPath::new(payload))
     }
 }
 
@@ -2999,6 +3436,9 @@ impl Input {
     pub fn unwatch(payload: Integer) -> Self {
         Self::Unwatch(ObservationToken::new(payload))
     }
+    pub fn register_agent(payload: OrchestratorAgentRegistration) -> Self {
+        Self::RegisterAgent(payload)
+    }
 }
 
 #[rustfmt::skip]
@@ -3077,6 +3517,21 @@ impl Output {
     pub fn observation_closed(payload: ObservationToken) -> Self {
         Self::ObservationClosed(ObservationClosed::new(payload))
     }
+    pub fn agent_registered(payload: AgentRegistered) -> Self {
+        Self::AgentRegistered(payload)
+    }
+    pub fn agent_registration_rejected(payload: AgentRegistrationRejected) -> Self {
+        Self::AgentRegistrationRejected(payload)
+    }
+    pub fn topic_tree(payload: OrchestratorTopics) -> Self {
+        Self::TopicTree(TopicTree::new(payload))
+    }
+    pub fn topic_detail(payload: TopicDetail) -> Self {
+        Self::TopicDetail(payload)
+    }
+    pub fn agent_directory(payload: OrchestratorAgentSummaries) -> Self {
+        Self::AgentDirectory(AgentDirectory::new(payload))
+    }
 }
 
 #[rustfmt::skip]
@@ -3150,9 +3605,23 @@ impl From<EvaluationRejectionReason> for EvaluationDecision {
 }
 
 #[rustfmt::skip]
+impl From<OrchestratorTopicPaths> for TopicSelection {
+    fn from(payload: OrchestratorTopicPaths) -> Self {
+        Self::Explicit(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<SessionIdentifier> for Observation {
     fn from(payload: SessionIdentifier) -> Self {
         Self::SessionLanes(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<OrchestratorTopicPath> for Observation {
+    fn from(payload: OrchestratorTopicPath) -> Self {
+        Self::Topic(payload)
     }
 }
 
@@ -3311,6 +3780,13 @@ impl From<ObservationToken> for Input {
 }
 
 #[rustfmt::skip]
+impl From<OrchestratorAgentRegistration> for Input {
+    fn from(payload: OrchestratorAgentRegistration) -> Self {
+        Self::RegisterAgent(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<ClaimAcceptance> for Output {
     fn from(payload: ClaimAcceptance) -> Self {
         Self::ClaimAcceptance(payload)
@@ -3465,6 +3941,41 @@ impl From<ObservationClosed> for Output {
 }
 
 #[rustfmt::skip]
+impl From<AgentRegistered> for Output {
+    fn from(payload: AgentRegistered) -> Self {
+        Self::AgentRegistered(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<AgentRegistrationRejected> for Output {
+    fn from(payload: AgentRegistrationRejected) -> Self {
+        Self::AgentRegistrationRejected(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<TopicTree> for Output {
+    fn from(payload: TopicTree) -> Self {
+        Self::TopicTree(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<TopicDetail> for Output {
+    fn from(payload: TopicDetail) -> Self {
+        Self::TopicDetail(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<AgentDirectory> for Output {
+    fn from(payload: AgentDirectory) -> Self {
+        Self::AgentDirectory(payload)
+    }
+}
+
+#[rustfmt::skip]
 #[cfg(feature = "nota-text")]
 impl std::str::FromStr for Input {
     type Err = NotaDecodeError;
@@ -3510,6 +4021,7 @@ pub mod short_header {
     pub const INPUT_WORKFLOW_RUN_OBSERVATION_RETRACTION: u64 = 0x0009000000000000;
     pub const INPUT_WATCH: u64 = 0x000A000000000000;
     pub const INPUT_UNWATCH: u64 = 0x000B000000000000;
+    pub const INPUT_REGISTER_AGENT: u64 = 0x000C000000000000;
     pub const OUTPUT_CLAIM_ACCEPTANCE: u64 = 0x0100000000000000;
     pub const OUTPUT_CLAIM_REJECTION: u64 = 0x0101000000000000;
     pub const OUTPUT_RELEASE_ACKNOWLEDGMENT: u64 = 0x0102000000000000;
@@ -3532,6 +4044,11 @@ pub mod short_header {
     pub const OUTPUT_PARTIAL_APPLIED: u64 = 0x0113000000000000;
     pub const OUTPUT_OBSERVATION_OPENED: u64 = 0x0114000000000000;
     pub const OUTPUT_OBSERVATION_CLOSED: u64 = 0x0115000000000000;
+    pub const OUTPUT_AGENT_REGISTERED: u64 = 0x0116000000000000;
+    pub const OUTPUT_AGENT_REGISTRATION_REJECTED: u64 = 0x0117000000000000;
+    pub const OUTPUT_TOPIC_TREE: u64 = 0x0118000000000000;
+    pub const OUTPUT_TOPIC_DETAIL: u64 = 0x0119000000000000;
+    pub const OUTPUT_AGENT_DIRECTORY: u64 = 0x011A000000000000;
 }
 
 #[rustfmt::skip]
@@ -3597,6 +4114,7 @@ pub enum InputRoute {
     WorkflowRunObservationRetraction,
     Watch,
     Unwatch,
+    RegisterAgent,
 }
 
 #[rustfmt::skip]
@@ -3637,6 +4155,11 @@ pub enum OutputRoute {
     PartialApplied,
     ObservationOpened,
     ObservationClosed,
+    AgentRegistered,
+    AgentRegistrationRejected,
+    TopicTree,
+    TopicDetail,
+    AgentDirectory,
 }
 
 #[rustfmt::skip]
@@ -3657,6 +4180,7 @@ impl Input {
             }
             Self::Watch(_) => InputRoute::Watch,
             Self::Unwatch(_) => InputRoute::Unwatch,
+            Self::RegisterAgent(_) => InputRoute::RegisterAgent,
         }
     }
     pub fn short_header(&self) -> u64 {
@@ -3675,6 +4199,7 @@ impl Input {
             }
             Self::Watch(_) => short_header::INPUT_WATCH,
             Self::Unwatch(_) => short_header::INPUT_UNWATCH,
+            Self::RegisterAgent(_) => short_header::INPUT_REGISTER_AGENT,
         }
     }
     pub fn route_from_short_header(header: u64) -> Result<InputRoute, SignalFrameError> {
@@ -3697,6 +4222,7 @@ impl Input {
             }
             short_header::INPUT_WATCH => Ok(InputRoute::Watch),
             short_header::INPUT_UNWATCH => Ok(InputRoute::Unwatch),
+            short_header::INPUT_REGISTER_AGENT => Ok(InputRoute::RegisterAgent),
             _ => {
                 Err(SignalFrameError::UnknownHeader {
                     root_enum: "Input",
@@ -3779,6 +4305,11 @@ impl Output {
             Self::PartialApplied(_) => OutputRoute::PartialApplied,
             Self::ObservationOpened(_) => OutputRoute::ObservationOpened,
             Self::ObservationClosed(_) => OutputRoute::ObservationClosed,
+            Self::AgentRegistered(_) => OutputRoute::AgentRegistered,
+            Self::AgentRegistrationRejected(_) => OutputRoute::AgentRegistrationRejected,
+            Self::TopicTree(_) => OutputRoute::TopicTree,
+            Self::TopicDetail(_) => OutputRoute::TopicDetail,
+            Self::AgentDirectory(_) => OutputRoute::AgentDirectory,
         }
     }
     pub fn short_header(&self) -> u64 {
@@ -3821,6 +4352,13 @@ impl Output {
             Self::PartialApplied(_) => short_header::OUTPUT_PARTIAL_APPLIED,
             Self::ObservationOpened(_) => short_header::OUTPUT_OBSERVATION_OPENED,
             Self::ObservationClosed(_) => short_header::OUTPUT_OBSERVATION_CLOSED,
+            Self::AgentRegistered(_) => short_header::OUTPUT_AGENT_REGISTERED,
+            Self::AgentRegistrationRejected(_) => {
+                short_header::OUTPUT_AGENT_REGISTRATION_REJECTED
+            }
+            Self::TopicTree(_) => short_header::OUTPUT_TOPIC_TREE,
+            Self::TopicDetail(_) => short_header::OUTPUT_TOPIC_DETAIL,
+            Self::AgentDirectory(_) => short_header::OUTPUT_AGENT_DIRECTORY,
         }
     }
     pub fn route_from_short_header(
@@ -3869,6 +4407,13 @@ impl Output {
             short_header::OUTPUT_PARTIAL_APPLIED => Ok(OutputRoute::PartialApplied),
             short_header::OUTPUT_OBSERVATION_OPENED => Ok(OutputRoute::ObservationOpened),
             short_header::OUTPUT_OBSERVATION_CLOSED => Ok(OutputRoute::ObservationClosed),
+            short_header::OUTPUT_AGENT_REGISTERED => Ok(OutputRoute::AgentRegistered),
+            short_header::OUTPUT_AGENT_REGISTRATION_REJECTED => {
+                Ok(OutputRoute::AgentRegistrationRejected)
+            }
+            short_header::OUTPUT_TOPIC_TREE => Ok(OutputRoute::TopicTree),
+            short_header::OUTPUT_TOPIC_DETAIL => Ok(OutputRoute::TopicDetail),
+            short_header::OUTPUT_AGENT_DIRECTORY => Ok(OutputRoute::AgentDirectory),
             _ => {
                 Err(SignalFrameError::UnknownHeader {
                     root_enum: "Output",
@@ -3932,6 +4477,7 @@ impl signal_frame::SignalOperationHeads for Input {
         "WorkflowRunObservationRetraction",
         "Watch",
         "Unwatch",
+        "RegisterAgent",
     ];
 }
 #[rustfmt::skip]

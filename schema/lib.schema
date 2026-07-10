@@ -10,7 +10,8 @@
  (ObserveWorkflowRun WorkflowRunObservation opens WorkflowRunStream)
  (WorkflowRunObservationRetraction WorkflowRunObservationToken)
  (Watch ObservationSubscription opens ObservationStream)
- (Unwatch ObservationToken)]
+ (Unwatch ObservationToken)
+ (RegisterAgent OrchestratorAgentRegistration)]
 [(ClaimAcceptance ClaimAcceptance)
  (ClaimRejection ClaimRejection)
  (ReleaseAcknowledgment ReleaseAcknowledgment)
@@ -32,7 +33,12 @@
  (WorkflowRunObservationClosed WorkflowRunObservationClosed)
  (PartialApplied PartialApplied)
  (ObservationOpened ObservationOpened)
- (ObservationClosed ObservationClosed)]
+ (ObservationClosed ObservationClosed)
+ (AgentRegistered AgentRegistered)
+ (AgentRegistrationRejected AgentRegistrationRejected)
+ (TopicTree TopicTree)
+ (TopicDetail TopicDetail)
+ (AgentDirectory AgentDirectory)]
 {
   RoleIdentifier String
   RoleName RoleIdentifier
@@ -101,6 +107,27 @@
   PushedState [Unpushed Pushed AncestorOfMain]
   Worktree { repository.RepositoryName branch.BranchName path.WirePath owning_lane.LaneName status.WorktreeStatus purpose.PurposeText last_activity.TimestampNanos PushedState }
 
+  OrchestratorAgentIdentifier String
+  OrchestratorTopicPath String
+  TopicName String
+  MissionDescription String
+  OrchestratorTopicPaths (Vector OrchestratorTopicPath)
+  OrchestratorTopic { path.OrchestratorTopicPath name.TopicName parent.(Optional OrchestratorTopicPath) }
+  OrchestratorTopics (Vector OrchestratorTopic)
+  OrchestratorAgentStatus [Active Retired]
+  OrchestratorAgentSummary { agent_identifier.OrchestratorAgentIdentifier mission.MissionDescription topics.OrchestratorTopicPaths status.OrchestratorAgentStatus }
+  OrchestratorAgentSummaries (Vector OrchestratorAgentSummary)
+  OrchestratorAgentIdentifiers (Vector OrchestratorAgentIdentifier)
+  TopicAssignmentSource [Judge Explicit]
+  TopicSelection [Automatic (Explicit OrchestratorTopicPaths)]
+  OrchestratorAgentRegistration { session.SessionIdentifier mission.MissionDescription harness.HarnessKind TopicSelection }
+  AgentRegistered { agent_identifier.OrchestratorAgentIdentifier assigned_topics.OrchestratorTopics assignment_source.TopicAssignmentSource }
+  AgentRegistrationRejectionReason [MissionEmpty MissionTooVague UnknownTopic JudgeUnavailable JudgeMalformed JudgeTimedOut]
+  AgentRegistrationRejected { reason.AgentRegistrationRejectionReason available_topics.OrchestratorTopics }
+  TopicTree { topics.OrchestratorTopics }
+  TopicDetail { topic.OrchestratorTopic member_agent_identifiers.OrchestratorAgentIdentifiers }
+  AgentDirectory { agents.OrchestratorAgentSummaries }
+
   ScopeReferences (Vector ScopeReference)
   ActivityFilters (Vector ActivityFilter)
   ScopeConflicts (Vector ScopeConflict)
@@ -118,7 +145,7 @@
   RoleClaim { role.RoleName scopes.ScopeReferences reason.ScopeReason }
   RoleRelease RoleName
   RoleHandoff { from.RoleName to.RoleName scopes.ScopeReferences reason.ScopeReason }
-  Observation [Roles Sessions (SessionLanes SessionIdentifier) Lanes Worktrees]
+  Observation [Roles Sessions (SessionLanes SessionIdentifier) Lanes Worktrees Topics (Topic OrchestratorTopicPath) Agents]
   ActivitySubmission { role.RoleName scope.ScopeReference reason.ScopeReason }
   ActivityQuery { limit.Integer filters.ActivityFilters }
   ActivityFilter [(RoleFilter RoleName) (PathPrefix WirePath) (TaskToken TaskToken)]
@@ -177,7 +204,7 @@
 
   ObservationOpened ObservationToken
   ObservationClosed ObservationToken
-  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow RunResolvedWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch]
+  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow RunResolvedWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch RegisterAgent]
   EffectOutcome [Applied Removed Changed Observed StreamOpened StreamClosed NoChange]
   OperationReceived OperationKind
   EffectEmitted { operation.OperationKind outcome.EffectOutcome }

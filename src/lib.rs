@@ -98,6 +98,18 @@ pub enum Error {
     InvalidModelName { name: String },
     #[error("host name must be non-empty, unbracketed, and contain no whitespace: {name}")]
     InvalidHostName { name: String },
+    #[error(
+        "orchestrator agent identifier must be non-empty, unbracketed, and contain no whitespace: {identifier}"
+    )]
+    InvalidOrchestratorAgentIdentifier { identifier: String },
+    #[error(
+        "orchestrator topic path must be non-empty, unbracketed, and contain no whitespace: {path}"
+    )]
+    InvalidOrchestratorTopicPath { path: String },
+    #[error("topic name must be non-empty and single-line: {name}")]
+    InvalidTopicName { name: String },
+    #[error("mission description must be non-empty: {mission}")]
+    InvalidMissionDescription { mission: String },
 }
 
 macro_rules! validated_string_nota_codec {
@@ -1504,6 +1516,12 @@ pub enum Observation {
     SessionLanes(SessionIdentifier),
     Lanes,
     Worktrees,
+    /// The whole orchestrator topic tree. Reply: `TopicTree`.
+    Topics,
+    /// One topic and its seated agents. Reply: `TopicDetail`.
+    Topic(OrchestratorTopicPath),
+    /// The registered-agent directory. Reply: `AgentDirectory`.
+    Agents,
 }
 
 /// Legacy empty payload kept for older callers while the `Observe`
@@ -1881,6 +1899,281 @@ pub enum ObservationEvent {
     EffectEmitted(EffectEmitted),
 }
 
+// ─── Orchestrator seat ────────────────────────────────────
+
+// The minted registration identity is the canonical agent address:
+// orchestrate identifier = router ActorIdentifier = message recipient.
+// The mint itself is Spirit's (random base36, length-growing on
+// saturation); the contract only carries the resulting token.
+validated_token_type!(
+    OrchestratorAgentIdentifier,
+    from_wire_token,
+    InvalidOrchestratorAgentIdentifier,
+    identifier
+);
+
+// A slash-separated topic path in the orchestrator topic tree.
+validated_token_type!(
+    OrchestratorTopicPath,
+    from_wire_token,
+    InvalidOrchestratorTopicPath,
+    path
+);
+
+/// A short human-facing topic label (single line, may contain spaces).
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct TopicName(String);
+
+impl TopicName {
+    pub fn try_new(name: String) -> ContractResult<Self> {
+        Self::from_text(name)
+    }
+
+    pub fn from_text(name: impl Into<String>) -> ContractResult<Self> {
+        let name = name.into();
+        if name.trim().is_empty() || name.contains('\n') || name.contains('\r') {
+            return Err(Error::InvalidTopicName { name });
+        }
+        Ok(Self(name))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for TopicName {
+    type Error = Error;
+
+    fn try_from(name: String) -> ContractResult<Self> {
+        Self::from_text(name)
+    }
+}
+
+impl TryFrom<&str> for TopicName {
+    type Error = Error;
+
+    fn try_from(name: &str) -> ContractResult<Self> {
+        Self::from_text(name)
+    }
+}
+
+impl AsRef<str> for TopicName {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+validated_string_nota_codec!(TopicName, TopicName::from_text);
+
+/// The mission an agent registers with. Mandatory in both registration
+/// modes: the topic judge and every future orchestrator function reads
+/// it. Prose, so multi-line text is allowed; only empty is rejected.
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct MissionDescription(String);
+
+impl MissionDescription {
+    pub fn try_new(mission: String) -> ContractResult<Self> {
+        Self::from_text(mission)
+    }
+
+    pub fn from_text(mission: impl Into<String>) -> ContractResult<Self> {
+        let mission = mission.into();
+        if mission.trim().is_empty() {
+            return Err(Error::InvalidMissionDescription { mission });
+        }
+        Ok(Self(mission))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for MissionDescription {
+    type Error = Error;
+
+    fn try_from(mission: String) -> ContractResult<Self> {
+        Self::from_text(mission)
+    }
+}
+
+impl TryFrom<&str> for MissionDescription {
+    type Error = Error;
+
+    fn try_from(mission: &str) -> ContractResult<Self> {
+        Self::from_text(mission)
+    }
+}
+
+impl AsRef<str> for MissionDescription {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+validated_string_nota_codec!(MissionDescription, MissionDescription::from_text);
+
+/// One topic in the orchestrator topic tree. `parent` is the path of
+/// the containing topic, absent for a root topic.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct OrchestratorTopic {
+    pub path: OrchestratorTopicPath,
+    pub name: TopicName,
+    pub parent: Option<OrchestratorTopicPath>,
+}
+
+/// Whether a registered agent is currently seated or has retired.
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub enum OrchestratorAgentStatus {
+    Active,
+    Retired,
+}
+
+/// A directory entry for one registered agent.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct OrchestratorAgentSummary {
+    pub agent_identifier: OrchestratorAgentIdentifier,
+    pub mission: MissionDescription,
+    pub topics: Vec<OrchestratorTopicPath>,
+    pub status: OrchestratorAgentStatus,
+}
+
+/// Where an agent's seated topics came from: assigned by the topic
+/// judge (Automatic registration) or named by the agent (Explicit).
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub enum TopicAssignmentSource {
+    Judge,
+    Explicit,
+}
+
+/// How an agent selects its topics at registration. `Automatic` defers
+/// to the topic judge; `Explicit` names the topic paths directly and
+/// makes no judge call. There is no caller-supplied reachability slot:
+/// reachability is discovered by the daemon at registration.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub enum TopicSelection {
+    Automatic,
+    Explicit(Vec<OrchestratorTopicPath>),
+}
+
+/// A peer agent asks to register on the orchestrator seat. The mission
+/// is mandatory in both selection modes. Reply: `AgentRegistered` on
+/// success, `AgentRegistrationRejected` with the current topic list on
+/// failure.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct OrchestratorAgentRegistration {
+    pub session: SessionIdentifier,
+    pub mission: MissionDescription,
+    pub harness: HarnessKind,
+    pub topic_selection: TopicSelection,
+}
+
+/// Successful registration: the minted address, the topics the agent
+/// was seated on, and where that seating came from.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct AgentRegistered {
+    pub agent_identifier: OrchestratorAgentIdentifier,
+    pub assigned_topics: Vec<OrchestratorTopic>,
+    pub assignment_source: TopicAssignmentSource,
+}
+
+/// Why a registration was rejected. `JudgeUnavailable`/`JudgeMalformed`/
+/// `JudgeTimedOut` are the caller-side fail-closed reasons for Automatic
+/// mode; the reply always carries the available topics so the caller can
+/// retry explicitly. There is no catch-all fallback seating.
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub enum AgentRegistrationRejectionReason {
+    MissionEmpty,
+    MissionTooVague,
+    UnknownTopic,
+    JudgeUnavailable,
+    JudgeMalformed,
+    JudgeTimedOut,
+}
+
+/// Rejected registration carrying the current topic list so a judge-down
+/// caller can retry with an explicit topic selection.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct AgentRegistrationRejected {
+    pub reason: AgentRegistrationRejectionReason,
+    pub available_topics: Vec<OrchestratorTopic>,
+}
+
+/// The whole orchestrator topic tree. Reply to `Observe(Observation::Topics)`.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct TopicTree {
+    pub topics: Vec<OrchestratorTopic>,
+}
+
+/// One topic and the agents seated on it. Reply to
+/// `Observe(Observation::Topic(path))`.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct TopicDetail {
+    pub topic: OrchestratorTopic,
+    pub member_agent_identifiers: Vec<OrchestratorAgentIdentifier>,
+}
+
+/// The registered-agent directory. Reply to `Observe(Observation::Agents)`.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct AgentDirectory {
+    pub agents: Vec<OrchestratorAgentSummary>,
+}
+
 // ─── Channel declaration ──────────────────────────────────
 
 signal_channel! {
@@ -1897,6 +2190,7 @@ signal_channel! {
         operation WorkflowRunObservationRetraction(WorkflowRunObservationToken),
         operation Watch(ObservationSubscription) opens ObservationStream,
         operation Unwatch(ObservationToken),
+        operation RegisterAgent(OrchestratorAgentRegistration),
     }
     reply Reply {
         ClaimAcceptance(ClaimAcceptance),
@@ -1921,6 +2215,11 @@ signal_channel! {
         PartialApplied(PartialApplied),
         ObservationOpened(ObservationOpened),
         ObservationClosed(ObservationClosed),
+        AgentRegistered(AgentRegistered),
+        AgentRegistrationRejected(AgentRegistrationRejected),
+        TopicTree(TopicTree),
+        TopicDetail(TopicDetail),
+        AgentDirectory(AgentDirectory),
     }
     event Event {
         WorkflowRunUpdated(WorkflowRunUpdate) belongs WorkflowRunStream,
