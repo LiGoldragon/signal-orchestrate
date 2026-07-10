@@ -2025,6 +2025,37 @@ pub struct OrchestratorTopic {
     pub parent: Option<OrchestratorTopicPath>,
 }
 
+impl OrchestratorTopicPath {
+    /// The topic lineage implied by this path: one [`OrchestratorTopic`] per
+    /// non-empty slash-separated segment, ordered root-first. The path
+    /// `coordination/messaging` yields `coordination` (a root topic, no parent)
+    /// then `coordination/messaging` (parent `coordination`), so explicit
+    /// registration can create every implied parent before seating the agent on
+    /// the leaf it named. Each topic's [`TopicName`] is its own final segment;
+    /// empty segments (a stray leading, trailing, or doubled slash) are skipped
+    /// so a malformed path never mints a nameless topic. A path with no
+    /// non-empty segment yields an empty lineage.
+    pub fn lineage(&self) -> ContractResult<Vec<OrchestratorTopic>> {
+        let mut lineage = Vec::new();
+        let mut parent: Option<OrchestratorTopicPath> = None;
+        let mut cumulative = String::new();
+        for segment in self.as_str().split('/').filter(|segment| !segment.is_empty()) {
+            if !cumulative.is_empty() {
+                cumulative.push('/');
+            }
+            cumulative.push_str(segment);
+            let path = OrchestratorTopicPath::from_wire_token(cumulative.clone())?;
+            let topic = OrchestratorTopic {
+                path: path.clone(),
+                name: TopicName::from_text(segment)?,
+                parent: parent.replace(path),
+            };
+            lineage.push(topic);
+        }
+        Ok(lineage)
+    }
+}
+
 /// Whether a registered agent is currently seated or has retired.
 #[derive(
     Archive,

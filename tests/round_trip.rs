@@ -1258,3 +1258,52 @@ fn agent_directory_round_trips() {
     let decoded = round_trip_reply(reply.clone());
     assert_eq!(decoded, reply);
 }
+
+#[test]
+fn single_segment_path_yields_one_root_topic() {
+    let lineage = topic_path("engineering").lineage().expect("lineage");
+    assert_eq!(lineage, vec![topic("engineering", "engineering", None)]);
+}
+
+#[test]
+fn nested_path_yields_each_implied_parent_root_first() {
+    let lineage = topic_path("coordination/messaging")
+        .lineage()
+        .expect("lineage");
+    assert_eq!(
+        lineage,
+        vec![
+            topic("coordination", "coordination", None),
+            topic("coordination/messaging", "messaging", Some("coordination")),
+        ]
+    );
+}
+
+#[test]
+fn deep_path_names_each_topic_after_its_own_final_segment() {
+    let lineage = topic_path("a/b/c").lineage().expect("lineage");
+    assert_eq!(
+        lineage,
+        vec![
+            topic("a", "a", None),
+            topic("a/b", "b", Some("a")),
+            topic("a/b/c", "c", Some("a/b")),
+        ]
+    );
+}
+
+#[test]
+fn stray_slashes_never_mint_a_nameless_topic() {
+    // Leading, trailing, and doubled slashes are empty segments and skipped;
+    // the lineage matches the clean nested path.
+    let lineage = topic_path("/coordination//messaging/")
+        .lineage()
+        .expect("lineage");
+    assert_eq!(
+        lineage,
+        vec![
+            topic("coordination", "coordination", None),
+            topic("coordination/messaging", "messaging", Some("coordination")),
+        ]
+    );
+}
