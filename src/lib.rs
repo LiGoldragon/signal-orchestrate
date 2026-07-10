@@ -2039,7 +2039,11 @@ impl OrchestratorTopicPath {
         let mut lineage = Vec::new();
         let mut parent: Option<OrchestratorTopicPath> = None;
         let mut cumulative = String::new();
-        for segment in self.as_str().split('/').filter(|segment| !segment.is_empty()) {
+        for segment in self
+            .as_str()
+            .split('/')
+            .filter(|segment| !segment.is_empty())
+        {
             if !cumulative.is_empty() {
                 cumulative.push('/');
             }
