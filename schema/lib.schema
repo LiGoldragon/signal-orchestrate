@@ -56,7 +56,7 @@
   LaneAuthority [Structural Support]
   LaneIdentifier String
   LaneDetails String
-  LaneStatus [Active Released HandoverEnded]
+  LaneStatus [Active Released HandoverEnded Suspect]
   LaneOwner { Role LaneAuthority }
   LaneAssignment { SessionIdentifier LaneIdentifier LaneOwner LaneDetails }
   LaneRegistration { LaneAssignment TimestampNanos LaneStatus }

@@ -988,6 +988,28 @@ pub enum LaneStatus {
     Active,
     Released,
     HandoverEnded,
+    /// Soft-tombstone: the lane's owner is presumed gone (idle past the
+    /// backstop, its last owned resource drained, or a future detection layer
+    /// flagged it), so the lane is draining through a short grace window toward
+    /// terminal conclusion. Any real activity revives it to `Active`. Appended
+    /// last so existing stored discriminants stay stable.
+    Suspect,
+}
+
+impl LaneStatus {
+    /// An open lane still belongs to a presumed-present owner: `Active` work or
+    /// a `Suspect` lane inside its grace window. Its claims and worktrees are
+    /// still live and its owner can still re-assert. Terminal lanes are not open.
+    pub fn is_open(self) -> bool {
+        matches!(self, Self::Active | Self::Suspect)
+    }
+
+    /// A terminal lane is finished work — `Released` or `HandoverEnded` — kept
+    /// only for its short post-mortem retention window before the reaper deletes
+    /// it. Terminal lanes are never revived by activity.
+    pub fn is_terminal(self) -> bool {
+        matches!(self, Self::Released | Self::HandoverEnded)
+    }
 }
 
 #[derive(

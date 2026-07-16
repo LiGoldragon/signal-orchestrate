@@ -124,6 +124,7 @@ pub enum LaneStatus {
     Active,
     Released,
     HandoverEnded,
+    Suspect,
 }
 
 #[rustfmt::skip]
