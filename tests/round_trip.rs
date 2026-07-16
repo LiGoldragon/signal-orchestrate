@@ -37,7 +37,10 @@ use signal_orchestrate::{
     WorkflowRunDigest, WorkflowRunHandle, WorkflowRunLog, WorkflowRunLogReported,
     WorkflowRunObservation, WorkflowRunObservationClosed, WorkflowRunObservationOpened,
     WorkflowRunObservationToken, WorkflowRunRequest, WorkflowRunResolution, WorkflowRunSnapshot,
-    WorkflowRunUpdate, WorkflowStep, WorkflowStepName, Worktree, WorktreeStatus, WorktreesObserved,
+    WorkflowRunUpdate, WorkflowStep, WorkflowStepName, Worktree, WorktreeConclusion,
+    WorktreeConclusionRequest, WorktreeConcluded, WorktreeRequest, WorktreeRequestRejected,
+    WorktreeRequestRejection, WorktreeScaffolded, WorktreeStatus, WorktreeTeardownRefused,
+    WorktreesObserved, TeardownRefusal,
 };
 use signal_orchestrate::{
     AgentDirectory, AgentRegistered, AgentRegistrationRejected, AgentRegistrationRejectionReason,
@@ -679,6 +682,94 @@ fn worktree_registry_records_round_trip() {
             last_activity: TimestampNanos::new(1_730_000_002_000_000_000),
             pushed_state: signal_orchestrate::PushedState::Pushed,
         }],
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}
+
+fn sample_worktree(status: WorktreeStatus) -> Worktree {
+    Worktree {
+        repository: signal_orchestrate::RepositoryName::from_text("orchestrate")
+            .expect("repository name"),
+        branch: signal_orchestrate::BranchName::from_text("worktree-lifecycle")
+            .expect("branch name"),
+        path: WirePath::from_absolute_path(
+            "/home/li/wt/github.com/LiGoldragon/orchestrate/worktree-lifecycle",
+        )
+        .expect("worktree path"),
+        owning_lane: signal_orchestrate::LaneName::from_text("OrchestratorWorktreeProtocol")
+            .expect("owning lane"),
+        status,
+        purpose: signal_orchestrate::PurposeText::from_text("worktree lifecycle protocol")
+            .expect("purpose"),
+        last_activity: TimestampNanos::new(1_730_000_003_000_000_000),
+        pushed_state: signal_orchestrate::PushedState::AncestorOfMain,
+    }
+}
+
+#[test]
+fn request_worktree_round_trips() {
+    let request = OrchestrateRequest::RequestWorktree(WorktreeRequest {
+        repository: signal_orchestrate::RepositoryName::from_text("orchestrate")
+            .expect("repository name"),
+        branch: signal_orchestrate::BranchName::from_text("worktree-lifecycle")
+            .expect("branch name"),
+        owning_lane: signal_orchestrate::LaneName::from_text("OrchestratorWorktreeProtocol")
+            .expect("owning lane"),
+        purpose: signal_orchestrate::PurposeText::from_text("worktree lifecycle protocol")
+            .expect("purpose"),
+    });
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+    assert_eq!(request.operation_kind(), OperationKind::RequestWorktree);
+}
+
+#[test]
+fn conclude_worktree_round_trips_each_disposition() {
+    for disposition in [WorktreeConclusion::Merged, WorktreeConclusion::Rejected] {
+        let request = OrchestrateRequest::ConcludeWorktree(WorktreeConclusionRequest {
+            owning_lane: signal_orchestrate::LaneName::from_text("OrchestratorWorktreeProtocol")
+                .expect("owning lane"),
+            disposition,
+        });
+        let decoded = round_trip_request(request.clone());
+        assert_eq!(decoded, request);
+        assert_eq!(request.operation_kind(), OperationKind::ConcludeWorktree);
+    }
+}
+
+#[test]
+fn worktree_scaffolded_round_trips() {
+    let reply = OrchestrateReply::WorktreeScaffolded(WorktreeScaffolded {
+        worktree: sample_worktree(WorktreeStatus::Active),
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}
+
+#[test]
+fn worktree_request_rejected_round_trips() {
+    let reply = OrchestrateReply::WorktreeRequestRejected(WorktreeRequestRejected {
+        reason: WorktreeRequestRejection::WorktreeAlreadyExists,
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}
+
+#[test]
+fn worktree_concluded_round_trips_with_abandoned_status() {
+    let reply = OrchestrateReply::WorktreeConcluded(WorktreeConcluded {
+        worktree: sample_worktree(WorktreeStatus::Abandoned),
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}
+
+#[test]
+fn worktree_teardown_refused_round_trips() {
+    let reply = OrchestrateReply::WorktreeTeardownRefused(WorktreeTeardownRefused {
+        worktree: sample_worktree(WorktreeStatus::Active),
+        reason: TeardownRefusal::UnmergedWorkPresent,
     });
     let decoded = round_trip_reply(reply.clone());
     assert_eq!(decoded, reply);

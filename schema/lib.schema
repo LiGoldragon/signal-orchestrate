@@ -11,7 +11,9 @@
  (WorkflowRunObservationRetraction WorkflowRunObservationToken)
  (Watch ObservationSubscription opens ObservationStream)
  (Unwatch ObservationToken)
- (RegisterAgent OrchestratorAgentRegistration)]
+ (RegisterAgent OrchestratorAgentRegistration)
+ (RequestWorktree WorktreeRequest)
+ (ConcludeWorktree WorktreeConclusionRequest)]
 [(ClaimAcceptance ClaimAcceptance)
  (ClaimRejection ClaimRejection)
  (ReleaseAcknowledgment ReleaseAcknowledgment)
@@ -38,7 +40,11 @@
  (AgentRegistrationRejected AgentRegistrationRejected)
  (TopicTree TopicTree)
  (TopicDetail TopicDetail)
- (AgentDirectory AgentDirectory)]
+ (AgentDirectory AgentDirectory)
+ (WorktreeScaffolded WorktreeScaffolded)
+ (WorktreeRequestRejected WorktreeRequestRejected)
+ (WorktreeConcluded WorktreeConcluded)
+ (WorktreeTeardownRefused WorktreeTeardownRefused)]
 {
   RoleIdentifier String
   RoleName RoleIdentifier
@@ -103,9 +109,18 @@
   BranchName String
   LaneName String
   PurposeText String
-  WorktreeStatus [Active Merged Archived Recycled]
+  WorktreeStatus [Active Merged Archived Recycled Abandoned]
   PushedState [Unpushed Pushed AncestorOfMain]
   Worktree { RepositoryName BranchName WirePath LaneName WorktreeStatus PurposeText TimestampNanos PushedState }
+  WorktreeConclusion [Merged Rejected]
+  WorktreeRequest { RepositoryName BranchName LaneName PurposeText }
+  WorktreeConclusionRequest { LaneName WorktreeConclusion }
+  WorktreeRequestRejection [RepositoryNotFound WorktreeAlreadyExists]
+  WorktreeScaffolded { Worktree }
+  WorktreeRequestRejected { WorktreeRequestRejection }
+  WorktreeConcluded { Worktree }
+  TeardownRefusal [UnmergedWorkPresent]
+  WorktreeTeardownRefused { Worktree TeardownRefusal }
 
   OrchestratorAgentIdentifier String
   OrchestratorTopicPath String
@@ -204,7 +219,7 @@
 
   ObservationOpened ObservationToken
   ObservationClosed ObservationToken
-  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow RunResolvedWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch RegisterAgent]
+  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow RunResolvedWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch RegisterAgent RequestWorktree ConcludeWorktree]
   EffectOutcome [Applied Removed Changed Observed StreamOpened StreamClosed NoChange]
   OperationReceived OperationKind
   EffectEmitted { OperationKind EffectOutcome }

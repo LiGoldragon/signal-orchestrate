@@ -685,6 +685,7 @@ pub enum WorktreeStatus {
     Merged,
     Archived,
     Recycled,
+    Abandoned,
 }
 
 #[rustfmt::skip]
@@ -723,6 +724,124 @@ pub struct Worktree {
     pub purpose_text: PurposeText,
     pub timestamp_nanos: TimestampNanos,
     pub pushed_state: PushedState,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum WorktreeConclusion {
+    Merged,
+    Rejected,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorktreeRequest {
+    pub repository_name: RepositoryName,
+    pub branch_name: BranchName,
+    pub lane_name: LaneName,
+    pub purpose_text: PurposeText,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorktreeConclusionRequest {
+    pub lane_name: LaneName,
+    pub worktree_conclusion: WorktreeConclusion,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum WorktreeRequestRejection {
+    RepositoryNotFound,
+    WorktreeAlreadyExists,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorktreeScaffolded(Worktree);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorktreeRequestRejected(WorktreeRequestRejection);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorktreeConcluded(Worktree);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum TeardownRefusal {
+    UnmergedWorkPresent,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct WorktreeTeardownRefused {
+    pub worktree: Worktree,
+    pub teardown_refusal: TeardownRefusal,
 }
 
 #[rustfmt::skip]
@@ -1736,6 +1855,8 @@ pub enum OperationKind {
     Watch,
     Unwatch,
     RegisterAgent,
+    RequestWorktree,
+    ConcludeWorktree,
 }
 
 #[rustfmt::skip]
@@ -1823,6 +1944,8 @@ pub enum Input {
     Watch(ObservationSubscription),
     Unwatch(ObservationToken),
     RegisterAgent(OrchestratorAgentRegistration),
+    RequestWorktree(WorktreeRequest),
+    ConcludeWorktree(WorktreeConclusionRequest),
 }
 
 #[rustfmt::skip]
@@ -1859,6 +1982,10 @@ pub enum Output {
     TopicTree(TopicTree),
     TopicDetail(TopicDetail),
     AgentDirectory(AgentDirectory),
+    WorktreeScaffolded(WorktreeScaffolded),
+    WorktreeRequestRejected(WorktreeRequestRejected),
+    WorktreeConcluded(WorktreeConcluded),
+    WorktreeTeardownRefused(WorktreeTeardownRefused),
 }
 
 #[rustfmt::skip]
@@ -2503,6 +2630,63 @@ impl PurposeText {
 #[rustfmt::skip]
 impl From<String> for PurposeText {
     fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WorktreeScaffolded {
+    pub fn new(payload: Worktree) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Worktree {
+        &self.0
+    }
+    pub fn into_payload(self) -> Worktree {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Worktree> for WorktreeScaffolded {
+    fn from(payload: Worktree) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WorktreeRequestRejected {
+    pub fn new(payload: WorktreeRequestRejection) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &WorktreeRequestRejection {
+        &self.0
+    }
+    pub fn into_payload(self) -> WorktreeRequestRejection {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<WorktreeRequestRejection> for WorktreeRequestRejected {
+    fn from(payload: WorktreeRequestRejection) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl WorktreeConcluded {
+    pub fn new(payload: Worktree) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Worktree {
+        &self.0
+    }
+    pub fn into_payload(self) -> Worktree {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Worktree> for WorktreeConcluded {
+    fn from(payload: Worktree) -> Self {
         Self::new(payload)
     }
 }
@@ -3439,6 +3623,12 @@ impl Input {
     pub fn register_agent(payload: OrchestratorAgentRegistration) -> Self {
         Self::RegisterAgent(payload)
     }
+    pub fn request_worktree(payload: WorktreeRequest) -> Self {
+        Self::RequestWorktree(payload)
+    }
+    pub fn conclude_worktree(payload: WorktreeConclusionRequest) -> Self {
+        Self::ConcludeWorktree(payload)
+    }
 }
 
 #[rustfmt::skip]
@@ -3531,6 +3721,18 @@ impl Output {
     }
     pub fn agent_directory(payload: OrchestratorAgentSummaries) -> Self {
         Self::AgentDirectory(AgentDirectory::new(payload))
+    }
+    pub fn worktree_scaffolded(payload: Worktree) -> Self {
+        Self::WorktreeScaffolded(WorktreeScaffolded::new(payload))
+    }
+    pub fn worktree_request_rejected(payload: WorktreeRequestRejection) -> Self {
+        Self::WorktreeRequestRejected(WorktreeRequestRejected::new(payload))
+    }
+    pub fn worktree_concluded(payload: Worktree) -> Self {
+        Self::WorktreeConcluded(WorktreeConcluded::new(payload))
+    }
+    pub fn worktree_teardown_refused(payload: WorktreeTeardownRefused) -> Self {
+        Self::WorktreeTeardownRefused(payload)
     }
 }
 
@@ -3787,6 +3989,20 @@ impl From<OrchestratorAgentRegistration> for Input {
 }
 
 #[rustfmt::skip]
+impl From<WorktreeRequest> for Input {
+    fn from(payload: WorktreeRequest) -> Self {
+        Self::RequestWorktree(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorktreeConclusionRequest> for Input {
+    fn from(payload: WorktreeConclusionRequest) -> Self {
+        Self::ConcludeWorktree(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<ClaimAcceptance> for Output {
     fn from(payload: ClaimAcceptance) -> Self {
         Self::ClaimAcceptance(payload)
@@ -3976,6 +4192,34 @@ impl From<AgentDirectory> for Output {
 }
 
 #[rustfmt::skip]
+impl From<WorktreeScaffolded> for Output {
+    fn from(payload: WorktreeScaffolded) -> Self {
+        Self::WorktreeScaffolded(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorktreeRequestRejected> for Output {
+    fn from(payload: WorktreeRequestRejected) -> Self {
+        Self::WorktreeRequestRejected(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorktreeConcluded> for Output {
+    fn from(payload: WorktreeConcluded) -> Self {
+        Self::WorktreeConcluded(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<WorktreeTeardownRefused> for Output {
+    fn from(payload: WorktreeTeardownRefused) -> Self {
+        Self::WorktreeTeardownRefused(payload)
+    }
+}
+
+#[rustfmt::skip]
 #[cfg(feature = "nota-text")]
 impl std::str::FromStr for Input {
     type Err = NotaDecodeError;
@@ -4022,6 +4266,8 @@ pub mod short_header {
     pub const INPUT_WATCH: u64 = 0x000A000000000000;
     pub const INPUT_UNWATCH: u64 = 0x000B000000000000;
     pub const INPUT_REGISTER_AGENT: u64 = 0x000C000000000000;
+    pub const INPUT_REQUEST_WORKTREE: u64 = 0x000D000000000000;
+    pub const INPUT_CONCLUDE_WORKTREE: u64 = 0x000E000000000000;
     pub const OUTPUT_CLAIM_ACCEPTANCE: u64 = 0x0100000000000000;
     pub const OUTPUT_CLAIM_REJECTION: u64 = 0x0101000000000000;
     pub const OUTPUT_RELEASE_ACKNOWLEDGMENT: u64 = 0x0102000000000000;
@@ -4049,6 +4295,10 @@ pub mod short_header {
     pub const OUTPUT_TOPIC_TREE: u64 = 0x0118000000000000;
     pub const OUTPUT_TOPIC_DETAIL: u64 = 0x0119000000000000;
     pub const OUTPUT_AGENT_DIRECTORY: u64 = 0x011A000000000000;
+    pub const OUTPUT_WORKTREE_SCAFFOLDED: u64 = 0x011B000000000000;
+    pub const OUTPUT_WORKTREE_REQUEST_REJECTED: u64 = 0x011C000000000000;
+    pub const OUTPUT_WORKTREE_CONCLUDED: u64 = 0x011D000000000000;
+    pub const OUTPUT_WORKTREE_TEARDOWN_REFUSED: u64 = 0x011E000000000000;
 }
 
 #[rustfmt::skip]
@@ -4115,6 +4365,8 @@ pub enum InputRoute {
     Watch,
     Unwatch,
     RegisterAgent,
+    RequestWorktree,
+    ConcludeWorktree,
 }
 
 #[rustfmt::skip]
@@ -4160,6 +4412,10 @@ pub enum OutputRoute {
     TopicTree,
     TopicDetail,
     AgentDirectory,
+    WorktreeScaffolded,
+    WorktreeRequestRejected,
+    WorktreeConcluded,
+    WorktreeTeardownRefused,
 }
 
 #[rustfmt::skip]
@@ -4181,6 +4437,8 @@ impl Input {
             Self::Watch(_) => InputRoute::Watch,
             Self::Unwatch(_) => InputRoute::Unwatch,
             Self::RegisterAgent(_) => InputRoute::RegisterAgent,
+            Self::RequestWorktree(_) => InputRoute::RequestWorktree,
+            Self::ConcludeWorktree(_) => InputRoute::ConcludeWorktree,
         }
     }
     pub fn short_header(&self) -> u64 {
@@ -4200,6 +4458,8 @@ impl Input {
             Self::Watch(_) => short_header::INPUT_WATCH,
             Self::Unwatch(_) => short_header::INPUT_UNWATCH,
             Self::RegisterAgent(_) => short_header::INPUT_REGISTER_AGENT,
+            Self::RequestWorktree(_) => short_header::INPUT_REQUEST_WORKTREE,
+            Self::ConcludeWorktree(_) => short_header::INPUT_CONCLUDE_WORKTREE,
         }
     }
     pub fn route_from_short_header(header: u64) -> Result<InputRoute, SignalFrameError> {
@@ -4223,6 +4483,8 @@ impl Input {
             short_header::INPUT_WATCH => Ok(InputRoute::Watch),
             short_header::INPUT_UNWATCH => Ok(InputRoute::Unwatch),
             short_header::INPUT_REGISTER_AGENT => Ok(InputRoute::RegisterAgent),
+            short_header::INPUT_REQUEST_WORKTREE => Ok(InputRoute::RequestWorktree),
+            short_header::INPUT_CONCLUDE_WORKTREE => Ok(InputRoute::ConcludeWorktree),
             _ => {
                 Err(SignalFrameError::UnknownHeader {
                     root_enum: "Input",
@@ -4310,6 +4572,10 @@ impl Output {
             Self::TopicTree(_) => OutputRoute::TopicTree,
             Self::TopicDetail(_) => OutputRoute::TopicDetail,
             Self::AgentDirectory(_) => OutputRoute::AgentDirectory,
+            Self::WorktreeScaffolded(_) => OutputRoute::WorktreeScaffolded,
+            Self::WorktreeRequestRejected(_) => OutputRoute::WorktreeRequestRejected,
+            Self::WorktreeConcluded(_) => OutputRoute::WorktreeConcluded,
+            Self::WorktreeTeardownRefused(_) => OutputRoute::WorktreeTeardownRefused,
         }
     }
     pub fn short_header(&self) -> u64 {
@@ -4359,6 +4625,14 @@ impl Output {
             Self::TopicTree(_) => short_header::OUTPUT_TOPIC_TREE,
             Self::TopicDetail(_) => short_header::OUTPUT_TOPIC_DETAIL,
             Self::AgentDirectory(_) => short_header::OUTPUT_AGENT_DIRECTORY,
+            Self::WorktreeScaffolded(_) => short_header::OUTPUT_WORKTREE_SCAFFOLDED,
+            Self::WorktreeRequestRejected(_) => {
+                short_header::OUTPUT_WORKTREE_REQUEST_REJECTED
+            }
+            Self::WorktreeConcluded(_) => short_header::OUTPUT_WORKTREE_CONCLUDED,
+            Self::WorktreeTeardownRefused(_) => {
+                short_header::OUTPUT_WORKTREE_TEARDOWN_REFUSED
+            }
         }
     }
     pub fn route_from_short_header(
@@ -4414,6 +4688,16 @@ impl Output {
             short_header::OUTPUT_TOPIC_TREE => Ok(OutputRoute::TopicTree),
             short_header::OUTPUT_TOPIC_DETAIL => Ok(OutputRoute::TopicDetail),
             short_header::OUTPUT_AGENT_DIRECTORY => Ok(OutputRoute::AgentDirectory),
+            short_header::OUTPUT_WORKTREE_SCAFFOLDED => {
+                Ok(OutputRoute::WorktreeScaffolded)
+            }
+            short_header::OUTPUT_WORKTREE_REQUEST_REJECTED => {
+                Ok(OutputRoute::WorktreeRequestRejected)
+            }
+            short_header::OUTPUT_WORKTREE_CONCLUDED => Ok(OutputRoute::WorktreeConcluded),
+            short_header::OUTPUT_WORKTREE_TEARDOWN_REFUSED => {
+                Ok(OutputRoute::WorktreeTeardownRefused)
+            }
             _ => {
                 Err(SignalFrameError::UnknownHeader {
                     root_enum: "Output",
@@ -4478,6 +4762,8 @@ impl signal_frame::SignalOperationHeads for Input {
         "Watch",
         "Unwatch",
         "RegisterAgent",
+        "RequestWorktree",
+        "ConcludeWorktree",
     ];
 }
 #[rustfmt::skip]

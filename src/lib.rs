@@ -732,7 +732,9 @@ validated_string_nota_codec!(PurposeText, PurposeText::from_text);
 
 /// Worktree lifecycle state. `Active` while in use; `Merged`
 /// once integrated; `Archived` retained as a GC-manifest record;
-/// `Recycled` when the worktree slot was reclaimed.
+/// `Recycled` when the worktree slot was reclaimed; `Abandoned`
+/// when the owning lane was reaped before the agent marked a
+/// terminal conclusion (flagged for reclamation, never auto-removed).
 #[derive(
     Archive,
     RkyvSerialize,
@@ -751,6 +753,7 @@ pub enum WorktreeStatus {
     Merged,
     Archived,
     Recycled,
+    Abandoned,
 }
 
 /// How a worktree's branch relates to its remote and to `main`.
@@ -793,6 +796,134 @@ pub struct Worktree {
     pub purpose: PurposeText,
     pub last_activity: TimestampNanos,
     pub pushed_state: PushedState,
+}
+
+/// Ask the daemon to scaffold a fresh worktree at the canonical
+/// root (`<worktree-index-root>/<repository>/<branch>`). The daemon
+/// creates the `jj` workspace off `main`, sets the feature bookmark,
+/// registers the row, and replies [`WorktreeScaffolded`]. Path,
+/// `last_activity`, and `pushed_state` are daemon-minted, so the
+/// caller supplies only intent. Reply on rejection:
+/// [`WorktreeRequestRejected`].
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorktreeRequest {
+    pub repository: RepositoryName,
+    pub branch: BranchName,
+    pub owning_lane: LaneName,
+    pub purpose: PurposeText,
+}
+
+/// The terminal disposition an agent marks when its worktree work is
+/// done. `Merged` — integrated into `main` (teardown is gated on the
+/// work being an ancestor of `main`); `Rejected` — discarded, with the
+/// commit preserved only on a remote `discard/<branch>` salvage ref.
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub enum WorktreeConclusion {
+    Merged,
+    Rejected,
+}
+
+/// Mark the worktree owned by `owning_lane` terminal so the daemon
+/// tears its workspace down. Reply: [`WorktreeConcluded`] on teardown,
+/// [`WorktreeTeardownRefused`] when the safety gate blocks it.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorktreeConclusionRequest {
+    pub owning_lane: LaneName,
+    pub disposition: WorktreeConclusion,
+}
+
+/// Ack for [`WorktreeRequest`] — echoes the scaffolded worktree with
+/// its daemon-minted path and derived facts.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorktreeScaffolded {
+    pub worktree: Worktree,
+}
+
+/// Why a [`WorktreeRequest`] was refused before any scaffolding.
+/// `RepositoryNotFound` — no source checkout for the named repository;
+/// `WorktreeAlreadyExists` — a worktree is already registered for
+/// `(repository, branch)` or the target directory is occupied.
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub enum WorktreeRequestRejection {
+    RepositoryNotFound,
+    WorktreeAlreadyExists,
+}
+
+/// Rejection reply for [`WorktreeRequest`].
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorktreeRequestRejected {
+    pub reason: WorktreeRequestRejection,
+}
+
+/// Ack for [`WorktreeConclusionRequest`] — echoes the worktree after
+/// teardown, in its terminal [`WorktreeStatus`].
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorktreeConcluded {
+    pub worktree: Worktree,
+}
+
+/// Why a [`WorktreeConclusionRequest`] was refused. `UnmergedWorkPresent`
+/// — a `Merged` mark whose work is not yet an ancestor of `main`; the
+/// daemon mutates nothing so the work is never lost.
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub enum TeardownRefusal {
+    UnmergedWorkPresent,
+}
+
+/// Refusal reply for [`WorktreeConclusionRequest`] — echoes the
+/// untouched worktree with the blocking [`TeardownRefusal`].
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct WorktreeTeardownRefused {
+    pub worktree: Worktree,
+    pub reason: TeardownRefusal,
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -2226,6 +2357,8 @@ signal_channel! {
         operation Watch(ObservationSubscription) opens ObservationStream,
         operation Unwatch(ObservationToken),
         operation RegisterAgent(OrchestratorAgentRegistration),
+        operation RequestWorktree(WorktreeRequest),
+        operation ConcludeWorktree(WorktreeConclusionRequest),
     }
     reply Reply {
         ClaimAcceptance(ClaimAcceptance),
@@ -2255,6 +2388,10 @@ signal_channel! {
         TopicTree(TopicTree),
         TopicDetail(TopicDetail),
         AgentDirectory(AgentDirectory),
+        WorktreeScaffolded(WorktreeScaffolded),
+        WorktreeRequestRejected(WorktreeRequestRejected),
+        WorktreeConcluded(WorktreeConcluded),
+        WorktreeTeardownRefused(WorktreeTeardownRefused),
     }
     event Event {
         WorkflowRunUpdated(WorkflowRunUpdate) belongs WorkflowRunStream,
