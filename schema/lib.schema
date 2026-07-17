@@ -129,7 +129,7 @@
   OrchestratorTopicPaths (Vector OrchestratorTopicPath)
   OrchestratorTopic { OrchestratorTopicPath TopicName (Optional OrchestratorTopicPath) }
   OrchestratorTopics (Vector OrchestratorTopic)
-  OrchestratorAgentStatus [Active Retired]
+  OrchestratorAgentStatus [Active Retired Dead]
   OrchestratorAgentSummary { OrchestratorAgentIdentifier MissionDescription OrchestratorTopicPaths OrchestratorAgentStatus }
   OrchestratorAgentSummaries (Vector OrchestratorAgentSummary)
   OrchestratorAgentIdentifiers (Vector OrchestratorAgentIdentifier)

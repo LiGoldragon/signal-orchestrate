@@ -923,6 +923,7 @@ pub struct OrchestratorTopics(Vec<OrchestratorTopic>);
 pub enum OrchestratorAgentStatus {
     Active,
     Retired,
+    Dead,
 }
 
 #[rustfmt::skip]

@@ -1344,10 +1344,23 @@ fn agent_directory_round_trips() {
                 topics: vec![],
                 status: OrchestratorAgentStatus::Retired,
             },
+            OrchestratorAgentSummary {
+                agent_identifier: agent_identifier("9wce"),
+                mission: mission("Crashed worker."),
+                topics: vec![],
+                status: OrchestratorAgentStatus::Dead,
+            },
         ],
     });
     let decoded = round_trip_reply(reply.clone());
     assert_eq!(decoded, reply);
+}
+
+#[test]
+fn dead_agent_status_is_terminal() {
+    assert!(OrchestratorAgentStatus::Dead.is_terminal());
+    assert!(OrchestratorAgentStatus::Retired.is_terminal());
+    assert!(!OrchestratorAgentStatus::Active.is_terminal());
 }
 
 #[test]

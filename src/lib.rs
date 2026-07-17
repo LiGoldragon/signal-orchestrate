@@ -2213,7 +2213,8 @@ impl OrchestratorTopicPath {
     }
 }
 
-/// Whether a registered agent is currently seated or has retired.
+/// Whether a registered agent is currently seated, has retired, or its
+/// harness process is known dead.
 #[derive(
     Archive,
     RkyvSerialize,
@@ -2230,6 +2231,20 @@ impl OrchestratorTopicPath {
 pub enum OrchestratorAgentStatus {
     Active,
     Retired,
+    /// The agent's harness process generation (pid pinned by its start time) is
+    /// known exited — pushed by the kernel exit watch or read from `/proc` at
+    /// reconciliation. Terminal like `Retired`, but distinguishable: a dead
+    /// agent is never respawn-delivered to, it bounces. Appended last so
+    /// existing stored discriminants stay stable.
+    Dead,
+}
+
+impl OrchestratorAgentStatus {
+    /// A terminal agent — `Retired` or `Dead` — is finished, kept only for its
+    /// short post-mortem retention window. Terminal agents are never revived.
+    pub fn is_terminal(self) -> bool {
+        matches!(self, Self::Retired | Self::Dead)
+    }
 }
 
 /// A directory entry for one registered agent.
