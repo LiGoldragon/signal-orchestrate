@@ -43,7 +43,8 @@ use signal_orchestrate::{
     WorktreesObserved, TeardownRefusal,
 };
 use signal_orchestrate::{
-    AgentDirectory, AgentRegistered, AgentRegistrationRejected, AgentRegistrationRejectionReason,
+    AgentDirectory, AgentIdentityMintRequest, AgentIdentityMinted, AgentRegistered,
+    AgentRegistrationRejected, AgentRegistrationRejectionReason, MintedIdentitySelection,
     MissionDescription, OrchestratorAgentIdentifier, OrchestratorAgentRegistration,
     OrchestratorAgentStatus, OrchestratorAgentSummary, OrchestratorTopic, OrchestratorTopicPath,
     TopicAssignmentSource, TopicDetail, TopicName, TopicSelection, TopicTree,
@@ -1226,6 +1227,7 @@ fn register_agent_automatic_round_trips() {
         mission: mission("Design the orchestrator messaging wire contracts."),
         harness: HarnessKind::Claude,
         topic_selection: TopicSelection::Automatic,
+        minted_identity: MintedIdentitySelection::None,
     });
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
@@ -1241,9 +1243,31 @@ fn register_agent_explicit_round_trips() {
             topic_path("infrastructure/nix"),
             topic_path("contracts"),
         ]),
+        minted_identity: MintedIdentitySelection::PreMinted(agent_identifier("4zqk")),
     });
     let decoded = round_trip_request(request.clone());
     assert_eq!(decoded, request);
+}
+
+#[test]
+fn mint_agent_identity_round_trips_and_exposes_operation_kind() {
+    let request = OrchestrateRequest::MintAgentIdentity(AgentIdentityMintRequest {
+        session: session_identifier("OrchestratorMessenger"),
+        mission: mission("Implement the contention-flow MVP."),
+        harness: HarnessKind::Claude,
+    });
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+    assert_eq!(request.operation_kind(), OperationKind::MintAgentIdentity);
+}
+
+#[test]
+fn agent_identity_minted_round_trips() {
+    let reply = OrchestrateReply::AgentIdentityMinted(AgentIdentityMinted {
+        agent_identifier: agent_identifier("9wchj"),
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
 }
 
 #[test]
@@ -1266,6 +1290,7 @@ fn register_agent_exposes_operation_kind() {
         mission: mission("kind witness"),
         harness: HarnessKind::Claude,
         topic_selection: TopicSelection::Automatic,
+        minted_identity: MintedIdentitySelection::None,
     });
     assert_eq!(request.operation_kind(), OperationKind::RegisterAgent);
 }

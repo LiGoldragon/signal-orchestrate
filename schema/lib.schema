@@ -13,7 +13,8 @@
  (Unwatch ObservationToken)
  (RegisterAgent OrchestratorAgentRegistration)
  (RequestWorktree WorktreeRequest)
- (ConcludeWorktree WorktreeConclusionRequest)]
+ (ConcludeWorktree WorktreeConclusionRequest)
+ (MintAgentIdentity AgentIdentityMintRequest)]
 [(ClaimAcceptance ClaimAcceptance)
  (ClaimRejection ClaimRejection)
  (ReleaseAcknowledgment ReleaseAcknowledgment)
@@ -44,7 +45,8 @@
  (WorktreeScaffolded WorktreeScaffolded)
  (WorktreeRequestRejected WorktreeRequestRejected)
  (WorktreeConcluded WorktreeConcluded)
- (WorktreeTeardownRefused WorktreeTeardownRefused)]
+ (WorktreeTeardownRefused WorktreeTeardownRefused)
+ (AgentIdentityMinted AgentIdentityMinted)]
 {
   RoleIdentifier String
   RoleName RoleIdentifier
@@ -129,14 +131,17 @@
   OrchestratorTopicPaths (Vector OrchestratorTopicPath)
   OrchestratorTopic { OrchestratorTopicPath TopicName (Optional OrchestratorTopicPath) }
   OrchestratorTopics (Vector OrchestratorTopic)
-  OrchestratorAgentStatus [Active Retired Dead]
+  OrchestratorAgentStatus [Active Retired Dead Allocated]
   OrchestratorAgentSummary { OrchestratorAgentIdentifier MissionDescription OrchestratorTopicPaths OrchestratorAgentStatus }
   OrchestratorAgentSummaries (Vector OrchestratorAgentSummary)
   OrchestratorAgentIdentifiers (Vector OrchestratorAgentIdentifier)
   TopicAssignmentSource [Judge Explicit]
   TopicSelection [Automatic (Explicit OrchestratorTopicPaths)]
-  OrchestratorAgentRegistration { SessionIdentifier MissionDescription HarnessKind TopicSelection }
+  MintedIdentitySelection [None (PreMinted OrchestratorAgentIdentifier)]
+  OrchestratorAgentRegistration { SessionIdentifier MissionDescription HarnessKind TopicSelection MintedIdentitySelection }
   AgentRegistered { OrchestratorAgentIdentifier OrchestratorTopics TopicAssignmentSource }
+  AgentIdentityMintRequest { SessionIdentifier MissionDescription HarnessKind }
+  AgentIdentityMinted { OrchestratorAgentIdentifier }
   AgentRegistrationRejectionReason [MissionEmpty MissionTooVague UnknownTopic JudgeUnavailable JudgeMalformed JudgeTimedOut]
   AgentRegistrationRejected { AgentRegistrationRejectionReason OrchestratorTopics }
   TopicTree { OrchestratorTopics }
@@ -219,7 +224,7 @@
 
   ObservationOpened ObservationToken
   ObservationClosed ObservationToken
-  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow RunResolvedWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch RegisterAgent RequestWorktree ConcludeWorktree]
+  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow RunResolvedWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch RegisterAgent RequestWorktree ConcludeWorktree MintAgentIdentity]
   EffectOutcome [Applied Removed Changed Observed StreamOpened StreamClosed NoChange]
   OperationReceived OperationKind
   EffectEmitted { OperationKind EffectOutcome }

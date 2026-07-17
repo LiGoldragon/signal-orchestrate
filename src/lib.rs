@@ -2237,6 +2237,11 @@ pub enum OrchestratorAgentStatus {
     /// agent is never respawn-delivered to, it bounces. Appended last so
     /// existing stored discriminants stay stable.
     Dead,
+    /// The identity is minted ahead of launch — the orchestrator allocated it
+    /// to a process that has not started (or not registered) yet. Registration
+    /// with the pre-minted identity binds the row `Active`. Appended last so
+    /// existing stored discriminants stay stable.
+    Allocated,
 }
 
 impl OrchestratorAgentStatus {
@@ -2290,6 +2295,18 @@ pub enum TopicSelection {
     Explicit(Vec<OrchestratorTopicPath>),
 }
 
+/// Whether the registering agent already carries an identity the orchestrator
+/// minted ahead of launch. `None` keeps the self-registration path: the daemon
+/// mints at registration. `PreMinted` binds the named allocated identity —
+/// registration binds, it does not mint.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub enum MintedIdentitySelection {
+    None,
+    PreMinted(OrchestratorAgentIdentifier),
+}
+
 /// A peer agent asks to register on the orchestrator seat. The mission
 /// is mandatory in both selection modes. Reply: `AgentRegistered` on
 /// success, `AgentRegistrationRejected` with the current topic list on
@@ -2302,6 +2319,29 @@ pub struct OrchestratorAgentRegistration {
     pub mission: MissionDescription,
     pub harness: HarnessKind,
     pub topic_selection: TopicSelection,
+    pub minted_identity: MintedIdentitySelection,
+}
+
+/// The orchestrator allocates an agent identity ahead of launch: the mint
+/// carries the launch intent (session, mission, harness) so the allocated
+/// registry row is honest from birth. Reply: `AgentIdentityMinted` carrying
+/// the reserved identifier; mint failures ride the typed engine refusal.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct AgentIdentityMintRequest {
+    pub session: SessionIdentifier,
+    pub mission: MissionDescription,
+    pub harness: HarnessKind,
+}
+
+/// A freshly allocated agent identity, reserved in the registry as
+/// `Allocated` until the launched process registers and binds it.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct AgentIdentityMinted {
+    pub agent_identifier: OrchestratorAgentIdentifier,
 }
 
 /// Successful registration: the minted address, the topics the agent
@@ -2396,6 +2436,7 @@ signal_channel! {
         operation RegisterAgent(OrchestratorAgentRegistration),
         operation RequestWorktree(WorktreeRequest),
         operation ConcludeWorktree(WorktreeConclusionRequest),
+        operation MintAgentIdentity(AgentIdentityMintRequest),
     }
     reply Reply {
         ClaimAcceptance(ClaimAcceptance),
@@ -2429,6 +2470,7 @@ signal_channel! {
         WorktreeRequestRejected(WorktreeRequestRejected),
         WorktreeConcluded(WorktreeConcluded),
         WorktreeTeardownRefused(WorktreeTeardownRefused),
+        AgentIdentityMinted(AgentIdentityMinted),
     }
     event Event {
         WorkflowRunUpdated(WorkflowRunUpdate) belongs WorkflowRunStream,
