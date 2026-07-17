@@ -1,6 +1,6 @@
 [package]
 name         = "signal-orchestrate"
-version      = "0.5.0"
+version      = "0.6.0"
 edition      = "2024"
 rust-version = "1.89"
 license      = "MIT OR Apache-2.0"
@@ -27,7 +27,7 @@ rkyv        = { version = "0.8", default-features = false, features = ["std", "b
 thiserror   = "2"
 
 [build-dependencies]
-schema-rust = { git = "https://github.com/LiGoldragon/schema-rust.git", rev = "255823ab3d0d6c5cab26e26a8b1d60c63c52c7b4" }
+schema-rust = { git = "https://github.com/LiGoldragon/schema-rust.git", rev = "bc964c4f2945a637890192f0623db851f8320c27" }
 
 [dev-dependencies]
 schema = { git = "https://github.com/LiGoldragon/schema.git", branch = "main" }

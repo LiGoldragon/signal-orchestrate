@@ -596,6 +596,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "schema-rust"
+version = "0.7.1"
+source = "git+https://github.com/LiGoldragon/schema-rust.git?rev=bc964c4f2945a637890192f0623db851f8320c27#bc964c4f2945a637890192f0623db851f8320c27"
+dependencies = [
+ "nota",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "schema-language",
+ "syn",
+ "thiserror",
+ "triad-runtime",
+]
+
+[[package]]
 name = "serde"
 version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -681,12 +696,12 @@ dependencies = [
 
 [[package]]
 name = "signal-orchestrate"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "nota",
  "rkyv",
  "schema",
- "schema-rust 0.7.0 (git+https://github.com/LiGoldragon/schema-rust.git?rev=255823ab3d0d6c5cab26e26a8b1d60c63c52c7b4)",
+ "schema-rust 0.7.1",
  "signal-criome",
  "signal-frame",
  "signal-harness",
