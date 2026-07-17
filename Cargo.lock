@@ -696,7 +696,7 @@ dependencies = [
 
 [[package]]
 name = "signal-orchestrate"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "nota",
  "rkyv",

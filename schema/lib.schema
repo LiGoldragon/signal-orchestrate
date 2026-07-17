@@ -46,7 +46,8 @@
  (WorktreeRequestRejected WorktreeRequestRejected)
  (WorktreeConcluded WorktreeConcluded)
  (WorktreeTeardownRefused WorktreeTeardownRefused)
- (AgentIdentityMinted AgentIdentityMinted)]
+ (AgentIdentityMinted AgentIdentityMinted)
+ (RepositoryMainContended RepositoryMainContended)]
 {
   RoleIdentifier String
   RoleName RoleIdentifier
@@ -120,9 +121,12 @@
   WorktreeRequestRejection [RepositoryNotFound WorktreeAlreadyExists]
   WorktreeScaffolded { Worktree }
   WorktreeRequestRejected { WorktreeRequestRejection }
-  WorktreeConcluded { Worktree }
-  TeardownRefusal [UnmergedWorkPresent]
+  MainIntegration [AlreadyAncestor FastForwarded Rebased Discarded]
+  WorktreeConcluded { Worktree MainIntegration }
+  TeardownRefusal [UnmergedWorkPresent AutoRebaseConflicted MainPushRejected]
   WorktreeTeardownRefused { Worktree TeardownRefusal }
+  FeatureWorktree [(Scaffolded Worktree) (Existing Worktree)]
+  RepositoryMainContended { RepositoryName RoleName ScopeReason DurationNanos FeatureWorktree }
 
   OrchestratorAgentIdentifier String
   OrchestratorTopicPath String
@@ -175,7 +179,7 @@
   ClaimAcceptance { RoleName ScopeReferences }
   ClaimRejection { RoleName ScopeConflicts }
   ScopeConflict { ScopeReference RoleName ScopeReason }
-  ReleaseAcknowledgment { RoleName ScopeReferences }
+  ReleaseAcknowledgment { RoleName ScopeReferences Worktrees }
   HandoffAcceptance { from.RoleName to.RoleName ScopeReferences }
   HandoffRejection { from.RoleName to.RoleName HandoffRejectionReason }
   HandoffRejectionReason [SourceRoleDoesNotHold (TargetRoleConflict ScopeConflicts)]

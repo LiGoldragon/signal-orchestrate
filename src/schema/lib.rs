@@ -812,8 +812,33 @@ pub struct WorktreeRequestRejected(WorktreeRequestRejection);
     feature = "nota-text",
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum MainIntegration {
+    AlreadyAncestor,
+    FastForwarded,
+    Rebased,
+    Discarded,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct WorktreeConcluded(Worktree);
+pub struct WorktreeConcluded {
+    pub worktree: Worktree,
+    pub main_integration: MainIntegration,
+}
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -832,6 +857,8 @@ pub struct WorktreeConcluded(Worktree);
 )]
 pub enum TeardownRefusal {
     UnmergedWorkPresent,
+    AutoRebaseConflicted,
+    MainPushRejected,
 }
 
 #[rustfmt::skip]
@@ -843,6 +870,31 @@ pub enum TeardownRefusal {
 pub struct WorktreeTeardownRefused {
     pub worktree: Worktree,
     pub teardown_refusal: TeardownRefusal,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum FeatureWorktree {
+    Scaffolded(Worktree),
+    Existing(Worktree),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RepositoryMainContended {
+    pub repository_name: RepositoryName,
+    pub role_name: RoleName,
+    pub scope_reason: ScopeReason,
+    pub duration_nanos: DurationNanos,
+    pub feature_worktree: FeatureWorktree,
 }
 
 #[rustfmt::skip]
@@ -1357,6 +1409,7 @@ pub struct ScopeConflict {
 pub struct ReleaseAcknowledgment {
     pub role_name: RoleName,
     pub scope_references: ScopeReferences,
+    pub worktrees: Worktrees,
 }
 
 #[rustfmt::skip]
@@ -2024,6 +2077,7 @@ pub enum Output {
     WorktreeConcluded(WorktreeConcluded),
     WorktreeTeardownRefused(WorktreeTeardownRefused),
     AgentIdentityMinted(AgentIdentityMinted),
+    RepositoryMainContended(RepositoryMainContended),
 }
 
 #[rustfmt::skip]
@@ -2706,25 +2760,6 @@ impl WorktreeRequestRejected {
 #[rustfmt::skip]
 impl From<WorktreeRequestRejection> for WorktreeRequestRejected {
     fn from(payload: WorktreeRequestRejection) -> Self {
-        Self::new(payload)
-    }
-}
-
-#[rustfmt::skip]
-impl WorktreeConcluded {
-    pub fn new(payload: Worktree) -> Self {
-        Self(payload)
-    }
-    pub fn payload(&self) -> &Worktree {
-        &self.0
-    }
-    pub fn into_payload(self) -> Worktree {
-        self.0
-    }
-}
-#[rustfmt::skip]
-impl From<Worktree> for WorktreeConcluded {
-    fn from(payload: Worktree) -> Self {
         Self::new(payload)
     }
 }
@@ -3569,6 +3604,16 @@ impl EvaluationDecision {
 }
 
 #[rustfmt::skip]
+impl FeatureWorktree {
+    pub fn scaffolded(payload: Worktree) -> Self {
+        Self::Scaffolded(payload)
+    }
+    pub fn existing(payload: Worktree) -> Self {
+        Self::Existing(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl TopicSelection {
     pub fn explicit(payload: Vec<OrchestratorTopicPath>) -> Self {
         Self::Explicit(OrchestratorTopicPaths::new(payload))
@@ -3795,14 +3840,17 @@ impl Output {
     pub fn worktree_request_rejected(payload: WorktreeRequestRejection) -> Self {
         Self::WorktreeRequestRejected(WorktreeRequestRejected::new(payload))
     }
-    pub fn worktree_concluded(payload: Worktree) -> Self {
-        Self::WorktreeConcluded(WorktreeConcluded::new(payload))
+    pub fn worktree_concluded(payload: WorktreeConcluded) -> Self {
+        Self::WorktreeConcluded(payload)
     }
     pub fn worktree_teardown_refused(payload: WorktreeTeardownRefused) -> Self {
         Self::WorktreeTeardownRefused(payload)
     }
     pub fn agent_identity_minted(payload: OrchestratorAgentIdentifier) -> Self {
         Self::AgentIdentityMinted(AgentIdentityMinted::new(payload))
+    }
+    pub fn repository_main_contended(payload: RepositoryMainContended) -> Self {
+        Self::RepositoryMainContended(payload)
     }
 }
 
@@ -4311,6 +4359,13 @@ impl From<AgentIdentityMinted> for Output {
 }
 
 #[rustfmt::skip]
+impl From<RepositoryMainContended> for Output {
+    fn from(payload: RepositoryMainContended) -> Self {
+        Self::RepositoryMainContended(payload)
+    }
+}
+
+#[rustfmt::skip]
 #[cfg(feature = "nota-text")]
 impl std::str::FromStr for Input {
     type Err = NotaDecodeError;
@@ -4392,6 +4447,7 @@ pub mod short_header {
     pub const OUTPUT_WORKTREE_CONCLUDED: u64 = 0x011D000000000000;
     pub const OUTPUT_WORKTREE_TEARDOWN_REFUSED: u64 = 0x011E000000000000;
     pub const OUTPUT_AGENT_IDENTITY_MINTED: u64 = 0x011F000000000000;
+    pub const OUTPUT_REPOSITORY_MAIN_CONTENDED: u64 = 0x0120000000000000;
 }
 
 #[rustfmt::skip]
@@ -4585,6 +4641,7 @@ pub enum OutputRoute {
     WorktreeConcluded,
     WorktreeTeardownRefused,
     AgentIdentityMinted,
+    RepositoryMainContended,
 }
 
 #[rustfmt::skip]
@@ -4759,6 +4816,7 @@ impl Output {
             Self::WorktreeConcluded(_) => OutputRoute::WorktreeConcluded,
             Self::WorktreeTeardownRefused(_) => OutputRoute::WorktreeTeardownRefused,
             Self::AgentIdentityMinted(_) => OutputRoute::AgentIdentityMinted,
+            Self::RepositoryMainContended(_) => OutputRoute::RepositoryMainContended,
         }
     }
     pub fn short_header(&self) -> u64 {
@@ -4817,6 +4875,9 @@ impl Output {
                 short_header::OUTPUT_WORKTREE_TEARDOWN_REFUSED
             }
             Self::AgentIdentityMinted(_) => short_header::OUTPUT_AGENT_IDENTITY_MINTED,
+            Self::RepositoryMainContended(_) => {
+                short_header::OUTPUT_REPOSITORY_MAIN_CONTENDED
+            }
         }
     }
     pub fn route_from_short_header(
@@ -4884,6 +4945,9 @@ impl Output {
             }
             short_header::OUTPUT_AGENT_IDENTITY_MINTED => {
                 Ok(OutputRoute::AgentIdentityMinted)
+            }
+            short_header::OUTPUT_REPOSITORY_MAIN_CONTENDED => {
+                Ok(OutputRoute::RepositoryMainContended)
             }
             _ => {
                 Err(SignalFrameError::UnknownHeader {

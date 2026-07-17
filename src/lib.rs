@@ -887,18 +887,49 @@ pub struct WorktreeRequestRejected {
     pub reason: WorktreeRequestRejection,
 }
 
+/// How a conclusion related to `main`. `AlreadyAncestor` — the work was
+/// integrated before conclusion; `FastForwarded` — `main` had not moved,
+/// the daemon advanced it onto the work; `Rebased` — `main` had moved, the
+/// daemon rebased the work onto the latest `main` and landed it;
+/// `Discarded` — a `Rejected` conclusion, the work never reached `main`
+/// (salvaged to the remote `discard/` ref only).
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub enum MainIntegration {
+    AlreadyAncestor,
+    FastForwarded,
+    Rebased,
+    Discarded,
+}
+
 /// Ack for [`WorktreeConclusionRequest`] — echoes the worktree after
-/// teardown, in its terminal [`WorktreeStatus`].
+/// teardown, in its terminal [`WorktreeStatus`], and how the work reached
+/// `main`.
 #[derive(
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorktreeConcluded {
     pub worktree: Worktree,
+    pub integration: MainIntegration,
 }
 
 /// Why a [`WorktreeConclusionRequest`] was refused. `UnmergedWorkPresent`
-/// — a `Merged` mark whose work is not yet an ancestor of `main`; the
-/// daemon mutates nothing so the work is never lost.
+/// — a `Merged` mark whose work is not yet an ancestor of `main`;
+/// `AutoRebaseConflicted` — the daemon's rebase onto the latest `main` hit
+/// real conflicts and was fully unwound; `MainPushRejected` — the landed
+/// `main` could not be pushed after retry and the land was unwound. In every
+/// refusal the daemon mutates nothing so the work is never lost.
 #[derive(
     Archive,
     RkyvSerialize,
@@ -914,6 +945,8 @@ pub struct WorktreeConcluded {
 )]
 pub enum TeardownRefusal {
     UnmergedWorkPresent,
+    AutoRebaseConflicted,
+    MainPushRejected,
 }
 
 /// Refusal reply for [`WorktreeConclusionRequest`] — echoes the
@@ -924,6 +957,33 @@ pub enum TeardownRefusal {
 pub struct WorktreeTeardownRefused {
     pub worktree: Worktree,
     pub reason: TeardownRefusal,
+}
+
+/// The claimant's redirect in a [`RepositoryMainContended`] answer:
+/// the daemon either scaffolded a fresh feature worktree named after the
+/// claimant's lane, or found one already standing for that identity.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub enum FeatureWorktree {
+    Scaffolded(Worktree),
+    Existing(Worktree),
+}
+
+/// The automatic contention answer. A claim covering a registered
+/// repository whose main checkout another live lane holds is answered with
+/// the holder, why and how long it has held main, and the claimant's own
+/// feature worktree (branch named after the claimant's lane) so work starts
+/// immediately instead of waiting.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct RepositoryMainContended {
+    pub repository: RepositoryName,
+    pub holder: RoleName,
+    pub held_reason: ScopeReason,
+    pub held_age: DurationNanos,
+    pub redirect: FeatureWorktree,
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -1610,6 +1670,11 @@ pub struct RoleRelease {
 pub struct ReleaseAcknowledgment {
     pub role: RoleName,
     pub released_scopes: Vec<ScopeReference>,
+    /// Feature worktrees still un-integrated for the repositories whose main
+    /// checkout the released scopes covered — "branch X was started off this
+    /// repo while you held main". Empty when nothing was started or the
+    /// release covered no repository main.
+    pub started_branches: Vec<Worktree>,
 }
 
 // ─── Handoff verbs ────────────────────────────────────────
@@ -2471,6 +2536,7 @@ signal_channel! {
         WorktreeConcluded(WorktreeConcluded),
         WorktreeTeardownRefused(WorktreeTeardownRefused),
         AgentIdentityMinted(AgentIdentityMinted),
+        RepositoryMainContended(RepositoryMainContended),
     }
     event Event {
         WorkflowRunUpdated(WorkflowRunUpdate) belongs WorkflowRunStream,

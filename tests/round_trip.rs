@@ -40,6 +40,7 @@ use signal_orchestrate::{
     WorkflowRunUpdate, WorkflowStep, WorkflowStepName, Worktree, WorktreeConclusion,
     WorktreeConclusionRequest, WorktreeConcluded, WorktreeRequest, WorktreeRequestRejected,
     WorktreeRequestRejection, WorktreeScaffolded, WorktreeStatus, WorktreeTeardownRefused,
+    FeatureWorktree, MainIntegration, RepositoryMainContended,
     WorktreesObserved, TeardownRefusal,
 };
 use signal_orchestrate::{
@@ -556,6 +557,7 @@ fn release_acknowledgment_round_trips() {
     let reply = OrchestrateReply::ReleaseAcknowledgment(ReleaseAcknowledgment {
         role: designer(),
         released_scopes: vec![sample_path_scope(), sample_task_scope()],
+        started_branches: Vec::new(),
     });
     let decoded = round_trip_reply(reply.clone());
     assert_eq!(decoded, reply);
@@ -758,22 +760,66 @@ fn worktree_request_rejected_round_trips() {
 }
 
 #[test]
-fn worktree_concluded_round_trips_with_abandoned_status() {
-    let reply = OrchestrateReply::WorktreeConcluded(WorktreeConcluded {
-        worktree: sample_worktree(WorktreeStatus::Abandoned),
+fn worktree_concluded_round_trips_each_integration() {
+    for integration in [
+        MainIntegration::AlreadyAncestor,
+        MainIntegration::FastForwarded,
+        MainIntegration::Rebased,
+        MainIntegration::Discarded,
+    ] {
+        let reply = OrchestrateReply::WorktreeConcluded(WorktreeConcluded {
+            worktree: sample_worktree(WorktreeStatus::Abandoned),
+            integration,
+        });
+        let decoded = round_trip_reply(reply.clone());
+        assert_eq!(decoded, reply);
+    }
+}
+
+#[test]
+fn worktree_teardown_refused_round_trips_each_reason() {
+    for reason in [
+        TeardownRefusal::UnmergedWorkPresent,
+        TeardownRefusal::AutoRebaseConflicted,
+        TeardownRefusal::MainPushRejected,
+    ] {
+        let reply = OrchestrateReply::WorktreeTeardownRefused(WorktreeTeardownRefused {
+            worktree: sample_worktree(WorktreeStatus::Active),
+            reason,
+        });
+        let decoded = round_trip_reply(reply.clone());
+        assert_eq!(decoded, reply);
+    }
+}
+
+#[test]
+fn release_acknowledgment_round_trips_with_started_branches() {
+    let reply = OrchestrateReply::ReleaseAcknowledgment(ReleaseAcknowledgment {
+        role: designer(),
+        released_scopes: vec![sample_path_scope()],
+        started_branches: vec![sample_worktree(WorktreeStatus::Active)],
     });
     let decoded = round_trip_reply(reply.clone());
     assert_eq!(decoded, reply);
 }
 
 #[test]
-fn worktree_teardown_refused_round_trips() {
-    let reply = OrchestrateReply::WorktreeTeardownRefused(WorktreeTeardownRefused {
-        worktree: sample_worktree(WorktreeStatus::Active),
-        reason: TeardownRefusal::UnmergedWorkPresent,
-    });
-    let decoded = round_trip_reply(reply.clone());
-    assert_eq!(decoded, reply);
+fn repository_main_contended_round_trips_each_redirect() {
+    for redirect in [
+        FeatureWorktree::Scaffolded(sample_worktree(WorktreeStatus::Active)),
+        FeatureWorktree::Existing(sample_worktree(WorktreeStatus::Active)),
+    ] {
+        let reply = OrchestrateReply::RepositoryMainContended(RepositoryMainContended {
+            repository: signal_orchestrate::RepositoryName::from_text("orchestrate")
+                .expect("repository name"),
+            holder: designer(),
+            held_reason: sample_reason(),
+            held_age: DurationNanos::new(3_600_000_000_000),
+            redirect,
+        });
+        let decoded = round_trip_reply(reply.clone());
+        assert_eq!(decoded, reply);
+    }
 }
 
 #[test]
