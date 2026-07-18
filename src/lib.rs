@@ -76,6 +76,18 @@ pub enum Error {
         "repository name must be non-empty, unbracketed, and contain no whitespace or path separators: {name}"
     )]
     InvalidRepositoryName { name: String },
+    #[error(
+        "repository host must be non-empty, unbracketed, and contain no whitespace or path separators: {host}"
+    )]
+    InvalidRepositoryHost { host: String },
+    #[error(
+        "repository owner must be non-empty, unbracketed, with no whitespace or edge separators: {owner}"
+    )]
+    InvalidRepositoryOwner { owner: String },
+    #[error("repository identity gap must be non-empty and single-line: {gap}")]
+    InvalidRepositoryIdentityGap { gap: String },
+    #[error("remote url does not name a host/owner/name repository identity: {url}")]
+    InvalidRemoteUrl { url: String },
     #[error("branch name must be non-empty, unbracketed, and contain no whitespace: {branch}")]
     InvalidBranchName { branch: String },
     #[error(
@@ -573,6 +585,272 @@ impl AsRef<str> for RepositoryName {
 
 validated_string_nota_codec!(RepositoryName, RepositoryName::from_text);
 
+/// The host a repository really lives on — the `github.com` segment of a
+/// canonical identity. Single DNS-name segment: no whitespace, no path
+/// separators, no brackets.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord,
+)]
+pub struct RepositoryHost(String);
+
+impl RepositoryHost {
+    pub fn try_new(host: String) -> ContractResult<Self> {
+        Self::from_text(host)
+    }
+
+    pub fn from_text(host: impl Into<String>) -> ContractResult<Self> {
+        let host = host.into();
+        if host.is_empty()
+            || host.chars().any(char::is_whitespace)
+            || host.contains('/')
+            || host.contains('\\')
+            || host.contains('[')
+            || host.contains(']')
+        {
+            return Err(Error::InvalidRepositoryHost { host });
+        }
+        Ok(Self(host))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for RepositoryHost {
+    type Error = Error;
+
+    fn try_from(host: String) -> ContractResult<Self> {
+        Self::from_text(host)
+    }
+}
+
+impl TryFrom<&str> for RepositoryHost {
+    type Error = Error;
+
+    fn try_from(host: &str) -> ContractResult<Self> {
+        Self::from_text(host)
+    }
+}
+
+impl AsRef<str> for RepositoryHost {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+validated_string_nota_codec!(RepositoryHost, RepositoryHost::from_text);
+
+/// The owner path under the host — `LiGoldragon` on GitHub, possibly a
+/// multi-segment group path elsewhere, so interior `/` is allowed; leading or
+/// trailing separators, whitespace, and brackets are not.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord,
+)]
+pub struct RepositoryOwner(String);
+
+impl RepositoryOwner {
+    pub fn try_new(owner: String) -> ContractResult<Self> {
+        Self::from_text(owner)
+    }
+
+    pub fn from_text(owner: impl Into<String>) -> ContractResult<Self> {
+        let owner = owner.into();
+        if owner.is_empty()
+            || owner.chars().any(char::is_whitespace)
+            || owner.starts_with('/')
+            || owner.ends_with('/')
+            || owner.contains('\\')
+            || owner.contains('[')
+            || owner.contains(']')
+        {
+            return Err(Error::InvalidRepositoryOwner { owner });
+        }
+        Ok(Self(owner))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for RepositoryOwner {
+    type Error = Error;
+
+    fn try_from(owner: String) -> ContractResult<Self> {
+        Self::from_text(owner)
+    }
+}
+
+impl TryFrom<&str> for RepositoryOwner {
+    type Error = Error;
+
+    fn try_from(owner: &str) -> ContractResult<Self> {
+        Self::from_text(owner)
+    }
+}
+
+impl AsRef<str> for RepositoryOwner {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+validated_string_nota_codec!(RepositoryOwner, RepositoryOwner::from_text);
+
+/// The real identity of a repository — where it truly lives, independent of
+/// any local hosting path: `host/owner/name`, e.g.
+/// `github.com/LiGoldragon/orchestrate`. The local checkout path is an
+/// incidental hosting preference; this identity is the repository's key.
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+)]
+pub struct RepositoryIdentity {
+    pub host: RepositoryHost,
+    pub owner: RepositoryOwner,
+    pub name: RepositoryName,
+}
+
+impl RepositoryIdentity {
+    pub fn new(host: RepositoryHost, owner: RepositoryOwner, name: RepositoryName) -> Self {
+        Self { host, owner, name }
+    }
+
+    /// Parse a git remote URL into the canonical identity. Handles the three
+    /// remote shapes in real use — `https://host/owner/name(.git)`,
+    /// `ssh://user@host(:port)/owner/name(.git)`, and the scp form
+    /// `user@host:owner/name(.git)` — normalizing away scheme, user, port,
+    /// and the `.git` suffix.
+    pub fn from_remote_url(url: &str) -> ContractResult<Self> {
+        let invalid = || Error::InvalidRemoteUrl {
+            url: url.to_owned(),
+        };
+        let trimmed = url.trim();
+        let without_scheme = trimmed
+            .split_once("://")
+            .map(|(_, rest)| rest)
+            .unwrap_or(trimmed);
+        let without_user = without_scheme
+            .split_once('@')
+            .map(|(_, rest)| rest)
+            .unwrap_or(without_scheme);
+        let separator = without_user.find(['/', ':']).ok_or_else(invalid)?;
+        let host_text = &without_user[..separator];
+        let mut path_text = &without_user[separator + 1..];
+        if without_user.as_bytes()[separator] == b':' {
+            if let Some((port, rest)) = path_text.split_once('/') {
+                if !port.is_empty() && port.bytes().all(|byte| byte.is_ascii_digit()) {
+                    path_text = rest;
+                }
+            }
+        }
+        let path_text = path_text
+            .trim_matches('/')
+            .strip_suffix(".git")
+            .unwrap_or(path_text.trim_matches('/'))
+            .trim_matches('/');
+        let (owner_text, name_text) = path_text.rsplit_once('/').ok_or_else(invalid)?;
+        let host = RepositoryHost::from_text(host_text).map_err(|_| invalid())?;
+        let owner = RepositoryOwner::from_text(owner_text).map_err(|_| invalid())?;
+        let name = RepositoryName::from_text(name_text).map_err(|_| invalid())?;
+        Ok(Self { host, owner, name })
+    }
+
+    /// The canonical `host/owner/name` text of this identity.
+    pub fn canonical_text(&self) -> String {
+        format!(
+            "{}/{}/{}",
+            self.host.as_str(),
+            self.owner.as_str(),
+            self.name.as_str()
+        )
+    }
+}
+
+/// Why a repository's real identity could not be established: no remote, an
+/// unreadable checkout, an unparseable URL. Non-empty single-line reason.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord,
+)]
+pub struct RepositoryIdentityGap(String);
+
+impl RepositoryIdentityGap {
+    pub fn try_new(gap: String) -> ContractResult<Self> {
+        Self::from_text(gap)
+    }
+
+    pub fn from_text(gap: impl Into<String>) -> ContractResult<Self> {
+        let gap = gap.into();
+        if gap.trim().is_empty() || gap.contains('\n') || gap.contains('\r') {
+            return Err(Error::InvalidRepositoryIdentityGap { gap });
+        }
+        Ok(Self(gap))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for RepositoryIdentityGap {
+    type Error = Error;
+
+    fn try_from(gap: String) -> ContractResult<Self> {
+        Self::from_text(gap)
+    }
+}
+
+impl TryFrom<&str> for RepositoryIdentityGap {
+    type Error = Error;
+
+    fn try_from(gap: &str) -> ContractResult<Self> {
+        Self::from_text(gap)
+    }
+}
+
+impl AsRef<str> for RepositoryIdentityGap {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+validated_string_nota_codec!(RepositoryIdentityGap, RepositoryIdentityGap::from_text);
+
+/// Whether the repository's real identity is established. `Identified`
+/// carries the canonical identity; `IdentityUnknown` keeps the row honest —
+/// the repository exists locally but its real identity could not be read,
+/// and the gap says why. Entries reflect reality; an unreadable identity is
+/// recorded, never dropped.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub enum RepositoryIdentityState {
+    Identified(RepositoryIdentity),
+    IdentityUnknown(RepositoryIdentityGap),
+}
+
+impl RepositoryIdentityState {
+    /// The text that keys this repository: the canonical identity when
+    /// identified, the local index name as the honest fallback otherwise.
+    pub fn key_text<'state>(&'state self, local_name: &'state RepositoryName) -> String {
+        match self {
+            Self::Identified(identity) => identity.canonical_text(),
+            Self::IdentityUnknown(_) => local_name.as_str().to_owned(),
+        }
+    }
+}
+
 /// The feature/`next` branch a worktree carries — the `<name>`
 /// segment of the worktree path and the jj bookmark name.
 #[derive(
@@ -869,7 +1147,6 @@ pub struct WorktreeScaffolded {
     NotaDecode,
     Debug,
     Clone,
-    Copy,
     PartialEq,
     Eq,
     Hash,
@@ -877,6 +1154,10 @@ pub struct WorktreeScaffolded {
 pub enum WorktreeRequestRejection {
     RepositoryNotFound,
     WorktreeAlreadyExists,
+    /// The registry knows this repository by its real identity, but no local
+    /// checkout stands at its recorded hosting path. The typed seam for a
+    /// future clone-on-demand: the identity names exactly what is missing.
+    RepositoryAbsentLocally(RepositoryIdentity),
 }
 
 /// Rejection reply for [`WorktreeRequest`].
@@ -1734,6 +2015,9 @@ pub enum Observation {
     SessionLanes(SessionIdentifier),
     Lanes,
     Worktrees,
+    /// The repository index with each repository's real identity.
+    /// Reply: `RepositoriesObserved`.
+    Repositories,
     /// The whole orchestrator topic tree. Reply: `TopicTree`.
     Topics,
     /// One topic and its seated agents. Reply: `TopicDetail`.
@@ -1813,6 +2097,29 @@ pub struct LaneResourceClaim {
 )]
 pub struct WorktreesObserved {
     pub worktrees: Vec<Worktree>,
+}
+
+/// One indexed repository: real identity first, local hosting incidental.
+/// `name` is the local index alias (the git-index directory name); `path` is
+/// where the checkout happens to live on this host.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct Repository {
+    pub identity: RepositoryIdentityState,
+    pub name: RepositoryName,
+    pub path: WirePath,
+    pub active: bool,
+    pub refreshed_at: TimestampNanos,
+}
+
+/// Reply to `Observe Repositories`: the repository index with each
+/// repository's real identity.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct RepositoriesObserved {
+    pub repositories: Vec<Repository>,
 }
 
 #[derive(
@@ -2513,6 +2820,7 @@ signal_channel! {
         SessionsObserved(SessionsObserved),
         LanesObserved(LanesObserved),
         WorktreesObserved(WorktreesObserved),
+        RepositoriesObserved(RepositoriesObserved),
         ActivityAcknowledgment(ActivityAcknowledgment),
         ActivityList(ActivityList),
         WorkflowRunAccepted(WorkflowRunAccepted),

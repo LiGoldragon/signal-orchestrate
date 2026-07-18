@@ -648,6 +648,67 @@ pub struct RepositoryName(String);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RepositoryHost(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RepositoryOwner(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RepositoryIdentity {
+    pub repository_host: RepositoryHost,
+    pub repository_owner: RepositoryOwner,
+    pub repository_name: RepositoryName,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RepositoryIdentityGap(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum RepositoryIdentityState {
+    Identified(RepositoryIdentity),
+    IdentityUnknown(RepositoryIdentityGap),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct Repository {
+    pub repository_identity_state: RepositoryIdentityState,
+    pub repository_name: RepositoryName,
+    pub wire_path: WirePath,
+    pub boolean: Boolean,
+    pub timestamp_nanos: TimestampNanos,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct BranchName(String);
 
 #[rustfmt::skip]
@@ -776,19 +837,11 @@ pub struct WorktreeConclusionRequest {
     feature = "nota-text",
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
-#[derive(
-    rkyv::Archive,
-    rkyv::Serialize,
-    rkyv::Deserialize,
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum WorktreeRequestRejection {
     RepositoryNotFound,
     WorktreeAlreadyExists,
+    RepositoryAbsentLocally(RepositoryIdentity),
 }
 
 #[rustfmt::skip]
@@ -1228,6 +1281,14 @@ pub struct Worktrees(Vec<Worktree>);
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct Repositories(Vec<Repository>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RoleStatuses(Vec<RoleStatus>);
 
 #[rustfmt::skip]
@@ -1307,6 +1368,7 @@ pub enum Observation {
     SessionLanes(SessionIdentifier),
     Lanes,
     Worktrees,
+    Repositories,
     Topics,
     Topic(OrchestratorTopicPath),
     Agents,
@@ -1518,6 +1580,14 @@ pub struct LaneResourceClaim {
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WorktreesObserved(Worktrees);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RepositoriesObserved(Repositories);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -2054,6 +2124,7 @@ pub enum Output {
     SessionsObserved(SessionsObserved),
     LanesObserved(LanesObserved),
     WorktreesObserved(WorktreesObserved),
+    RepositoriesObserved(RepositoriesObserved),
     ActivityAcknowledgment(ActivityAcknowledgment),
     ActivityList(ActivityList),
     WorkflowRunAccepted(WorkflowRunAccepted),
@@ -2670,6 +2741,63 @@ impl From<String> for RepositoryName {
 }
 
 #[rustfmt::skip]
+impl RepositoryHost {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for RepositoryHost {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl RepositoryOwner {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for RepositoryOwner {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl RepositoryIdentityGap {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for RepositoryIdentityGap {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl BranchName {
     pub fn new(payload: impl Into<String>) -> Self {
         Self(payload.into())
@@ -3126,6 +3254,25 @@ impl From<Vec<Worktree>> for Worktrees {
 }
 
 #[rustfmt::skip]
+impl Repositories {
+    pub fn new(payload: Vec<Repository>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<Repository> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<Repository> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<Repository>> for Repositories {
+    fn from(payload: Vec<Repository>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl RoleStatuses {
     pub fn new(payload: Vec<RoleStatus>) -> Self {
         Self(payload)
@@ -3311,6 +3458,25 @@ impl WorktreesObserved {
 #[rustfmt::skip]
 impl From<Worktrees> for WorktreesObserved {
     fn from(payload: Worktrees) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl RepositoriesObserved {
+    pub fn new(payload: Repositories) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Repositories {
+        &self.0
+    }
+    pub fn into_payload(self) -> Repositories {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Repositories> for RepositoriesObserved {
+    fn from(payload: Repositories) -> Self {
         Self::new(payload)
     }
 }
@@ -3604,6 +3770,23 @@ impl EvaluationDecision {
 }
 
 #[rustfmt::skip]
+impl RepositoryIdentityState {
+    pub fn identified(payload: RepositoryIdentity) -> Self {
+        Self::Identified(payload)
+    }
+    pub fn identity_unknown(payload: String) -> Self {
+        Self::IdentityUnknown(RepositoryIdentityGap::new(payload))
+    }
+}
+
+#[rustfmt::skip]
+impl WorktreeRequestRejection {
+    pub fn repository_absent_locally(payload: RepositoryIdentity) -> Self {
+        Self::RepositoryAbsentLocally(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl FeatureWorktree {
     pub fn scaffolded(payload: Worktree) -> Self {
         Self::Scaffolded(payload)
@@ -3772,6 +3955,9 @@ impl Output {
     pub fn worktrees_observed(payload: Worktrees) -> Self {
         Self::WorktreesObserved(WorktreesObserved::new(payload))
     }
+    pub fn repositories_observed(payload: Repositories) -> Self {
+        Self::RepositoriesObserved(RepositoriesObserved::new(payload))
+    }
     pub fn activity_acknowledgment(payload: Integer) -> Self {
         Self::ActivityAcknowledgment(ActivityAcknowledgment::new(payload))
     }
@@ -3921,6 +4107,27 @@ impl From<EscalationTarget> for EvaluationDecision {
 impl From<EvaluationRejectionReason> for EvaluationDecision {
     fn from(payload: EvaluationRejectionReason) -> Self {
         Self::Rejected(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<RepositoryIdentity> for RepositoryIdentityState {
+    fn from(payload: RepositoryIdentity) -> Self {
+        Self::Identified(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<RepositoryIdentityGap> for RepositoryIdentityState {
+    fn from(payload: RepositoryIdentityGap) -> Self {
+        Self::IdentityUnknown(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<RepositoryIdentity> for WorktreeRequestRejection {
+    fn from(payload: RepositoryIdentity) -> Self {
+        Self::RepositoryAbsentLocally(payload)
     }
 }
 
@@ -4198,6 +4405,13 @@ impl From<WorktreesObserved> for Output {
 }
 
 #[rustfmt::skip]
+impl From<RepositoriesObserved> for Output {
+    fn from(payload: RepositoriesObserved) -> Self {
+        Self::RepositoriesObserved(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<ActivityAcknowledgment> for Output {
     fn from(payload: ActivityAcknowledgment) -> Self {
         Self::ActivityAcknowledgment(payload)
@@ -4424,30 +4638,31 @@ pub mod short_header {
     pub const OUTPUT_SESSIONS_OBSERVED: u64 = 0x0106000000000000;
     pub const OUTPUT_LANES_OBSERVED: u64 = 0x0107000000000000;
     pub const OUTPUT_WORKTREES_OBSERVED: u64 = 0x0108000000000000;
-    pub const OUTPUT_ACTIVITY_ACKNOWLEDGMENT: u64 = 0x0109000000000000;
-    pub const OUTPUT_ACTIVITY_LIST: u64 = 0x010A000000000000;
-    pub const OUTPUT_WORKFLOW_RUN_ACCEPTED: u64 = 0x010B000000000000;
-    pub const OUTPUT_WORKFLOW_RESOLUTION_ACCEPTED: u64 = 0x010C000000000000;
-    pub const OUTPUT_WORKFLOW_RESOLUTION_UNAVAILABLE: u64 = 0x010D000000000000;
-    pub const OUTPUT_WORKFLOW_RECEIPT_PRODUCED: u64 = 0x010E000000000000;
-    pub const OUTPUT_WORKFLOW_RESOLVED_RECEIPT_PRODUCED: u64 = 0x010F000000000000;
-    pub const OUTPUT_WORKFLOW_RUN_LOG_REPORTED: u64 = 0x0110000000000000;
-    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_OPENED: u64 = 0x0111000000000000;
-    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_CLOSED: u64 = 0x0112000000000000;
-    pub const OUTPUT_PARTIAL_APPLIED: u64 = 0x0113000000000000;
-    pub const OUTPUT_OBSERVATION_OPENED: u64 = 0x0114000000000000;
-    pub const OUTPUT_OBSERVATION_CLOSED: u64 = 0x0115000000000000;
-    pub const OUTPUT_AGENT_REGISTERED: u64 = 0x0116000000000000;
-    pub const OUTPUT_AGENT_REGISTRATION_REJECTED: u64 = 0x0117000000000000;
-    pub const OUTPUT_TOPIC_TREE: u64 = 0x0118000000000000;
-    pub const OUTPUT_TOPIC_DETAIL: u64 = 0x0119000000000000;
-    pub const OUTPUT_AGENT_DIRECTORY: u64 = 0x011A000000000000;
-    pub const OUTPUT_WORKTREE_SCAFFOLDED: u64 = 0x011B000000000000;
-    pub const OUTPUT_WORKTREE_REQUEST_REJECTED: u64 = 0x011C000000000000;
-    pub const OUTPUT_WORKTREE_CONCLUDED: u64 = 0x011D000000000000;
-    pub const OUTPUT_WORKTREE_TEARDOWN_REFUSED: u64 = 0x011E000000000000;
-    pub const OUTPUT_AGENT_IDENTITY_MINTED: u64 = 0x011F000000000000;
-    pub const OUTPUT_REPOSITORY_MAIN_CONTENDED: u64 = 0x0120000000000000;
+    pub const OUTPUT_REPOSITORIES_OBSERVED: u64 = 0x0109000000000000;
+    pub const OUTPUT_ACTIVITY_ACKNOWLEDGMENT: u64 = 0x010A000000000000;
+    pub const OUTPUT_ACTIVITY_LIST: u64 = 0x010B000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_ACCEPTED: u64 = 0x010C000000000000;
+    pub const OUTPUT_WORKFLOW_RESOLUTION_ACCEPTED: u64 = 0x010D000000000000;
+    pub const OUTPUT_WORKFLOW_RESOLUTION_UNAVAILABLE: u64 = 0x010E000000000000;
+    pub const OUTPUT_WORKFLOW_RECEIPT_PRODUCED: u64 = 0x010F000000000000;
+    pub const OUTPUT_WORKFLOW_RESOLVED_RECEIPT_PRODUCED: u64 = 0x0110000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_LOG_REPORTED: u64 = 0x0111000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_OPENED: u64 = 0x0112000000000000;
+    pub const OUTPUT_WORKFLOW_RUN_OBSERVATION_CLOSED: u64 = 0x0113000000000000;
+    pub const OUTPUT_PARTIAL_APPLIED: u64 = 0x0114000000000000;
+    pub const OUTPUT_OBSERVATION_OPENED: u64 = 0x0115000000000000;
+    pub const OUTPUT_OBSERVATION_CLOSED: u64 = 0x0116000000000000;
+    pub const OUTPUT_AGENT_REGISTERED: u64 = 0x0117000000000000;
+    pub const OUTPUT_AGENT_REGISTRATION_REJECTED: u64 = 0x0118000000000000;
+    pub const OUTPUT_TOPIC_TREE: u64 = 0x0119000000000000;
+    pub const OUTPUT_TOPIC_DETAIL: u64 = 0x011A000000000000;
+    pub const OUTPUT_AGENT_DIRECTORY: u64 = 0x011B000000000000;
+    pub const OUTPUT_WORKTREE_SCAFFOLDED: u64 = 0x011C000000000000;
+    pub const OUTPUT_WORKTREE_REQUEST_REJECTED: u64 = 0x011D000000000000;
+    pub const OUTPUT_WORKTREE_CONCLUDED: u64 = 0x011E000000000000;
+    pub const OUTPUT_WORKTREE_TEARDOWN_REFUSED: u64 = 0x011F000000000000;
+    pub const OUTPUT_AGENT_IDENTITY_MINTED: u64 = 0x0120000000000000;
+    pub const OUTPUT_REPOSITORY_MAIN_CONTENDED: u64 = 0x0121000000000000;
 }
 
 #[rustfmt::skip]
@@ -4618,6 +4833,7 @@ pub enum OutputRoute {
     SessionsObserved,
     LanesObserved,
     WorktreesObserved,
+    RepositoriesObserved,
     ActivityAcknowledgment,
     ActivityList,
     WorkflowRunAccepted,
@@ -4783,6 +4999,7 @@ impl Output {
             Self::SessionsObserved(_) => OutputRoute::SessionsObserved,
             Self::LanesObserved(_) => OutputRoute::LanesObserved,
             Self::WorktreesObserved(_) => OutputRoute::WorktreesObserved,
+            Self::RepositoriesObserved(_) => OutputRoute::RepositoriesObserved,
             Self::ActivityAcknowledgment(_) => OutputRoute::ActivityAcknowledgment,
             Self::ActivityList(_) => OutputRoute::ActivityList,
             Self::WorkflowRunAccepted(_) => OutputRoute::WorkflowRunAccepted,
@@ -4830,6 +5047,7 @@ impl Output {
             Self::SessionsObserved(_) => short_header::OUTPUT_SESSIONS_OBSERVED,
             Self::LanesObserved(_) => short_header::OUTPUT_LANES_OBSERVED,
             Self::WorktreesObserved(_) => short_header::OUTPUT_WORKTREES_OBSERVED,
+            Self::RepositoriesObserved(_) => short_header::OUTPUT_REPOSITORIES_OBSERVED,
             Self::ActivityAcknowledgment(_) => {
                 short_header::OUTPUT_ACTIVITY_ACKNOWLEDGMENT
             }
@@ -4895,6 +5113,9 @@ impl Output {
             short_header::OUTPUT_SESSIONS_OBSERVED => Ok(OutputRoute::SessionsObserved),
             short_header::OUTPUT_LANES_OBSERVED => Ok(OutputRoute::LanesObserved),
             short_header::OUTPUT_WORKTREES_OBSERVED => Ok(OutputRoute::WorktreesObserved),
+            short_header::OUTPUT_REPOSITORIES_OBSERVED => {
+                Ok(OutputRoute::RepositoriesObserved)
+            }
             short_header::OUTPUT_ACTIVITY_ACKNOWLEDGMENT => {
                 Ok(OutputRoute::ActivityAcknowledgment)
             }

@@ -1482,3 +1482,93 @@ fn stray_slashes_never_mint_a_nameless_topic() {
         ]
     );
 }
+
+// ─── Repository identity (real identity, path incidental) ───
+
+use signal_orchestrate::{
+    RepositoriesObserved, Repository, RepositoryHost, RepositoryIdentity, RepositoryIdentityGap,
+    RepositoryIdentityState, RepositoryName, RepositoryOwner,
+};
+
+fn orchestrate_identity() -> RepositoryIdentity {
+    RepositoryIdentity::new(
+        RepositoryHost::from_text("github.com").expect("host"),
+        RepositoryOwner::from_text("LiGoldragon").expect("owner"),
+        RepositoryName::from_text("orchestrate").expect("name"),
+    )
+}
+
+#[test]
+fn repository_identity_parses_each_remote_url_shape() {
+    for url in [
+        "https://github.com/LiGoldragon/orchestrate.git",
+        "https://github.com/LiGoldragon/orchestrate",
+        "git@github.com:LiGoldragon/orchestrate.git",
+        "ssh://git@github.com/LiGoldragon/orchestrate.git",
+        "ssh://git@github.com:22/LiGoldragon/orchestrate",
+    ] {
+        let identity = RepositoryIdentity::from_remote_url(url).expect(url);
+        assert_eq!(identity, orchestrate_identity(), "{url}");
+        assert_eq!(
+            identity.canonical_text(),
+            "github.com/LiGoldragon/orchestrate"
+        );
+    }
+}
+
+#[test]
+fn repository_identity_rejects_urls_without_an_owner_and_name() {
+    for url in ["", "github.com", "https://github.com/orchestrate.git"] {
+        assert!(
+            matches!(
+                RepositoryIdentity::from_remote_url(url),
+                Err(Error::InvalidRemoteUrl { .. })
+            ),
+            "{url}"
+        );
+    }
+}
+
+#[test]
+fn observe_repositories_request_round_trips() {
+    let request = OrchestrateRequest::Observe(Observation::Repositories);
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+}
+
+#[test]
+fn repositories_observed_round_trips_each_identity_state() {
+    let reply = OrchestrateReply::RepositoriesObserved(RepositoriesObserved {
+        repositories: vec![
+            Repository {
+                identity: RepositoryIdentityState::Identified(orchestrate_identity()),
+                name: RepositoryName::from_text("orchestrate").expect("name"),
+                path: WirePath::from_absolute_path("/git/github.com/LiGoldragon/orchestrate")
+                    .expect("path"),
+                active: true,
+                refreshed_at: TimestampNanos::new(1_784_366_000_000_000_000),
+            },
+            Repository {
+                identity: RepositoryIdentityState::IdentityUnknown(
+                    RepositoryIdentityGap::from_text("no git remote configured").expect("gap"),
+                ),
+                name: RepositoryName::from_text("scratch").expect("name"),
+                path: WirePath::from_absolute_path("/git/github.com/LiGoldragon/scratch")
+                    .expect("path"),
+                active: false,
+                refreshed_at: TimestampNanos::new(1_784_366_000_000_000_001),
+            },
+        ],
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}
+
+#[test]
+fn worktree_request_rejected_round_trips_repository_absent_locally() {
+    let reply = OrchestrateReply::WorktreeRequestRejected(WorktreeRequestRejected {
+        reason: WorktreeRequestRejection::RepositoryAbsentLocally(orchestrate_identity()),
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}

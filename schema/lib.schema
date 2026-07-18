@@ -24,6 +24,7 @@
  (SessionsObserved SessionsObserved)
  (LanesObserved LanesObserved)
  (WorktreesObserved WorktreesObserved)
+ (RepositoriesObserved RepositoriesObserved)
  (ActivityAcknowledgment ActivityAcknowledgment)
  (ActivityList ActivityList)
  (WorkflowRunAccepted WorkflowRunAccepted)
@@ -109,6 +110,12 @@
   WorkflowReceipt { WorkflowDigest OperationDigest EvaluationDecision WorkflowProvenanceDigest }
 
   RepositoryName String
+  RepositoryHost String
+  RepositoryOwner String
+  RepositoryIdentity { RepositoryHost RepositoryOwner RepositoryName }
+  RepositoryIdentityGap String
+  RepositoryIdentityState [(Identified RepositoryIdentity) (IdentityUnknown RepositoryIdentityGap)]
+  Repository { RepositoryIdentityState RepositoryName WirePath Boolean TimestampNanos }
   BranchName String
   LaneName String
   PurposeText String
@@ -118,7 +125,7 @@
   WorktreeConclusion [Merged Rejected]
   WorktreeRequest { RepositoryName BranchName LaneName PurposeText }
   WorktreeConclusionRequest { LaneName WorktreeConclusion }
-  WorktreeRequestRejection [RepositoryNotFound WorktreeAlreadyExists]
+  WorktreeRequestRejection [RepositoryNotFound WorktreeAlreadyExists (RepositoryAbsentLocally RepositoryIdentity)]
   WorktreeScaffolded { Worktree }
   WorktreeRequestRejected { WorktreeRequestRejection }
   MainIntegration [AlreadyAncestor FastForwarded Rebased Discarded]
@@ -160,6 +167,7 @@
   LaneProjections (Vector LaneProjection)
   LaneResourceClaims (Vector LaneResourceClaim)
   Worktrees (Vector Worktree)
+  Repositories (Vector Repository)
   RoleStatuses (Vector RoleStatus)
   Activities (Vector Activity)
   ClaimEntries (Vector ClaimEntry)
@@ -169,7 +177,7 @@
   RoleClaim { RoleName ScopeReferences ScopeReason }
   RoleRelease RoleName
   RoleHandoff { from.RoleName to.RoleName ScopeReferences ScopeReason }
-  Observation [Roles Sessions (SessionLanes SessionIdentifier) Lanes Worktrees Topics (Topic OrchestratorTopicPath) Agents]
+  Observation [Roles Sessions (SessionLanes SessionIdentifier) Lanes Worktrees Repositories Topics (Topic OrchestratorTopicPath) Agents]
   ActivitySubmission { RoleName ScopeReference ScopeReason }
   ActivityQuery { Integer ActivityFilters }
   ActivityFilter [(RoleFilter RoleName) (PathPrefix WirePath) (TaskToken TaskToken)]
@@ -190,6 +198,7 @@
   LaneProjection { LaneRegistration LaneResourceClaims TimestampNanos DurationNanos }
   LaneResourceClaim { ScopeReference ScopeReason TimestampNanos DurationNanos }
   WorktreesObserved { Worktrees }
+  RepositoriesObserved { Repositories }
   RoleStatus { RoleName HarnessKind ClaimEntries }
   ClaimEntry { ScopeReference ScopeReason TimestampNanos DurationNanos }
   Activity { RoleName ScopeReference ScopeReason TimestampNanos }
