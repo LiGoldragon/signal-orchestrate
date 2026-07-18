@@ -2217,16 +2217,8 @@ pub enum OrchestratorMessageRecipient {
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct Sender(OrchestratorAgentIdentifier);
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OrchestratorMessageSubmission {
-    pub(crate) sender: Sender,
+    pub orchestrator_agent_identifier: OrchestratorAgentIdentifier,
     pub orchestrator_message_recipient: OrchestratorMessageRecipient,
     pub orchestrator_message: OrchestratorMessage,
 }
@@ -2256,15 +2248,7 @@ pub enum MessengerDeliveryState {
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct TriageSlot(Integer);
-
-#[rustfmt::skip]
-#[cfg_attr(
-    feature = "nota-text",
-    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
-)]
-#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct Recipients(Vec<OrchestratorAgentIdentifier>);
+pub struct TriageSlotNumber(Integer);
 
 #[rustfmt::skip]
 #[cfg_attr(
@@ -2273,8 +2257,8 @@ pub(crate) struct Recipients(Vec<OrchestratorAgentIdentifier>);
 )]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OrchestratorMessageRouted {
-    pub(crate) triage_slot: TriageSlot,
-    pub(crate) recipients: Recipients,
+    pub triage_slot_number: TriageSlotNumber,
+    pub orchestrator_agent_identifiers: OrchestratorAgentIdentifiers,
     pub messenger_delivery_state: MessengerDeliveryState,
 }
 
@@ -3998,25 +3982,6 @@ impl From<String> for MessageContent {
 }
 
 #[rustfmt::skip]
-impl Sender {
-    pub fn new(payload: OrchestratorAgentIdentifier) -> Self {
-        Self(payload)
-    }
-    pub fn payload(&self) -> &OrchestratorAgentIdentifier {
-        &self.0
-    }
-    pub fn into_payload(self) -> OrchestratorAgentIdentifier {
-        self.0
-    }
-}
-#[rustfmt::skip]
-impl From<OrchestratorAgentIdentifier> for Sender {
-    fn from(payload: OrchestratorAgentIdentifier) -> Self {
-        Self::new(payload)
-    }
-}
-
-#[rustfmt::skip]
 impl MessengerDegradationDetail {
     pub fn new(payload: impl Into<String>) -> Self {
         Self(payload.into())
@@ -4036,7 +4001,7 @@ impl From<String> for MessengerDegradationDetail {
 }
 
 #[rustfmt::skip]
-impl TriageSlot {
+impl TriageSlotNumber {
     pub fn new(payload: Integer) -> Self {
         Self(payload)
     }
@@ -4048,27 +4013,8 @@ impl TriageSlot {
     }
 }
 #[rustfmt::skip]
-impl From<Integer> for TriageSlot {
+impl From<Integer> for TriageSlotNumber {
     fn from(payload: Integer) -> Self {
-        Self::new(payload)
-    }
-}
-
-#[rustfmt::skip]
-impl Recipients {
-    pub fn new(payload: Vec<OrchestratorAgentIdentifier>) -> Self {
-        Self(payload)
-    }
-    pub fn payload(&self) -> &Vec<OrchestratorAgentIdentifier> {
-        &self.0
-    }
-    pub fn into_payload(self) -> Vec<OrchestratorAgentIdentifier> {
-        self.0
-    }
-}
-#[rustfmt::skip]
-impl From<Vec<OrchestratorAgentIdentifier>> for Recipients {
-    fn from(payload: Vec<OrchestratorAgentIdentifier>) -> Self {
         Self::new(payload)
     }
 }

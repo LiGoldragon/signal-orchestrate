@@ -267,15 +267,16 @@
   }
   OrchestratorMessageRecipient [(Agent OrchestratorAgentIdentifier) Orchestrator]
   OrchestratorMessageSubmission {
-    Sender.OrchestratorAgentIdentifier
+    OrchestratorAgentIdentifier
     OrchestratorMessageRecipient
     OrchestratorMessage
   }
   MessengerDegradationDetail String
   MessengerDeliveryState [Submitted (Degraded MessengerDegradationDetail)]
+  TriageSlotNumber Integer
   OrchestratorMessageRouted {
-    TriageSlot.Integer
-    Recipients.(Vector OrchestratorAgentIdentifier)
+    TriageSlotNumber
+    OrchestratorAgentIdentifiers
     MessengerDeliveryState
   }
   OrchestratorMessageRejection [NoEligibleRecipient SenderNotRegistered MalformedPayload MissingCoordinator]
