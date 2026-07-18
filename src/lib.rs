@@ -2841,7 +2841,95 @@ pub struct AgentDirectory {
     pub agents: Vec<OrchestratorAgentSummary>,
 }
 
+
+// ─── Orchestrator message send (packet 3.4) ──────────────
+
+/// A semantic orchestrator message in flight: the sending agent, the
+/// resolved-or-to-be-triaged recipient, and the payload. The payload
+/// vocabulary is the `signal-orchestrator-message` crate, integrated as the
+/// single semantic authority (kind, subject, content); this contract adds
+/// only the transport envelope around it.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct OrchestratorMessageSubmission {
+    pub sender: OrchestratorAgentIdentifier,
+    pub recipient: OrchestratorMessageRecipient,
+    pub message: signal_orchestrator_message::OrchestratorMessage,
+}
+
+/// Where an orchestrator message is addressed: a specific registered agent,
+/// or the orchestrator seat itself (an escalation).
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub enum OrchestratorMessageRecipient {
+    Agent(OrchestratorAgentIdentifier),
+    Orchestrator,
+}
+
+/// The messenger-delivery half of a routed reply: the routed message was
+/// handed to the co-resident messenger, or that best-effort hop degraded
+/// with the named detail (the triage record is committed either way).
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub enum MessengerDeliveryState {
+    Submitted,
+    Degraded(MessengerDegradationDetail),
+}
+
+/// Why the messenger hop degraded, as human-readable detail.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct MessengerDegradationDetail(pub String);
+
+impl MessengerDegradationDetail {
+    pub fn new(value: impl Into<String>) -> Self {
+        Self(value.into())
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+/// Reply to a routed `SendOrchestratorMessage`: the committed triage slot,
+/// the resolved recipients, and the messenger hop's outcome.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct OrchestratorMessageRouted {
+    pub triage_slot: u64,
+    pub recipients: Vec<OrchestratorAgentIdentifier>,
+    pub messenger_delivery_state: MessengerDeliveryState,
+}
+
+/// Why a `SendOrchestratorMessage` was not routed. The first three mirror the
+/// stored triage rejection reasons; `MissingCoordinator` is the typed answer
+/// to an escalation when no coordinator seat is registered (the judge stays
+/// shelved this phase).
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, Copy, PartialEq, Eq,
+)]
+pub enum OrchestratorMessageRejection {
+    NoEligibleRecipient,
+    SenderNotRegistered,
+    MalformedPayload,
+    MissingCoordinator,
+}
+
+/// Reply to a `SendOrchestratorMessage` that was not routed.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct OrchestratorMessageRejected {
+    pub rejection: OrchestratorMessageRejection,
+}
+
 // ─── Channel declaration ──────────────────────────────────
+
 
 signal_channel! {
     channel Orchestrate {
@@ -2862,6 +2950,7 @@ signal_channel! {
         operation ConcludeWorktree(WorktreeConclusionRequest),
         operation MintAgentIdentity(AgentIdentityMintRequest),
         operation LaunchAgent(AgentLaunchRequest),
+        operation SendOrchestratorMessage(OrchestratorMessageSubmission),
     }
     reply Reply {
         ClaimAcceptance(ClaimAcceptance),
@@ -2900,6 +2989,8 @@ signal_channel! {
         AgentLaunched(AgentLaunched),
         AgentLaunchRefused(AgentLaunchRefused),
         RepositoryMainContended(RepositoryMainContended),
+        OrchestratorMessageRouted(OrchestratorMessageRouted),
+        OrchestratorMessageRejected(OrchestratorMessageRejected),
     }
     event Event {
         WorkflowRunUpdated(WorkflowRunUpdate) belongs WorkflowRunStream,

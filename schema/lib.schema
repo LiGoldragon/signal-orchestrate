@@ -15,7 +15,8 @@
  (RequestWorktree WorktreeRequest)
  (ConcludeWorktree WorktreeConclusionRequest)
  (MintAgentIdentity AgentIdentityMintRequest)
- (LaunchAgent AgentLaunchRequest)]
+ (LaunchAgent AgentLaunchRequest)
+ (SendOrchestratorMessage OrchestratorMessageSubmission)]
 [(ClaimAcceptance ClaimAcceptance)
  (ClaimRejection ClaimRejection)
  (ReleaseAcknowledgment ReleaseAcknowledgment)
@@ -51,7 +52,9 @@
  (AgentIdentityMinted AgentIdentityMinted)
  (AgentLaunched AgentLaunched)
  (AgentLaunchRefused AgentLaunchRefused)
- (RepositoryMainContended RepositoryMainContended)]
+ (RepositoryMainContended RepositoryMainContended)
+ (OrchestratorMessageRouted OrchestratorMessageRouted)
+ (OrchestratorMessageRejected OrchestratorMessageRejected)]
 {
   RoleIdentifier String
   RoleName RoleIdentifier
@@ -244,7 +247,7 @@
 
   ObservationOpened ObservationToken
   ObservationClosed ObservationToken
-  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow RunResolvedWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch RegisterAgent RequestWorktree ConcludeWorktree MintAgentIdentity LaunchAgent]
+  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow RunResolvedWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch RegisterAgent RequestWorktree ConcludeWorktree MintAgentIdentity LaunchAgent SendOrchestratorMessage]
   EffectOutcome [Applied Removed Changed Observed StreamOpened StreamClosed NoChange]
   OperationReceived OperationKind
   EffectEmitted { OperationKind EffectOutcome }
@@ -253,4 +256,29 @@
                     (EffectEmitted EffectEmitted belongs ObservationStream)]
   WorkflowRunStream (Stream { token.WorkflowRunObservationToken opened.WorkflowRunObservationOpened event.WorkflowRunEvent close.WorkflowRunObservationToken })
   ObservationStream (Stream { token.ObservationToken opened.ObservationOpened event.ObservationEvent close.ObservationToken })
+  GuidanceMagnitude [Soft Standard Hard]
+  OrchestratorMessageKind [(Guidance GuidanceMagnitude) Interruption Report]
+  MessageSubject String
+  MessageContent String
+  OrchestratorMessage {
+    OrchestratorMessageKind
+    MessageSubject
+    MessageContent
+  }
+  OrchestratorMessageRecipient [(Agent OrchestratorAgentIdentifier) Orchestrator]
+  OrchestratorMessageSubmission {
+    Sender.OrchestratorAgentIdentifier
+    OrchestratorMessageRecipient
+    OrchestratorMessage
+  }
+  MessengerDegradationDetail String
+  MessengerDeliveryState [Submitted (Degraded MessengerDegradationDetail)]
+  OrchestratorMessageRouted {
+    TriageSlot.Integer
+    Recipients.(Vector OrchestratorAgentIdentifier)
+    MessengerDeliveryState
+  }
+  OrchestratorMessageRejection [NoEligibleRecipient SenderNotRegistered MalformedPayload MissingCoordinator]
+  OrchestratorMessageRejected { OrchestratorMessageRejection }
+
 }

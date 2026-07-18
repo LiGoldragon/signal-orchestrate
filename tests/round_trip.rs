@@ -1615,3 +1615,49 @@ fn worktree_request_rejected_round_trips_repository_absent_locally() {
     let decoded = round_trip_reply(reply.clone());
     assert_eq!(decoded, reply);
 }
+
+#[test]
+fn send_orchestrator_message_round_trips_with_routed_and_rejected_replies() {
+    use signal_orchestrate::{
+        MessengerDeliveryState, OrchestratorMessageRecipient, OrchestratorMessageRejected,
+        OrchestratorMessageRejection, OrchestratorMessageRouted, OrchestratorMessageSubmission,
+    };
+    use signal_orchestrator_message::{
+        GuidanceMagnitude, MessageContent, MessageSubject, OrchestratorMessage,
+        OrchestratorMessageKind,
+    };
+
+    let submission = OrchestratorMessageSubmission {
+        sender: OrchestratorAgentIdentifier::try_new("li7f".to_owned()).expect("sender id"),
+        recipient: OrchestratorMessageRecipient::Agent(
+            OrchestratorAgentIdentifier::try_new("x2qb".to_owned()).expect("recipient id"),
+        ),
+        message: OrchestratorMessage::new(
+            OrchestratorMessageKind::Guidance(GuidanceMagnitude::Standard),
+            MessageSubject::new("rebase before landing").expect("subject"),
+            MessageContent::new("main moved; rebase your branch first").expect("content"),
+        ),
+    };
+    let round = round_trip_request(OrchestrateRequest::SendOrchestratorMessage(
+        submission.clone(),
+    ));
+    assert_eq!(
+        round,
+        OrchestrateRequest::SendOrchestratorMessage(submission)
+    );
+
+    for reply in [
+        OrchestrateReply::OrchestratorMessageRouted(OrchestratorMessageRouted {
+            triage_slot: 7,
+            recipients: vec![
+                OrchestratorAgentIdentifier::try_new("x2qb".to_owned()).expect("recipient id"),
+            ],
+            messenger_delivery_state: MessengerDeliveryState::Submitted,
+        }),
+        OrchestrateReply::OrchestratorMessageRejected(OrchestratorMessageRejected {
+            rejection: OrchestratorMessageRejection::MissingCoordinator,
+        }),
+    ] {
+        assert_eq!(round_trip_reply(reply.clone()), reply);
+    }
+}

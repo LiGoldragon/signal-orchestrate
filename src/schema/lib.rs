@@ -2071,6 +2071,7 @@ pub enum OperationKind {
     ConcludeWorktree,
     MintAgentIdentity,
     LaunchAgent,
+    SendOrchestratorMessage,
 }
 
 #[rustfmt::skip]
@@ -2143,6 +2144,175 @@ pub enum ObservationEvent {
     feature = "nota-text",
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum GuidanceMagnitude {
+    Soft,
+    Standard,
+    Hard,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum OrchestratorMessageKind {
+    Guidance(GuidanceMagnitude),
+    Interruption,
+    Report,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MessageSubject(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MessageContent(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorMessage {
+    pub orchestrator_message_kind: OrchestratorMessageKind,
+    pub message_subject: MessageSubject,
+    pub message_content: MessageContent,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum OrchestratorMessageRecipient {
+    Agent(OrchestratorAgentIdentifier),
+    Orchestrator,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Sender(OrchestratorAgentIdentifier);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorMessageSubmission {
+    pub(crate) sender: Sender,
+    pub orchestrator_message_recipient: OrchestratorMessageRecipient,
+    pub orchestrator_message: OrchestratorMessage,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MessengerDegradationDetail(String);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum MessengerDeliveryState {
+    Submitted,
+    Degraded(MessengerDegradationDetail),
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub(crate) struct TriageSlot(Integer);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Recipients(Vec<OrchestratorAgentIdentifier>);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorMessageRouted {
+    pub(crate) triage_slot: TriageSlot,
+    pub(crate) recipients: Recipients,
+    pub messenger_delivery_state: MessengerDeliveryState,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum OrchestratorMessageRejection {
+    NoEligibleRecipient,
+    SenderNotRegistered,
+    MalformedPayload,
+    MissingCoordinator,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct OrchestratorMessageRejected(OrchestratorMessageRejection);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Input {
     Claim(RoleClaim),
@@ -2162,6 +2332,7 @@ pub enum Input {
     ConcludeWorktree(WorktreeConclusionRequest),
     MintAgentIdentity(AgentIdentityMintRequest),
     LaunchAgent(AgentLaunchRequest),
+    SendOrchestratorMessage(OrchestratorMessageSubmission),
 }
 
 #[rustfmt::skip]
@@ -2207,6 +2378,8 @@ pub enum Output {
     AgentLaunched(AgentLaunched),
     AgentLaunchRefused(AgentLaunchRefused),
     RepositoryMainContended(RepositoryMainContended),
+    OrchestratorMessageRouted(OrchestratorMessageRouted),
+    OrchestratorMessageRejected(OrchestratorMessageRejected),
 }
 
 #[rustfmt::skip]
@@ -3787,6 +3960,139 @@ impl From<OperationKind> for OperationReceived {
 }
 
 #[rustfmt::skip]
+impl MessageSubject {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for MessageSubject {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl MessageContent {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for MessageContent {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl Sender {
+    pub fn new(payload: OrchestratorAgentIdentifier) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &OrchestratorAgentIdentifier {
+        &self.0
+    }
+    pub fn into_payload(self) -> OrchestratorAgentIdentifier {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<OrchestratorAgentIdentifier> for Sender {
+    fn from(payload: OrchestratorAgentIdentifier) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl MessengerDegradationDetail {
+    pub fn new(payload: impl Into<String>) -> Self {
+        Self(payload.into())
+    }
+    pub fn payload(&self) -> &String {
+        &self.0
+    }
+    pub fn into_payload(self) -> String {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<String> for MessengerDegradationDetail {
+    fn from(payload: String) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl TriageSlot {
+    pub fn new(payload: Integer) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Integer {
+        &self.0
+    }
+    pub fn into_payload(self) -> Integer {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Integer> for TriageSlot {
+    fn from(payload: Integer) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl Recipients {
+    pub fn new(payload: Vec<OrchestratorAgentIdentifier>) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &Vec<OrchestratorAgentIdentifier> {
+        &self.0
+    }
+    pub fn into_payload(self) -> Vec<OrchestratorAgentIdentifier> {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<Vec<OrchestratorAgentIdentifier>> for Recipients {
+    fn from(payload: Vec<OrchestratorAgentIdentifier>) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl OrchestratorMessageRejected {
+    pub fn new(payload: OrchestratorMessageRejection) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &OrchestratorMessageRejection {
+        &self.0
+    }
+    pub fn into_payload(self) -> OrchestratorMessageRejection {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<OrchestratorMessageRejection> for OrchestratorMessageRejected {
+    fn from(payload: OrchestratorMessageRejection) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl ModelSelector {
     pub fn exact(payload: String) -> Self {
         Self::Exact(NamedModel::new(payload))
@@ -3952,6 +4258,27 @@ impl ObservationEvent {
 }
 
 #[rustfmt::skip]
+impl OrchestratorMessageKind {
+    pub fn guidance(payload: GuidanceMagnitude) -> Self {
+        Self::Guidance(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl OrchestratorMessageRecipient {
+    pub fn agent(payload: String) -> Self {
+        Self::Agent(OrchestratorAgentIdentifier::new(payload))
+    }
+}
+
+#[rustfmt::skip]
+impl MessengerDeliveryState {
+    pub fn degraded(payload: String) -> Self {
+        Self::Degraded(MessengerDegradationDetail::new(payload))
+    }
+}
+
+#[rustfmt::skip]
 impl Input {
     pub fn claim(payload: RoleClaim) -> Self {
         Self::Claim(payload)
@@ -4003,6 +4330,9 @@ impl Input {
     }
     pub fn launch_agent(payload: OrchestratorAgentIdentifier) -> Self {
         Self::LaunchAgent(AgentLaunchRequest::new(payload))
+    }
+    pub fn send_orchestrator_message(payload: OrchestratorMessageSubmission) -> Self {
+        Self::SendOrchestratorMessage(payload)
     }
 }
 
@@ -4123,6 +4453,12 @@ impl Output {
     }
     pub fn repository_main_contended(payload: RepositoryMainContended) -> Self {
         Self::RepositoryMainContended(payload)
+    }
+    pub fn orchestrator_message_routed(payload: OrchestratorMessageRouted) -> Self {
+        Self::OrchestratorMessageRouted(payload)
+    }
+    pub fn orchestrator_message_rejected(payload: OrchestratorMessageRejection) -> Self {
+        Self::OrchestratorMessageRejected(OrchestratorMessageRejected::new(payload))
     }
 }
 
@@ -4316,6 +4652,27 @@ impl From<EffectEmitted> for ObservationEvent {
 }
 
 #[rustfmt::skip]
+impl From<GuidanceMagnitude> for OrchestratorMessageKind {
+    fn from(payload: GuidanceMagnitude) -> Self {
+        Self::Guidance(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<OrchestratorAgentIdentifier> for OrchestratorMessageRecipient {
+    fn from(payload: OrchestratorAgentIdentifier) -> Self {
+        Self::Agent(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<MessengerDegradationDetail> for MessengerDeliveryState {
+    fn from(payload: MessengerDegradationDetail) -> Self {
+        Self::Degraded(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<RoleClaim> for Input {
     fn from(payload: RoleClaim) -> Self {
         Self::Claim(payload)
@@ -4431,6 +4788,13 @@ impl From<AgentIdentityMintRequest> for Input {
 impl From<AgentLaunchRequest> for Input {
     fn from(payload: AgentLaunchRequest) -> Self {
         Self::LaunchAgent(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<OrchestratorMessageSubmission> for Input {
+    fn from(payload: OrchestratorMessageSubmission) -> Self {
+        Self::SendOrchestratorMessage(payload)
     }
 }
 
@@ -4687,6 +5051,20 @@ impl From<RepositoryMainContended> for Output {
 }
 
 #[rustfmt::skip]
+impl From<OrchestratorMessageRouted> for Output {
+    fn from(payload: OrchestratorMessageRouted) -> Self {
+        Self::OrchestratorMessageRouted(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<OrchestratorMessageRejected> for Output {
+    fn from(payload: OrchestratorMessageRejected) -> Self {
+        Self::OrchestratorMessageRejected(payload)
+    }
+}
+
+#[rustfmt::skip]
 #[cfg(feature = "nota-text")]
 impl std::str::FromStr for Input {
     type Err = NotaDecodeError;
@@ -4737,6 +5115,7 @@ pub mod short_header {
     pub const INPUT_CONCLUDE_WORKTREE: u64 = 0x000E000000000000;
     pub const INPUT_MINT_AGENT_IDENTITY: u64 = 0x000F000000000000;
     pub const INPUT_LAUNCH_AGENT: u64 = 0x0010000000000000;
+    pub const INPUT_SEND_ORCHESTRATOR_MESSAGE: u64 = 0x0011000000000000;
     pub const OUTPUT_CLAIM_ACCEPTANCE: u64 = 0x0100000000000000;
     pub const OUTPUT_CLAIM_REJECTION: u64 = 0x0101000000000000;
     pub const OUTPUT_RELEASE_ACKNOWLEDGMENT: u64 = 0x0102000000000000;
@@ -4773,6 +5152,8 @@ pub mod short_header {
     pub const OUTPUT_AGENT_LAUNCHED: u64 = 0x0121000000000000;
     pub const OUTPUT_AGENT_LAUNCH_REFUSED: u64 = 0x0122000000000000;
     pub const OUTPUT_REPOSITORY_MAIN_CONTENDED: u64 = 0x0123000000000000;
+    pub const OUTPUT_ORCHESTRATOR_MESSAGE_ROUTED: u64 = 0x0124000000000000;
+    pub const OUTPUT_ORCHESTRATOR_MESSAGE_REJECTED: u64 = 0x0125000000000000;
 }
 
 #[rustfmt::skip]
@@ -4917,6 +5298,7 @@ pub enum InputRoute {
     ConcludeWorktree,
     MintAgentIdentity,
     LaunchAgent,
+    SendOrchestratorMessage,
 }
 
 #[rustfmt::skip]
@@ -4971,6 +5353,8 @@ pub enum OutputRoute {
     AgentLaunched,
     AgentLaunchRefused,
     RepositoryMainContended,
+    OrchestratorMessageRouted,
+    OrchestratorMessageRejected,
 }
 
 #[rustfmt::skip]
@@ -4996,6 +5380,7 @@ impl Input {
             Self::ConcludeWorktree(_) => InputRoute::ConcludeWorktree,
             Self::MintAgentIdentity(_) => InputRoute::MintAgentIdentity,
             Self::LaunchAgent(_) => InputRoute::LaunchAgent,
+            Self::SendOrchestratorMessage(_) => InputRoute::SendOrchestratorMessage,
         }
     }
     pub fn short_header(&self) -> u64 {
@@ -5019,6 +5404,9 @@ impl Input {
             Self::ConcludeWorktree(_) => short_header::INPUT_CONCLUDE_WORKTREE,
             Self::MintAgentIdentity(_) => short_header::INPUT_MINT_AGENT_IDENTITY,
             Self::LaunchAgent(_) => short_header::INPUT_LAUNCH_AGENT,
+            Self::SendOrchestratorMessage(_) => {
+                short_header::INPUT_SEND_ORCHESTRATOR_MESSAGE
+            }
         }
     }
     pub fn route_from_short_header(header: u64) -> Result<InputRoute, SignalFrameError> {
@@ -5046,6 +5434,9 @@ impl Input {
             short_header::INPUT_CONCLUDE_WORKTREE => Ok(InputRoute::ConcludeWorktree),
             short_header::INPUT_MINT_AGENT_IDENTITY => Ok(InputRoute::MintAgentIdentity),
             short_header::INPUT_LAUNCH_AGENT => Ok(InputRoute::LaunchAgent),
+            short_header::INPUT_SEND_ORCHESTRATOR_MESSAGE => {
+                Ok(InputRoute::SendOrchestratorMessage)
+            }
             _ => {
                 Err(SignalFrameError::UnknownHeader {
                     root_enum: "Input",
@@ -5152,6 +5543,10 @@ impl Output {
             Self::AgentLaunched(_) => OutputRoute::AgentLaunched,
             Self::AgentLaunchRefused(_) => OutputRoute::AgentLaunchRefused,
             Self::RepositoryMainContended(_) => OutputRoute::RepositoryMainContended,
+            Self::OrchestratorMessageRouted(_) => OutputRoute::OrchestratorMessageRouted,
+            Self::OrchestratorMessageRejected(_) => {
+                OutputRoute::OrchestratorMessageRejected
+            }
         }
     }
     pub fn short_header(&self) -> u64 {
@@ -5215,6 +5610,12 @@ impl Output {
             Self::AgentLaunchRefused(_) => short_header::OUTPUT_AGENT_LAUNCH_REFUSED,
             Self::RepositoryMainContended(_) => {
                 short_header::OUTPUT_REPOSITORY_MAIN_CONTENDED
+            }
+            Self::OrchestratorMessageRouted(_) => {
+                short_header::OUTPUT_ORCHESTRATOR_MESSAGE_ROUTED
+            }
+            Self::OrchestratorMessageRejected(_) => {
+                short_header::OUTPUT_ORCHESTRATOR_MESSAGE_REJECTED
             }
         }
     }
@@ -5294,6 +5695,12 @@ impl Output {
             short_header::OUTPUT_REPOSITORY_MAIN_CONTENDED => {
                 Ok(OutputRoute::RepositoryMainContended)
             }
+            short_header::OUTPUT_ORCHESTRATOR_MESSAGE_ROUTED => {
+                Ok(OutputRoute::OrchestratorMessageRouted)
+            }
+            short_header::OUTPUT_ORCHESTRATOR_MESSAGE_REJECTED => {
+                Ok(OutputRoute::OrchestratorMessageRejected)
+            }
             _ => {
                 Err(SignalFrameError::UnknownHeader {
                     root_enum: "Output",
@@ -5372,6 +5779,7 @@ impl signal_frame::SignalOperationHeads for Input {
         "ConcludeWorktree",
         "MintAgentIdentity",
         "LaunchAgent",
+        "SendOrchestratorMessage",
     ];
 }
 #[rustfmt::skip]

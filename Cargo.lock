@@ -696,7 +696,7 @@ dependencies = [
 
 [[package]]
 name = "signal-orchestrate"
-version = "0.9.1"
+version = "0.10.0"
 dependencies = [
  "nota",
  "rkyv",
@@ -705,6 +705,17 @@ dependencies = [
  "signal-criome",
  "signal-frame",
  "signal-harness",
+ "signal-orchestrator-message",
+ "thiserror",
+]
+
+[[package]]
+name = "signal-orchestrator-message"
+version = "0.1.0"
+source = "git+https://github.com/LiGoldragon/signal-orchestrator-message.git?branch=main#ff571be972482eda22b53bc3926dbd9f39a54ff2"
+dependencies = [
+ "nota",
+ "rkyv",
  "thiserror",
 ]
 
