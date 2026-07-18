@@ -1154,6 +1154,60 @@ pub struct AgentIdentityMinted(OrchestratorAgentIdentifier);
     feature = "nota-text",
     derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
 )]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct AgentLaunchRequest(OrchestratorAgentIdentifier);
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct AgentLaunched {
+    pub orchestrator_agent_identifier: OrchestratorAgentIdentifier,
+    pub integer: Integer,
+    pub optional_wire_path: Option<WirePath>,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+)]
+pub enum AgentLaunchRefusalReason {
+    UnknownAgent,
+    AgentNotAllocated,
+    HarnessUnreachable,
+    HarnessRefused,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct AgentLaunchRefused {
+    pub orchestrator_agent_identifier: OrchestratorAgentIdentifier,
+    pub agent_launch_refusal_reason: AgentLaunchRefusalReason,
+    pub string: String,
+}
+
+#[rustfmt::skip]
+#[cfg_attr(
+    feature = "nota-text",
+    derive(nota::NotaDecode, nota::NotaDecodeTraced, nota::NotaEncode)
+)]
 #[derive(
     rkyv::Archive,
     rkyv::Serialize,
@@ -2016,6 +2070,7 @@ pub enum OperationKind {
     RequestWorktree,
     ConcludeWorktree,
     MintAgentIdentity,
+    LaunchAgent,
 }
 
 #[rustfmt::skip]
@@ -2106,6 +2161,7 @@ pub enum Input {
     RequestWorktree(WorktreeRequest),
     ConcludeWorktree(WorktreeConclusionRequest),
     MintAgentIdentity(AgentIdentityMintRequest),
+    LaunchAgent(AgentLaunchRequest),
 }
 
 #[rustfmt::skip]
@@ -2148,6 +2204,8 @@ pub enum Output {
     WorktreeConcluded(WorktreeConcluded),
     WorktreeTeardownRefused(WorktreeTeardownRefused),
     AgentIdentityMinted(AgentIdentityMinted),
+    AgentLaunched(AgentLaunched),
+    AgentLaunchRefused(AgentLaunchRefused),
     RepositoryMainContended(RepositoryMainContended),
 }
 
@@ -3064,6 +3122,25 @@ impl From<OrchestratorAgentIdentifier> for AgentIdentityMinted {
 }
 
 #[rustfmt::skip]
+impl AgentLaunchRequest {
+    pub fn new(payload: OrchestratorAgentIdentifier) -> Self {
+        Self(payload)
+    }
+    pub fn payload(&self) -> &OrchestratorAgentIdentifier {
+        &self.0
+    }
+    pub fn into_payload(self) -> OrchestratorAgentIdentifier {
+        self.0
+    }
+}
+#[rustfmt::skip]
+impl From<OrchestratorAgentIdentifier> for AgentLaunchRequest {
+    fn from(payload: OrchestratorAgentIdentifier) -> Self {
+        Self::new(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl TopicTree {
     pub fn new(payload: OrchestratorTopics) -> Self {
         Self(payload)
@@ -3924,6 +4001,9 @@ impl Input {
     pub fn mint_agent_identity(payload: AgentIdentityMintRequest) -> Self {
         Self::MintAgentIdentity(payload)
     }
+    pub fn launch_agent(payload: OrchestratorAgentIdentifier) -> Self {
+        Self::LaunchAgent(AgentLaunchRequest::new(payload))
+    }
 }
 
 #[rustfmt::skip]
@@ -4034,6 +4114,12 @@ impl Output {
     }
     pub fn agent_identity_minted(payload: OrchestratorAgentIdentifier) -> Self {
         Self::AgentIdentityMinted(AgentIdentityMinted::new(payload))
+    }
+    pub fn agent_launched(payload: AgentLaunched) -> Self {
+        Self::AgentLaunched(payload)
+    }
+    pub fn agent_launch_refused(payload: AgentLaunchRefused) -> Self {
+        Self::AgentLaunchRefused(payload)
     }
     pub fn repository_main_contended(payload: RepositoryMainContended) -> Self {
         Self::RepositoryMainContended(payload)
@@ -4342,6 +4428,13 @@ impl From<AgentIdentityMintRequest> for Input {
 }
 
 #[rustfmt::skip]
+impl From<AgentLaunchRequest> for Input {
+    fn from(payload: AgentLaunchRequest) -> Self {
+        Self::LaunchAgent(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<ClaimAcceptance> for Output {
     fn from(payload: ClaimAcceptance) -> Self {
         Self::ClaimAcceptance(payload)
@@ -4573,6 +4666,20 @@ impl From<AgentIdentityMinted> for Output {
 }
 
 #[rustfmt::skip]
+impl From<AgentLaunched> for Output {
+    fn from(payload: AgentLaunched) -> Self {
+        Self::AgentLaunched(payload)
+    }
+}
+
+#[rustfmt::skip]
+impl From<AgentLaunchRefused> for Output {
+    fn from(payload: AgentLaunchRefused) -> Self {
+        Self::AgentLaunchRefused(payload)
+    }
+}
+
+#[rustfmt::skip]
 impl From<RepositoryMainContended> for Output {
     fn from(payload: RepositoryMainContended) -> Self {
         Self::RepositoryMainContended(payload)
@@ -4629,6 +4736,7 @@ pub mod short_header {
     pub const INPUT_REQUEST_WORKTREE: u64 = 0x000D000000000000;
     pub const INPUT_CONCLUDE_WORKTREE: u64 = 0x000E000000000000;
     pub const INPUT_MINT_AGENT_IDENTITY: u64 = 0x000F000000000000;
+    pub const INPUT_LAUNCH_AGENT: u64 = 0x0010000000000000;
     pub const OUTPUT_CLAIM_ACCEPTANCE: u64 = 0x0100000000000000;
     pub const OUTPUT_CLAIM_REJECTION: u64 = 0x0101000000000000;
     pub const OUTPUT_RELEASE_ACKNOWLEDGMENT: u64 = 0x0102000000000000;
@@ -4662,7 +4770,9 @@ pub mod short_header {
     pub const OUTPUT_WORKTREE_CONCLUDED: u64 = 0x011E000000000000;
     pub const OUTPUT_WORKTREE_TEARDOWN_REFUSED: u64 = 0x011F000000000000;
     pub const OUTPUT_AGENT_IDENTITY_MINTED: u64 = 0x0120000000000000;
-    pub const OUTPUT_REPOSITORY_MAIN_CONTENDED: u64 = 0x0121000000000000;
+    pub const OUTPUT_AGENT_LAUNCHED: u64 = 0x0121000000000000;
+    pub const OUTPUT_AGENT_LAUNCH_REFUSED: u64 = 0x0122000000000000;
+    pub const OUTPUT_REPOSITORY_MAIN_CONTENDED: u64 = 0x0123000000000000;
 }
 
 #[rustfmt::skip]
@@ -4806,6 +4916,7 @@ pub enum InputRoute {
     RequestWorktree,
     ConcludeWorktree,
     MintAgentIdentity,
+    LaunchAgent,
 }
 
 #[rustfmt::skip]
@@ -4857,6 +4968,8 @@ pub enum OutputRoute {
     WorktreeConcluded,
     WorktreeTeardownRefused,
     AgentIdentityMinted,
+    AgentLaunched,
+    AgentLaunchRefused,
     RepositoryMainContended,
 }
 
@@ -4882,6 +4995,7 @@ impl Input {
             Self::RequestWorktree(_) => InputRoute::RequestWorktree,
             Self::ConcludeWorktree(_) => InputRoute::ConcludeWorktree,
             Self::MintAgentIdentity(_) => InputRoute::MintAgentIdentity,
+            Self::LaunchAgent(_) => InputRoute::LaunchAgent,
         }
     }
     pub fn short_header(&self) -> u64 {
@@ -4904,6 +5018,7 @@ impl Input {
             Self::RequestWorktree(_) => short_header::INPUT_REQUEST_WORKTREE,
             Self::ConcludeWorktree(_) => short_header::INPUT_CONCLUDE_WORKTREE,
             Self::MintAgentIdentity(_) => short_header::INPUT_MINT_AGENT_IDENTITY,
+            Self::LaunchAgent(_) => short_header::INPUT_LAUNCH_AGENT,
         }
     }
     pub fn route_from_short_header(header: u64) -> Result<InputRoute, SignalFrameError> {
@@ -4930,6 +5045,7 @@ impl Input {
             short_header::INPUT_REQUEST_WORKTREE => Ok(InputRoute::RequestWorktree),
             short_header::INPUT_CONCLUDE_WORKTREE => Ok(InputRoute::ConcludeWorktree),
             short_header::INPUT_MINT_AGENT_IDENTITY => Ok(InputRoute::MintAgentIdentity),
+            short_header::INPUT_LAUNCH_AGENT => Ok(InputRoute::LaunchAgent),
             _ => {
                 Err(SignalFrameError::UnknownHeader {
                     root_enum: "Input",
@@ -5033,6 +5149,8 @@ impl Output {
             Self::WorktreeConcluded(_) => OutputRoute::WorktreeConcluded,
             Self::WorktreeTeardownRefused(_) => OutputRoute::WorktreeTeardownRefused,
             Self::AgentIdentityMinted(_) => OutputRoute::AgentIdentityMinted,
+            Self::AgentLaunched(_) => OutputRoute::AgentLaunched,
+            Self::AgentLaunchRefused(_) => OutputRoute::AgentLaunchRefused,
             Self::RepositoryMainContended(_) => OutputRoute::RepositoryMainContended,
         }
     }
@@ -5093,6 +5211,8 @@ impl Output {
                 short_header::OUTPUT_WORKTREE_TEARDOWN_REFUSED
             }
             Self::AgentIdentityMinted(_) => short_header::OUTPUT_AGENT_IDENTITY_MINTED,
+            Self::AgentLaunched(_) => short_header::OUTPUT_AGENT_LAUNCHED,
+            Self::AgentLaunchRefused(_) => short_header::OUTPUT_AGENT_LAUNCH_REFUSED,
             Self::RepositoryMainContended(_) => {
                 short_header::OUTPUT_REPOSITORY_MAIN_CONTENDED
             }
@@ -5166,6 +5286,10 @@ impl Output {
             }
             short_header::OUTPUT_AGENT_IDENTITY_MINTED => {
                 Ok(OutputRoute::AgentIdentityMinted)
+            }
+            short_header::OUTPUT_AGENT_LAUNCHED => Ok(OutputRoute::AgentLaunched),
+            short_header::OUTPUT_AGENT_LAUNCH_REFUSED => {
+                Ok(OutputRoute::AgentLaunchRefused)
             }
             short_header::OUTPUT_REPOSITORY_MAIN_CONTENDED => {
                 Ok(OutputRoute::RepositoryMainContended)
@@ -5247,6 +5371,7 @@ impl signal_frame::SignalOperationHeads for Input {
         "RequestWorktree",
         "ConcludeWorktree",
         "MintAgentIdentity",
+        "LaunchAgent",
     ];
 }
 #[rustfmt::skip]

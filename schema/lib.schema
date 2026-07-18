@@ -14,7 +14,8 @@
  (RegisterAgent OrchestratorAgentRegistration)
  (RequestWorktree WorktreeRequest)
  (ConcludeWorktree WorktreeConclusionRequest)
- (MintAgentIdentity AgentIdentityMintRequest)]
+ (MintAgentIdentity AgentIdentityMintRequest)
+ (LaunchAgent AgentLaunchRequest)]
 [(ClaimAcceptance ClaimAcceptance)
  (ClaimRejection ClaimRejection)
  (ReleaseAcknowledgment ReleaseAcknowledgment)
@@ -48,6 +49,8 @@
  (WorktreeConcluded WorktreeConcluded)
  (WorktreeTeardownRefused WorktreeTeardownRefused)
  (AgentIdentityMinted AgentIdentityMinted)
+ (AgentLaunched AgentLaunched)
+ (AgentLaunchRefused AgentLaunchRefused)
  (RepositoryMainContended RepositoryMainContended)]
 {
   RoleIdentifier String
@@ -153,6 +156,10 @@
   AgentRegistered { OrchestratorAgentIdentifier OrchestratorTopics TopicAssignmentSource }
   AgentIdentityMintRequest { SessionIdentifier MissionDescription HarnessKind }
   AgentIdentityMinted { OrchestratorAgentIdentifier }
+  AgentLaunchRequest { OrchestratorAgentIdentifier }
+  AgentLaunched { OrchestratorAgentIdentifier Integer (Optional WirePath) }
+  AgentLaunchRefusalReason [UnknownAgent AgentNotAllocated HarnessUnreachable HarnessRefused]
+  AgentLaunchRefused { OrchestratorAgentIdentifier AgentLaunchRefusalReason String }
   AgentRegistrationRejectionReason [MissionEmpty MissionTooVague UnknownTopic JudgeUnavailable JudgeMalformed JudgeTimedOut]
   AgentRegistrationRejected { AgentRegistrationRejectionReason OrchestratorTopics }
   TopicTree { OrchestratorTopics }
@@ -237,7 +244,7 @@
 
   ObservationOpened ObservationToken
   ObservationClosed ObservationToken
-  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow RunResolvedWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch RegisterAgent RequestWorktree ConcludeWorktree MintAgentIdentity]
+  OperationKind [Claim Release Handoff Observe Submit Query RunWorkflow RunResolvedWorkflow ObserveWorkflowRun WorkflowRunObservationRetraction Watch Unwatch RegisterAgent RequestWorktree ConcludeWorktree MintAgentIdentity LaunchAgent]
   EffectOutcome [Applied Removed Changed Observed StreamOpened StreamClosed NoChange]
   OperationReceived OperationKind
   EffectEmitted { OperationKind EffectOutcome }
