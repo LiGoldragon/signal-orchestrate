@@ -44,7 +44,8 @@ use signal_orchestrate::{
     WorktreesObserved, TeardownRefusal,
 };
 use signal_orchestrate::{
-    AgentDirectory, AgentIdentityMintRequest, AgentIdentityMinted, AgentRegistered,
+    AgentDirectory, AgentIdentityMintRequest, AgentIdentityMinted, AgentLaunchRefusalReason,
+    AgentLaunchRefused, AgentLaunchRequest, AgentLaunched, AgentRegistered,
     AgentRegistrationRejected, AgentRegistrationRejectionReason, MintedIdentitySelection,
     MissionDescription, OrchestratorAgentIdentifier, OrchestratorAgentRegistration,
     OrchestratorAgentStatus, OrchestratorAgentSummary, OrchestratorTopic, OrchestratorTopicPath,
@@ -1311,6 +1312,48 @@ fn mint_agent_identity_round_trips_and_exposes_operation_kind() {
 fn agent_identity_minted_round_trips() {
     let reply = OrchestrateReply::AgentIdentityMinted(AgentIdentityMinted {
         agent_identifier: agent_identifier("9wchj"),
+    });
+    let decoded = round_trip_reply(reply.clone());
+    assert_eq!(decoded, reply);
+}
+
+#[test]
+fn launch_agent_round_trips_and_exposes_operation_kind() {
+    let request = OrchestrateRequest::LaunchAgent(AgentLaunchRequest {
+        agent_identifier: agent_identifier("9wchj"),
+    });
+    let decoded = round_trip_request(request.clone());
+    assert_eq!(decoded, request);
+    assert_eq!(request.operation_kind(), OperationKind::LaunchAgent);
+}
+
+#[test]
+fn agent_launched_round_trips_with_and_without_session_directory() {
+    for session_directory in [
+        Some(
+            WirePath::from_absolute_path(
+                "/run/user/1000/terminal-cell/session-agent-9wchj-1784366",
+            )
+            .expect("wire path"),
+        ),
+        None,
+    ] {
+        let reply = OrchestrateReply::AgentLaunched(AgentLaunched {
+            agent_identifier: agent_identifier("9wchj"),
+            child_process_id: 4321,
+            session_directory,
+        });
+        let decoded = round_trip_reply(reply.clone());
+        assert_eq!(decoded, reply);
+    }
+}
+
+#[test]
+fn agent_launch_refused_round_trips() {
+    let reply = OrchestrateReply::AgentLaunchRefused(AgentLaunchRefused {
+        agent_identifier: agent_identifier("9wchj"),
+        reason: AgentLaunchRefusalReason::AgentNotAllocated,
+        detail: "agent is Active, not Allocated".to_string(),
     });
     let decoded = round_trip_reply(reply.clone());
     assert_eq!(decoded, reply);

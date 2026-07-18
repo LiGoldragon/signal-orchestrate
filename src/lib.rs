@@ -2716,6 +2716,58 @@ pub struct AgentIdentityMinted {
     pub agent_identifier: OrchestratorAgentIdentifier,
 }
 
+/// Launch a previously allocated agent: the orchestrator commands the
+/// harness component to spawn the session with the pre-minted identity
+/// delivered in its initial prompt.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct AgentLaunchRequest {
+    pub agent_identifier: OrchestratorAgentIdentifier,
+}
+
+/// The launched session's facts: the harness child pid and, when the launch
+/// went through a PTY-owning terminal cell, its session directory.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct AgentLaunched {
+    pub agent_identifier: OrchestratorAgentIdentifier,
+    pub child_process_id: u32,
+    pub session_directory: Option<WirePath>,
+}
+
+#[derive(
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub enum AgentLaunchRefusalReason {
+    UnknownAgent,
+    AgentNotAllocated,
+    HarnessUnreachable,
+    HarnessRefused,
+}
+
+/// Typed launch refusal; `detail` is operator diagnostics, the reason is
+/// the actionable fact.
+#[derive(
+    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+)]
+pub struct AgentLaunchRefused {
+    pub agent_identifier: OrchestratorAgentIdentifier,
+    pub reason: AgentLaunchRefusalReason,
+    pub detail: String,
+}
+
 /// Successful registration: the minted address, the topics the agent
 /// was seated on, and where that seating came from.
 #[derive(
@@ -2809,6 +2861,7 @@ signal_channel! {
         operation RequestWorktree(WorktreeRequest),
         operation ConcludeWorktree(WorktreeConclusionRequest),
         operation MintAgentIdentity(AgentIdentityMintRequest),
+        operation LaunchAgent(AgentLaunchRequest),
     }
     reply Reply {
         ClaimAcceptance(ClaimAcceptance),
@@ -2844,6 +2897,8 @@ signal_channel! {
         WorktreeConcluded(WorktreeConcluded),
         WorktreeTeardownRefused(WorktreeTeardownRefused),
         AgentIdentityMinted(AgentIdentityMinted),
+        AgentLaunched(AgentLaunched),
+        AgentLaunchRefused(AgentLaunchRefused),
         RepositoryMainContended(RepositoryMainContended),
     }
     event Event {
