@@ -37,6 +37,16 @@ The state actor replies with `OrchestrateReply::ClaimAcceptance`
 on success or `OrchestrateReply::ClaimRejection` (carrying
 typed `ScopeConflict` records) on overlap.
 
+## v0.9 compatibility family
+
+Version 0.9.2 is a maintained compatibility release for current
+Criome-compatible Orchestrate maintenance. It pins the legacy Nota, Signal
+Frame, Signal Criome, and schema-rust family to immutable revisions. Its
+checked-in schema artifacts are intentionally unchanged from v0.9.1 and are
+fresh only with the reply-reliability schema-rust 0.7.1 generator. In
+particular, this preserves the typed `EngineRefusal` wire reply surface; a
+0.7.0 generator would remove that surface from generated artifacts.
+
 ## See also
 
 - `ARCHITECTURE.md` — channel role + boundaries

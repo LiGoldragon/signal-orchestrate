@@ -16,9 +16,9 @@ checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
 
 [[package]]
 name = "bitflags"
-version = "2.13.0"
+version = "2.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4388bee8683e3d04af747c73422af53102d2bd24d9eadb6cbc100baef4b43f8"
+checksum = "b588b76d00fde79687d7646a9b5bdf3cc0f655e0bbd080335a95d7e96f3587da"
 
 [[package]]
 name = "blake3"
@@ -72,7 +72,7 @@ checksum = "89385e82b5d1821d2219e0b095efa2cc1f246cbf99080f3be46a1a85c0d392d9"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -83,9 +83,9 @@ checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
 name = "cc"
-version = "1.2.66"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5d6cac793997bd970000024b2934968efe83b382de4fdcf4fcb46b6ee4ad996"
+checksum = "c89588d05638b5b4594a3348a2d6c20277e43a7f5c5202b05cc56888475a47b8"
 dependencies = [
  "find-msvc-tools",
  "shlex",
@@ -148,9 +148,9 @@ checksum = "5baebc0774151f905a1a2cc41989300b1e6fbb29aff0ceffa1064fdd3088d582"
 
 [[package]]
 name = "futures"
-version = "0.3.32"
+version = "0.3.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b147ee9d1f6d097cef9ce628cd2ee62288d963e16fb287bd9286455b241382d"
+checksum = "a88cf1f829d945f548cf8fec32c61b1f202b6d93b45848602fc02af4b12ad218"
 dependencies = [
  "futures-channel",
  "futures-core",
@@ -163,9 +163,9 @@ dependencies = [
 
 [[package]]
 name = "futures-channel"
-version = "0.3.32"
+version = "0.3.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07bbe89c50d7a535e539b8c17bc0b49bdb77747034daa8087407d655f3f7cc1d"
+checksum = "262590f4fe6afeb0bc83be1daa64e52657fe185690a958af7f3ad0e92085c5ae"
 dependencies = [
  "futures-core",
  "futures-sink",
@@ -173,15 +173,15 @@ dependencies = [
 
 [[package]]
 name = "futures-core"
-version = "0.3.32"
+version = "0.3.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e3450815272ef58cec6d564423f6e755e25379b217b0bc688e295ba24df6b1d"
+checksum = "2cd50c473c80f6d7c3670a752354b8e569b1a7cbfdc0419ec88e5edad85e0dc7"
 
 [[package]]
 name = "futures-executor"
-version = "0.3.32"
+version = "0.3.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baf29c38818342a3b26b5b923639e7b1f4a61fc5e76102d4b1981c6dc7a7579d"
+checksum = "6754879cc9f2c66f88c6e5c35344bb0bdb0708b0352b1201815667c7eabc7458"
 dependencies = [
  "futures-core",
  "futures-task",
@@ -190,38 +190,38 @@ dependencies = [
 
 [[package]]
 name = "futures-io"
-version = "0.3.32"
+version = "0.3.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cecba35d7ad927e23624b22ad55235f2239cfa44fd10428eecbeba6d6a717718"
+checksum = "4577ecaa3c4f96589d473f679a71b596316f6641bc350038b962a5daf0085d7a"
 
 [[package]]
 name = "futures-macro"
-version = "0.3.32"
+version = "0.3.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e835b70203e41293343137df5c0664546da5745f82ec9b84d40be8336958447b"
+checksum = "2d6d3cde68c518367be28956066ddfef33813991b77a55005a69dae04bf3b10b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
 name = "futures-sink"
-version = "0.3.32"
+version = "0.3.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c39754e157331b013978ec91992bde1ac089843443c49cbc7f46150b0fad0893"
+checksum = "e34418ac499d6305c2fb5ad0ed2f6ac998c5f8ca209b4510f7f94242c647e307"
 
 [[package]]
 name = "futures-task"
-version = "0.3.32"
+version = "0.3.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "037711b3d59c33004d3856fbdc83b99d4ff37a24768fa1be9ce3538a1cde4393"
+checksum = "b231ed28831efb4a61a08580c4bc233ec56bc009f4cd8f52da2c3cb97df0c109"
 
 [[package]]
 name = "futures-util"
-version = "0.3.32"
+version = "0.3.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "389ca41296e6190b48053de0321d02a77f32f8a5d2461dd38762c0593805c6d6"
+checksum = "a77a90a256fce34da66415271e30f94ee91c57b04b8a2c042d9cf3220179deaa"
 dependencies = [
  "futures-channel",
  "futures-core",
@@ -301,7 +301,7 @@ dependencies = [
  "heck",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -324,9 +324,9 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "mio"
-version = "1.2.1"
+version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02bd0af71c67b473010cbbc60715ee815645a4dc942899111f494b4b737d6fda"
+checksum = "30d65c71f1ce40ab09135ce117d742b9f8a19ff91a41a8b57ed50bc2de59c427"
 dependencies = [
  "libc",
  "wasi",
@@ -350,13 +350,13 @@ checksum = "4568f25ccbd45ab5d5603dc34318c1ec56b117531781260002151b8530a9f931"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
 name = "nota"
 version = "0.5.1"
-source = "git+https://github.com/LiGoldragon/nota.git?branch=main#ce7c564de0a0518eaa1938d55dccc460a67cadb4"
+source = "git+https://github.com/LiGoldragon/nota.git?rev=ce7c564de0a0518eaa1938d55dccc460a67cadb4#ce7c564de0a0518eaa1938d55dccc460a67cadb4"
 dependencies = [
  "nota-derive",
  "rkyv",
@@ -365,11 +365,11 @@ dependencies = [
 [[package]]
 name = "nota-derive"
 version = "0.3.0"
-source = "git+https://github.com/LiGoldragon/nota.git?branch=main#ce7c564de0a0518eaa1938d55dccc460a67cadb4"
+source = "git+https://github.com/LiGoldragon/nota.git?rev=ce7c564de0a0518eaa1938d55dccc460a67cadb4#ce7c564de0a0518eaa1938d55dccc460a67cadb4"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -407,14 +407,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "479ca8adacdd7ce8f1fb39ce9ecccbfe93a3f1344b3d0d97f20bc0196208f62b"
 dependencies = [
  "proc-macro2",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.106"
+version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
+checksum = "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9"
 dependencies = [
  "unicode-ident",
 ]
@@ -436,14 +436,14 @@ checksum = "7347867d0a7e1208d93b46767be83e2b8f978c3dad35f775ac8d8847551d6fe1"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
 name = "quote"
-version = "1.0.46"
+version = "1.0.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dfbc457d0c7a0759a614551b11a6409e5951f6c7537be1f1b7682b9ae9230368"
+checksum = "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001"
 dependencies = [
  "proc-macro2",
 ]
@@ -493,7 +493,7 @@ checksum = "c0ed1a78a1b19d184b0daa629dd9a024573173ec7d485b287cb369fb3607cc1c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -517,8 +517,8 @@ checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
 name = "schema"
-version = "0.2.0"
-source = "git+https://github.com/LiGoldragon/schema.git?branch=main#36a79b7809fd4d89f6109d9dc732209dd4d40c41"
+version = "0.2.1"
+source = "git+https://github.com/LiGoldragon/schema.git?rev=389dd16ba88d710f680f969b31d37a512efa2f72#389dd16ba88d710f680f969b31d37a512efa2f72"
 dependencies = [
  "blake3",
  "nota",
@@ -530,20 +530,20 @@ dependencies = [
 [[package]]
 name = "schema-cc"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/schema.git?branch=main#36a79b7809fd4d89f6109d9dc732209dd4d40c41"
+source = "git+https://github.com/LiGoldragon/schema.git?rev=389dd16ba88d710f680f969b31d37a512efa2f72#389dd16ba88d710f680f969b31d37a512efa2f72"
 dependencies = [
  "nota",
  "prettyplease",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
  "thiserror",
 ]
 
 [[package]]
 name = "schema-language"
-version = "0.2.0"
-source = "git+https://github.com/LiGoldragon/schema-language.git?rev=6aae825d668e3f607a2754afa6b7d94e9f246c41#6aae825d668e3f607a2754afa6b7d94e9f246c41"
+version = "0.2.1"
+source = "git+https://github.com/LiGoldragon/schema-language.git?rev=b74e917ec29a74da1ae7c20a459ea2c6ab4976b4#b74e917ec29a74da1ae7c20a459ea2c6ab4976b4"
 dependencies = [
  "blake3",
  "nota",
@@ -555,66 +555,66 @@ dependencies = [
 [[package]]
 name = "schema-language-cc"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/schema-language.git?rev=6aae825d668e3f607a2754afa6b7d94e9f246c41#6aae825d668e3f607a2754afa6b7d94e9f246c41"
+source = "git+https://github.com/LiGoldragon/schema-language.git?rev=b74e917ec29a74da1ae7c20a459ea2c6ab4976b4#b74e917ec29a74da1ae7c20a459ea2c6ab4976b4"
 dependencies = [
  "nota",
  "prettyplease",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
  "thiserror",
 ]
 
 [[package]]
 name = "schema-rust"
-version = "0.7.0"
-source = "git+https://github.com/LiGoldragon/schema-rust.git?branch=main#f3b4563163dd11ba1cbbcca8081701ab7830b8f5"
+version = "0.7.0+legacy.1"
+source = "git+https://github.com/LiGoldragon/schema-rust.git?rev=384337d1313df19b77641ac7240fcd2fc6864f54#384337d1313df19b77641ac7240fcd2fc6864f54"
 dependencies = [
  "nota",
  "prettyplease",
  "proc-macro2",
  "quote",
  "schema-language",
- "syn",
- "thiserror",
- "triad-runtime",
-]
-
-[[package]]
-name = "schema-rust"
-version = "0.7.0"
-source = "git+https://github.com/LiGoldragon/schema-rust.git?rev=255823ab3d0d6c5cab26e26a8b1d60c63c52c7b4#255823ab3d0d6c5cab26e26a8b1d60c63c52c7b4"
-dependencies = [
- "nota",
- "prettyplease",
- "proc-macro2",
- "quote",
- "schema-language",
- "syn",
+ "syn 2.0.119",
  "thiserror",
  "triad-runtime",
 ]
 
 [[package]]
 name = "schema-rust"
-version = "0.7.1"
-source = "git+https://github.com/LiGoldragon/schema-rust.git?rev=bc964c4f2945a637890192f0623db851f8320c27#bc964c4f2945a637890192f0623db851f8320c27"
+version = "0.7.0+wire-safe.1"
+source = "git+https://github.com/LiGoldragon/schema-rust.git?rev=31a9ae1982dc834a31ba2e8d662e71f360e8536c#31a9ae1982dc834a31ba2e8d662e71f360e8536c"
 dependencies = [
  "nota",
  "prettyplease",
  "proc-macro2",
  "quote",
  "schema-language",
- "syn",
+ "syn 2.0.119",
+ "thiserror",
+ "triad-runtime",
+]
+
+[[package]]
+name = "schema-rust"
+version = "0.7.2"
+source = "git+https://github.com/LiGoldragon/schema-rust.git?rev=4993acb5f5b103a975729bfc73b1f1c4f47cc0d5#4993acb5f5b103a975729bfc73b1f1c4f47cc0d5"
+dependencies = [
+ "nota",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "schema-language",
+ "syn 2.0.119",
  "thiserror",
  "triad-runtime",
 ]
 
 [[package]]
 name = "serde"
-version = "1.0.228"
+version = "1.0.229"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
+checksum = "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba"
 dependencies = [
  "serde_core",
  "serde_derive",
@@ -622,22 +622,22 @@ dependencies = [
 
 [[package]]
 name = "serde_core"
-version = "1.0.228"
+version = "1.0.229"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
+checksum = "67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.228"
+version = "1.0.229"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
+checksum = "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 3.0.2",
 ]
 
 [[package]]
@@ -648,75 +648,96 @@ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "signal-criome"
-version = "0.11.0"
-source = "git+https://github.com/LiGoldragon/signal-criome.git?branch=main#1c5d99e368f7bd4f5a8755956460f8be6e85fd99"
+version = "0.11.1"
+source = "git+https://github.com/LiGoldragon/signal-criome.git?rev=38522278c884b47d01a1b7868123375a5b523ef6#38522278c884b47d01a1b7868123375a5b523ef6"
 dependencies = [
  "blake3",
  "blst",
  "nota",
  "rkyv",
- "schema-rust 0.7.0 (git+https://github.com/LiGoldragon/schema-rust.git?rev=255823ab3d0d6c5cab26e26a8b1d60c63c52c7b4)",
- "signal-frame",
+ "schema-rust 0.7.0+wire-safe.1",
+ "signal-frame 0.3.1",
  "thiserror",
 ]
 
 [[package]]
 name = "signal-frame"
 version = "0.3.0"
-source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#bb86bef67e478ff52690a4dcceec8f22d2b005ad"
+source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#f46872e7e8edae5264c892443d415a273b231234"
+dependencies = [
+ "paste",
+ "rkyv",
+ "signal-frame-macros 0.1.1 (git+https://github.com/LiGoldragon/signal-frame.git?branch=main)",
+ "thiserror",
+]
+
+[[package]]
+name = "signal-frame"
+version = "0.3.1"
+source = "git+https://github.com/LiGoldragon/signal-frame.git?rev=91e675298b79ec2aab2e0714a5e3e5b2d6d07339#91e675298b79ec2aab2e0714a5e3e5b2d6d07339"
 dependencies = [
  "nota",
  "paste",
  "rkyv",
- "signal-frame-macros",
+ "signal-frame-macros 0.1.1 (git+https://github.com/LiGoldragon/signal-frame.git?rev=91e675298b79ec2aab2e0714a5e3e5b2d6d07339)",
  "thiserror",
 ]
 
 [[package]]
 name = "signal-frame-macros"
 version = "0.1.1"
-source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#bb86bef67e478ff52690a4dcceec8f22d2b005ad"
+source = "git+https://github.com/LiGoldragon/signal-frame.git?branch=main#f46872e7e8edae5264c892443d415a273b231234"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "signal-frame-macros"
+version = "0.1.1"
+source = "git+https://github.com/LiGoldragon/signal-frame.git?rev=91e675298b79ec2aab2e0714a5e3e5b2d6d07339#91e675298b79ec2aab2e0714a5e3e5b2d6d07339"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]
 name = "signal-harness"
-version = "0.3.0"
-source = "git+https://github.com/LiGoldragon/signal-harness.git?branch=main#ad7ae26e1c31265e98e65ae01ba38bb7d8b5a68b"
+version = "0.4.1"
+source = "git+https://github.com/LiGoldragon/signal-harness.git?rev=ce77cfb5824ded91b5522b63dd08a4d7914a86e8#ce77cfb5824ded91b5522b63dd08a4d7914a86e8"
 dependencies = [
  "nota",
  "rkyv",
- "signal-frame",
+ "signal-frame 0.3.1",
  "signal-persona",
  "thiserror",
 ]
 
 [[package]]
 name = "signal-orchestrate"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "nota",
  "rkyv",
  "schema",
- "schema-rust 0.7.1",
+ "schema-rust 0.7.2",
  "signal-criome",
- "signal-frame",
+ "signal-frame 0.3.1",
  "signal-harness",
  "thiserror",
 ]
 
 [[package]]
 name = "signal-persona"
-version = "0.2.0"
-source = "git+https://github.com/LiGoldragon/signal-persona.git?branch=main#9d448f19d0147ef8c4b502c04e6fadfc06fc31ce"
+version = "0.2.1"
+source = "git+https://github.com/LiGoldragon/signal-persona.git?rev=497b7bc4fa84eb0cc2e45b555a29432f0e2b341a#497b7bc4fa84eb0cc2e45b555a29432f0e2b341a"
 dependencies = [
  "nota",
  "rkyv",
- "schema-rust 0.7.0 (git+https://github.com/LiGoldragon/schema-rust.git?branch=main)",
- "signal-frame",
+ "schema-rust 0.7.0+legacy.1",
+ "signal-frame 0.3.1",
 ]
 
 [[package]]
@@ -733,9 +754,9 @@ checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
 name = "socket2"
-version = "0.6.4"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52d1cfed4120b4d927bf7c0f86d2087a4a7d6027c906d9f9d525a80573b9be51"
+checksum = "c3d1e2c7f27f8d4cb10542a02c49005dbd6e93095799d6f3be745fae9f8fedd4"
 dependencies = [
  "libc",
  "windows-sys",
@@ -743,9 +764,20 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.118"
+version = "2.0.119"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b9ae57f904213ebb649ce6895b8a66c66f0203b9319718f69a5612a065b1422"
+checksum = "872831b642d1a07999a962a351ed35b955ea2cfc8f3862091e2a240a84f17297"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
+name = "syn"
+version = "3.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a207d6d6a2b7fc470b80443726053f18a2481b7e1eee970597051596567987a3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -754,22 +786,22 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "2.0.18"
+version = "2.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4288b5bcbc7920c07a1149a35cf9590a2aa808e0bc1eafaade0b80947865fbc4"
+checksum = "09a43598840e33d5b0331f38c5e30d13bb11c11210a4b58f0d9b18a5a5eefcd9"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "2.0.18"
+version = "2.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5"
+checksum = "43cbfe0cf76104d42a574802844187e84a305e531ed54455f11fbde0f10541cd"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 3.0.2",
 ]
 
 [[package]]
@@ -783,9 +815,9 @@ dependencies = [
 
 [[package]]
 name = "tinyvec"
-version = "1.11.0"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e61e67053d25a4e82c844e8424039d9745781b3fc4f32b8d55ed50f5f667ef3"
+checksum = "bb4ebadaa0af04fab11ae01eb5f9fdb5f9c5b875506e210e71c07873528baa7f"
 dependencies = [
  "tinyvec_macros",
 ]
@@ -798,9 +830,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.52.3"
+version = "1.53.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fc7f01b389ac15039e4dc9531aa973a135d7a4135281b12d7c1bc79fd57fffe"
+checksum = "d988bcd52dbe076d3d46903332f58c912b87a2c49b1428419a5845154762ffee"
 dependencies = [
  "bytes",
  "libc",
@@ -814,13 +846,13 @@ dependencies = [
 
 [[package]]
 name = "tokio-macros"
-version = "2.7.0"
+version = "2.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "385a6cb71ab9ab790c5fe8d67f1645e6c450a7ce006a33de03daa956cf70a496"
+checksum = "6328af13490e73a9b4694030fafd93f8c8c6a9dede33e821c3fc63eddf8042ba"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -842,7 +874,7 @@ checksum = "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -856,13 +888,13 @@ dependencies = [
 
 [[package]]
 name = "triad-runtime"
-version = "0.6.1"
-source = "git+https://github.com/LiGoldragon/triad-runtime.git?branch=main#b34df30c56fcbc88266210167d2520d0996feca3"
+version = "0.7.0"
+source = "git+https://github.com/LiGoldragon/triad-runtime.git?branch=main#d323f9024f8490961c687798cf2dad4aea54aa7e"
 dependencies = [
  "kameo",
  "rkyv",
  "rustix",
- "signal-frame",
+ "signal-frame 0.3.0",
  "thiserror",
  "tokio",
 ]
@@ -875,9 +907,9 @@ checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
 
 [[package]]
 name = "uuid"
-version = "1.23.4"
+version = "1.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf80a72845275afea99e7f2b434723d3bc7e38470fcd1c7ed39a599c73319a53"
+checksum = "bf3923a6f5c4c6382e0b653c4117f48d631ea17f38ed86e2a828e6f7412f5239"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
@@ -921,7 +953,7 @@ dependencies = [
  "bumpalo",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
  "wasm-bindgen-shared",
 ]
 
@@ -966,5 +998,5 @@ checksum = "3c50655cbb0fe3fc43170059e702f1ce5e19b84cec58dc87b037a09935c2f328"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.119",
 ]

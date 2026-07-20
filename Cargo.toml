@@ -1,6 +1,6 @@
 [package]
 name         = "signal-orchestrate"
-version      = "0.9.1"
+version      = "0.9.2"
 edition      = "2024"
 rust-version = "1.89"
 license      = "MIT OR Apache-2.0"
@@ -19,18 +19,18 @@ default   = ["nota-text"]
 nota-text = ["signal-frame/nota-text"]
 
 [dependencies]
-signal-frame = { git = "https://github.com/LiGoldragon/signal-frame.git", branch = "main", default-features = false }
-signal-criome = { git = "https://github.com/LiGoldragon/signal-criome.git", branch = "main", default-features = false, features = ["nota-text"] }
-signal-harness = { git = "https://github.com/LiGoldragon/signal-harness.git", branch = "main" }
-nota   = { git = "https://github.com/LiGoldragon/nota.git", branch = "main" }
+signal-frame = { git = "https://github.com/LiGoldragon/signal-frame.git", rev = "91e675298b79ec2aab2e0714a5e3e5b2d6d07339", default-features = false }
+signal-criome = { git = "https://github.com/LiGoldragon/signal-criome.git", rev = "38522278c884b47d01a1b7868123375a5b523ef6", default-features = false, features = ["nota-text"] }
+signal-harness = { git = "https://github.com/LiGoldragon/signal-harness.git", rev = "ce77cfb5824ded91b5522b63dd08a4d7914a86e8" }
+nota   = { git = "https://github.com/LiGoldragon/nota.git", rev = "ce7c564de0a0518eaa1938d55dccc460a67cadb4" }
 rkyv        = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 thiserror   = "2"
 
 [build-dependencies]
-schema-rust = { git = "https://github.com/LiGoldragon/schema-rust.git", rev = "bc964c4f2945a637890192f0623db851f8320c27" }
+schema-rust = { git = "https://github.com/LiGoldragon/schema-rust.git", rev = "4993acb5f5b103a975729bfc73b1f1c4f47cc0d5" }
 
 [dev-dependencies]
-schema = { git = "https://github.com/LiGoldragon/schema.git", branch = "main" }
+schema = { git = "https://github.com/LiGoldragon/schema.git", rev = "389dd16ba88d710f680f969b31d37a512efa2f72" }
 
 [lints.rust]
 unsafe_code = "forbid"
