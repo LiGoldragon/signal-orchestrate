@@ -1,6 +1,6 @@
 [package]
 name         = "signal-orchestrate"
-version      = "0.10.1"
+version      = "0.10.2"
 edition      = "2024"
 rust-version = "1.89"
 license      = "MIT OR Apache-2.0"
@@ -19,11 +19,11 @@ default   = ["nota-text"]
 nota-text = ["signal-frame/nota-text"]
 
 [dependencies]
-signal-frame = { git = "https://github.com/LiGoldragon/signal-frame.git", branch = "main", default-features = false }
-signal-orchestrator-message = { git = "https://github.com/LiGoldragon/signal-orchestrator-message.git", branch = "main", features = ["nota-text"] }
-signal-criome = { git = "https://github.com/LiGoldragon/signal-criome.git", branch = "main", default-features = false, features = ["nota-text"] }
-signal-harness = { git = "https://github.com/LiGoldragon/signal-harness.git", branch = "main" }
-nota   = { git = "https://github.com/LiGoldragon/nota.git", branch = "main" }
+signal-frame = { git = "https://github.com/LiGoldragon/signal-frame.git", rev = "91e675298b79ec2aab2e0714a5e3e5b2d6d07339", default-features = false }
+signal-orchestrator-message = { git = "https://github.com/LiGoldragon/signal-orchestrator-message.git", rev = "1189ad84f6a0a05eb8e83b0b92710b7d7bcf1141", features = ["nota-text"] }
+signal-criome = { git = "https://github.com/LiGoldragon/signal-criome.git", rev = "ec3171b0a90fd6d6a21281e5cea5fba34d076faa", default-features = false, features = ["nota-text"] }
+signal-harness = { git = "https://github.com/LiGoldragon/signal-harness.git", rev = "ce77cfb5824ded91b5522b63dd08a4d7914a86e8" }
+nota = { git = "https://github.com/LiGoldragon/nota.git", rev = "ce7c564de0a0518eaa1938d55dccc460a67cadb4" }
 rkyv        = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 thiserror   = "2"
 
