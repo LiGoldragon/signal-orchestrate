@@ -1,6 +1,6 @@
 [package]
 name         = "signal-orchestrate"
-version      = "0.12.0"
+version      = "0.13.0"
 edition      = "2024"
 rust-version = "1.89"
 license      = "MIT OR Apache-2.0"
@@ -21,7 +21,7 @@ dotos-text = ["signal-frame/dotos-text"]
 [dependencies]
 signal-frame = { git = "https://github.com/LiGoldragon/signal-frame.git", rev = "8aa0bcaeb29fe9e461a11706a469638d2fd109ac", default-features = false }
 signal-orchestrator-message = { git = "https://github.com/LiGoldragon/signal-orchestrator-message.git", rev = "f2480bbe5486d1e1c168da684a99dec47887fa97", default-features = false, features = ["dotos-text"] }
-signal-criome = { git = "https://github.com/LiGoldragon/signal-criome.git", rev = "9436a3b8ffc2ee508ee1aaec807f5fe293187d59", default-features = false, features = ["dotos-text"] }
+signal-criome = { git = "https://github.com/LiGoldragon/signal-criome.git", rev = "39d110c1fcd8d405823e7e565d23014177e10f17", default-features = false, features = ["dotos-text"] }
 signal-harness = { git = "https://github.com/LiGoldragon/signal-harness.git", rev = "c05eacf167b9bee5245bdf46906428c8dee47c1b", default-features = false, features = ["dotos-text"] }
 dotos = { git = "https://github.com/LiGoldragon/dotos.git", rev = "80c7b17f7ad3cf547d2624c6a243e5de5f85c9f3" }
 rkyv        = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
