@@ -23,15 +23,14 @@ If your change adds a new request or reply variant, edit
 
 ## What this repo owns
 
-- `RoleIdentifier` / `RoleName` compatibility alias (validated
-  dynamic role token).
+- `RoleIdentifier` (validated dynamic role token).
 - `HarnessKind` (Codex or Claude).
 - `ScopeReference` (closed enum: Path | Task) plus
   `WirePath` and `TaskToken` newtypes.
 - `ScopeReason` (provisional `String` newtype).
 - `TimestampNanos` (store-supplied; never agent-supplied).
 - The closed `OrchestrateRequest` enum (`RoleClaim`,
-  `RoleRelease`, `RoleHandoff`, `RoleObservation`,
+  `RoleRelease`, `RoleHandoff`, `Observation`,
   `ActivitySubmission`, `ActivityQuery`).
 - The closed `OrchestrateReply` enum (`ClaimAcceptance`,
   `ClaimRejection`, `ReleaseAcknowledgment`,

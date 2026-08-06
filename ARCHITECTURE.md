@@ -108,10 +108,8 @@ callers pattern-match instead of parsing strings.
 
 This contract owns:
 
-- `RoleIdentifier` / `RoleName`: validated dynamic role token. The
-  `RoleName` name remains as a compatibility alias while callers move
-  off the old fixed-role enum shape.
-- `SessionIdentifier` / `SessionName`: CamelCase orchestrator-named
+- `RoleIdentifier`: validated dynamic role token.
+- `SessionIdentifier`: CamelCase orchestrator-named
   cognitive grouping. A session is not an edit lock.
 - `LaneIdentifier`, `LaneAssignment`, `LaneOwner`, `LaneRegistration`,
   `LaneStatus`, `LaneProjection`, and `LaneResourceClaim`: assigned lane
@@ -177,7 +175,27 @@ This crate does not own:
 Meta orders belong in a `meta-signal-orchestrate` contract. This ordinary
 contract is the peer/CLI surface.
 
-## 7 · Witness Tests
+## 7 · Ethos Interface Stage
+
+`schema/coordination.ethos` is the component-owned, authority-sealed
+`Interface.{1 0 0}` source for the structural collaboration nucleus: role,
+lane, scope, worktree, claim, and release types. Core Nomos revalidates the
+authority transaction and lowers it through Whole Logos. Rust Logos alone
+projects the checked Rust artifact, with external Rust paths supplied
+explicitly by the build.
+
+The bootstrap Interface currently admits Types and requires empty Input,
+Output, and Refusal roles. The public Signal operations, validated constructor
+behavior, archival derives, and frame behavior therefore remain honestly
+handwritten Rust. They move behind the Interface as later Protos stages can
+express them; this crate does not pretend they have already been generated.
+
+`SIGNAL_ORCHESTRATE_UPDATE_INTERFACE_ARTIFACTS=1` updates the canonical Ethos
+and Rust projections together. Ordinary builds require both checked artifacts
+to be exact, and Cargo publishes the owned Ethos source directory to direct
+contract consumers.
+
+## 8 · Witness Tests
 
 `tests/round_trip.rs` proves:
 
@@ -198,7 +216,11 @@ contract is the peer/CLI surface.
 
 ```text
 src/lib.rs            payloads, validation newtypes, signal_channel!
+schema/coordination.ethos authority-sealed structural coordination Interface
+src/bootstrap_manifest.rs opaque identity and canonical-order seats
+src/schema/coordination/ checked Rust Logos projection of the Interface
 tests/round_trip.rs   frame round trips and contract-local operation witnesses
+tests/bootstrap_boundary.rs strict authority, lowering, and projection witness
 ```
 
 ## See Also

@@ -9,20 +9,19 @@ Read `src/lib.rs` for the public interface — two enums
 `signal_channel!` macro. The variants ARE the messages this
 channel carries:
 
-- **Role lifecycle:** `RoleClaim`, `RoleRelease`,
-  `RoleHandoff`, `RoleObservation`.
+- **Role lifecycle:** `RoleClaim`, `RoleRelease`, and `RoleHandoff`.
 - **Activity log:** `ActivitySubmission`, `ActivityQuery`.
 
 ## Quick reference
 
 ```rust
 use signal_orchestrate::{
-    OrchestrateRequest, RoleClaim, RoleName, ScopeReason, ScopeReference, WirePath,
+    OrchestrateRequest, RoleClaim, RoleIdentifier, ScopeReason, ScopeReference, WirePath,
 };
 
 // Designer claims a path and a task scope
 let request = OrchestrateRequest::RoleClaim(RoleClaim {
-    role: RoleName::from_wire_token("design-system-refresh")?,
+    role: RoleIdentifier::from_wire_token("design-system-refresh")?,
     scopes: vec![
         ScopeReference::Path(
             WirePath::from_absolute_path("/git/.../signal/ARCHITECTURE.md")?

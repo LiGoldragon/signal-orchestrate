@@ -42,6 +42,12 @@ use std::str::FromStr;
 
 pub mod schema;
 
+/// Canonical textual projection of the role-free coordination Interface stage.
+pub const COORDINATION_INTERFACE_SOURCE: &str = include_str!("../schema/coordination.ethos");
+
+/// Checked structural Rust projection of the verified coordination Interface.
+pub const COORDINATION_INTERFACE_RUST: &str = include_str!("schema/coordination/generated.rs");
+
 // ─── Error ────────────────────────────────────────────────
 
 pub type ContractResult<T> = std::result::Result<T, Error>;
@@ -152,8 +158,6 @@ macro_rules! validated_string_nota_codec {
     Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord,
 )]
 pub struct RoleIdentifier(String);
-
-pub type RoleName = RoleIdentifier;
 
 impl RoleIdentifier {
     pub const CURRENT_WORKSPACE_ROLE_TOKENS: [&'static str; 11] = [
@@ -377,8 +381,6 @@ impl Role {
     Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord,
 )]
 pub struct SessionIdentifier(String);
-
-pub type SessionName = SessionIdentifier;
 
 impl SessionIdentifier {
     pub fn try_new(session: String) -> ContractResult<Self> {
@@ -748,12 +750,12 @@ impl RepositoryIdentity {
         let separator = without_user.find(['/', ':']).ok_or_else(invalid)?;
         let host_text = &without_user[..separator];
         let mut path_text = &without_user[separator + 1..];
-        if without_user.as_bytes()[separator] == b':' {
-            if let Some((port, rest)) = path_text.split_once('/') {
-                if !port.is_empty() && port.bytes().all(|byte| byte.is_ascii_digit()) {
-                    path_text = rest;
-                }
-            }
+        if without_user.as_bytes()[separator] == b':'
+            && let Some((port, rest)) = path_text.split_once('/')
+            && !port.is_empty()
+            && port.bytes().all(|byte| byte.is_ascii_digit())
+        {
+            path_text = rest;
         }
         let path_text = path_text
             .trim_matches('/')
@@ -1261,7 +1263,7 @@ pub enum FeatureWorktree {
 )]
 pub struct RepositoryMainContended {
     pub repository: RepositoryName,
-    pub holder: RoleName,
+    pub holder: RoleIdentifier,
     pub held_reason: ScopeReason,
     pub held_age: DurationNanos,
     pub redirect: FeatureWorktree,
@@ -1904,7 +1906,7 @@ pub struct WorkflowRunUpdate {
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct RoleClaim {
-    pub role: RoleName,
+    pub role: RoleIdentifier,
     pub scopes: Vec<ScopeReference>,
     pub reason: ScopeReason,
 }
@@ -1913,7 +1915,7 @@ pub struct RoleClaim {
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ClaimAcceptance {
-    pub role: RoleName,
+    pub role: RoleIdentifier,
     pub scopes: Vec<ScopeReference>,
 }
 
@@ -1921,7 +1923,7 @@ pub struct ClaimAcceptance {
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ClaimRejection {
-    pub role: RoleName,
+    pub role: RoleIdentifier,
     pub conflicts: Vec<ScopeConflict>,
 }
 
@@ -1930,7 +1932,7 @@ pub struct ClaimRejection {
 )]
 pub struct ScopeConflict {
     pub scope: ScopeReference,
-    pub held_by: RoleName,
+    pub held_by: RoleIdentifier,
     pub held_reason: ScopeReason,
 }
 
@@ -1942,14 +1944,14 @@ pub struct ScopeConflict {
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct RoleRelease {
-    pub role: RoleName,
+    pub role: RoleIdentifier,
 }
 
 #[derive(
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ReleaseAcknowledgment {
-    pub role: RoleName,
+    pub role: RoleIdentifier,
     pub released_scopes: Vec<ScopeReference>,
     /// Feature worktrees still un-integrated for the repositories whose main
     /// checkout the released scopes covered — "branch X was started off this
@@ -1967,8 +1969,8 @@ pub struct ReleaseAcknowledgment {
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct RoleHandoff {
-    pub from: RoleName,
-    pub to: RoleName,
+    pub from: RoleIdentifier,
+    pub to: RoleIdentifier,
     pub scopes: Vec<ScopeReference>,
     pub reason: ScopeReason,
 }
@@ -1977,8 +1979,8 @@ pub struct RoleHandoff {
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct HandoffAcceptance {
-    pub from: RoleName,
-    pub to: RoleName,
+    pub from: RoleIdentifier,
+    pub to: RoleIdentifier,
     pub scopes: Vec<ScopeReference>,
 }
 
@@ -1986,8 +1988,8 @@ pub struct HandoffAcceptance {
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct HandoffRejection {
-    pub from: RoleName,
-    pub to: RoleName,
+    pub from: RoleIdentifier,
+    pub to: RoleIdentifier,
     pub reason: HandoffRejectionReason,
 }
 
@@ -2025,22 +2027,6 @@ pub enum Observation {
     /// The registered-agent directory. Reply: `AgentDirectory`.
     Agents,
 }
-
-/// Legacy empty payload kept for older callers while the `Observe`
-/// operation moves to [`Observation`].
-#[derive(
-    Archive,
-    RkyvSerialize,
-    RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-)]
-pub struct RoleObservation {}
 
 #[derive(
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
@@ -2126,7 +2112,7 @@ pub struct RepositoriesObserved {
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct RoleStatus {
-    pub role: RoleName,
+    pub role: RoleIdentifier,
     pub harness: HarnessKind,
     pub claims: Vec<ClaimEntry>,
 }
@@ -2150,7 +2136,7 @@ pub struct ClaimEntry {
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct Activity {
-    pub role: RoleName,
+    pub role: RoleIdentifier,
     pub scope: ScopeReference,
     pub reason: ScopeReason,
     pub stamped_at: TimestampNanos,
@@ -2163,7 +2149,7 @@ pub struct Activity {
     Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ActivitySubmission {
-    pub role: RoleName,
+    pub role: RoleIdentifier,
     pub scope: ScopeReference,
     pub reason: ScopeReason,
 }
@@ -2216,7 +2202,7 @@ impl NotaEncode for ActivityQuery {
 )]
 pub enum ActivityFilter {
     /// Only entries from this role.
-    RoleFilter(RoleName),
+    RoleFilter(RoleIdentifier),
     /// Only entries whose scope is `Path(p)` where `p`
     /// starts with this prefix.
     PathPrefix(WirePath),
@@ -2841,7 +2827,6 @@ pub struct AgentDirectory {
     pub agents: Vec<OrchestratorAgentSummary>,
 }
 
-
 // ─── Orchestrator message send (packet 3.4) ──────────────
 
 /// A semantic orchestrator message in flight: the sending agent, the
@@ -2911,7 +2896,16 @@ pub struct OrchestratorMessageRouted {
 /// to an escalation when no coordinator seat is registered (the judge stays
 /// shelved this phase).
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, Copy, PartialEq, Eq,
+    Archive,
+    RkyvSerialize,
+    RkyvDeserialize,
+    NotaEncode,
+    NotaDecode,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
 )]
 pub enum OrchestratorMessageRejection {
     NoEligibleRecipient,
@@ -2929,7 +2923,6 @@ pub struct OrchestratorMessageRejected {
 }
 
 // ─── Channel declaration ──────────────────────────────────
-
 
 signal_channel! {
     channel Orchestrate {

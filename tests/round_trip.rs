@@ -21,27 +21,27 @@ use signal_orchestrate::{
     ActivitySubmission, ApplicationFailure, ApplicationFailureReason, ApplicationSuccess,
     CapabilityProfile, ClaimAcceptance, ClaimEntry, ClaimRejection, CodexContinuationIdentifier,
     CombinationRule, ContinuationHandle, ContinuationRequest, DownstreamComponent, DurationNanos,
-    EffectEmitted, EffectOutcome, EffortRequest, Error, HandoffAcceptance, HandoffRejection,
-    HandoffRejectionReason, HarnessKind, HarnessName, HostName, LaneAssignment, LaneAuthority,
-    LaneDetails, LaneIdentifier, LaneOwner, LaneProjection, LaneRegistration, LaneResourceClaim,
-    LaneStatus, LanesObserved, ModelAttestation, ModelName, ModelRequest, ModelResolutionRequest,
-    ModelResolved, ModelSelector, ModelUnavailable, ModelUnavailableReason, NamedModel,
-    Observation, ObservationClosed, ObservationEvent, ObservationOpened, ObservationSubscription,
-    ObservationToken, OperationKind, OperationReceived, OrchestrateEvent, OrchestrateFrame,
-    OrchestrateFrameBody, OrchestrateReply, OrchestrateRequest, PartialApplied, ProviderName,
-    ReleaseAcknowledgment, ResolvedWorkflowRunRequest, Role, RoleClaim, RoleHandoff, RoleName,
-    RoleRelease, RoleSnapshot, RoleStatus, RoleToken, ScopeConflict, ScopeReason, ScopeReference,
+    EffectEmitted, EffectOutcome, EffortRequest, Error, FeatureWorktree, HandoffAcceptance,
+    HandoffRejection, HandoffRejectionReason, HarnessKind, HarnessName, HostName, LaneAssignment,
+    LaneAuthority, LaneDetails, LaneIdentifier, LaneOwner, LaneProjection, LaneRegistration,
+    LaneResourceClaim, LaneStatus, LanesObserved, MainIntegration, ModelAttestation, ModelName,
+    ModelRequest, ModelResolutionRequest, ModelResolved, ModelSelector, ModelUnavailable,
+    ModelUnavailableReason, NamedModel, Observation, ObservationClosed, ObservationEvent,
+    ObservationOpened, ObservationSubscription, ObservationToken, OperationKind, OperationReceived,
+    OrchestrateEvent, OrchestrateFrame, OrchestrateFrameBody, OrchestrateReply, OrchestrateRequest,
+    PartialApplied, ProviderName, ReleaseAcknowledgment, RepositoryMainContended,
+    ResolvedWorkflowRunRequest, Role, RoleClaim, RoleHandoff, RoleIdentifier, RoleRelease,
+    RoleSnapshot, RoleStatus, RoleToken, ScopeConflict, ScopeReason, ScopeReference,
     SessionIdentifier, SessionProjection, SessionsObserved, StepLog, StepOutcome, StepThreshold,
-    TaskToken, TimestampNanos, WirePath, WorkflowDefinition, WorkflowReceiptProduced,
-    WorkflowResolutionUnavailable, WorkflowResolvedReceiptProduced, WorkflowRunAccepted,
-    WorkflowRunDigest, WorkflowRunHandle, WorkflowRunLog, WorkflowRunLogReported,
-    WorkflowRunObservation, WorkflowRunObservationClosed, WorkflowRunObservationOpened,
-    WorkflowRunObservationToken, WorkflowRunRequest, WorkflowRunResolution, WorkflowRunSnapshot,
-    WorkflowRunUpdate, WorkflowStep, WorkflowStepName, Worktree, WorktreeConclusion,
-    WorktreeConclusionRequest, WorktreeConcluded, WorktreeRequest, WorktreeRequestRejected,
-    WorktreeRequestRejection, WorktreeScaffolded, WorktreeStatus, WorktreeTeardownRefused,
-    FeatureWorktree, MainIntegration, RepositoryMainContended,
-    WorktreesObserved, TeardownRefusal,
+    TaskToken, TeardownRefusal, TimestampNanos, WirePath, WorkflowDefinition,
+    WorkflowReceiptProduced, WorkflowResolutionUnavailable, WorkflowResolvedReceiptProduced,
+    WorkflowRunAccepted, WorkflowRunDigest, WorkflowRunHandle, WorkflowRunLog,
+    WorkflowRunLogReported, WorkflowRunObservation, WorkflowRunObservationClosed,
+    WorkflowRunObservationOpened, WorkflowRunObservationToken, WorkflowRunRequest,
+    WorkflowRunResolution, WorkflowRunSnapshot, WorkflowRunUpdate, WorkflowStep, WorkflowStepName,
+    Worktree, WorktreeConcluded, WorktreeConclusion, WorktreeConclusionRequest, WorktreeRequest,
+    WorktreeRequestRejected, WorktreeRequestRejection, WorktreeScaffolded, WorktreeStatus,
+    WorktreeTeardownRefused, WorktreesObserved,
 };
 use signal_orchestrate::{
     AgentDirectory, AgentIdentityMintRequest, AgentIdentityMinted, AgentLaunchRefusalReason,
@@ -128,51 +128,51 @@ fn sample_reason() -> ScopeReason {
     ScopeReason::from_text("design-cascade per /93").expect("sample reason")
 }
 
-fn role(token: &str) -> RoleName {
-    RoleName::from_wire_token(token).expect("role")
+fn role(token: &str) -> RoleIdentifier {
+    RoleIdentifier::from_wire_token(token).expect("role")
 }
 
-fn operator() -> RoleName {
+fn operator() -> RoleIdentifier {
     role("operator")
 }
 
-fn operator_assistant() -> RoleName {
+fn operator_assistant() -> RoleIdentifier {
     role("operator-assistant")
 }
 
-fn second_operator_assistant() -> RoleName {
+fn second_operator_assistant() -> RoleIdentifier {
     role("second-operator-assistant")
 }
 
-fn designer() -> RoleName {
+fn designer() -> RoleIdentifier {
     role("designer")
 }
 
-fn designer_assistant() -> RoleName {
+fn designer_assistant() -> RoleIdentifier {
     role("designer-assistant")
 }
 
-fn second_designer_assistant() -> RoleName {
+fn second_designer_assistant() -> RoleIdentifier {
     role("second-designer-assistant")
 }
 
-fn system_specialist() -> RoleName {
+fn system_specialist() -> RoleIdentifier {
     role("system-specialist")
 }
 
-fn system_assistant() -> RoleName {
+fn system_assistant() -> RoleIdentifier {
     role("system-assistant")
 }
 
-fn second_system_assistant() -> RoleName {
+fn second_system_assistant() -> RoleIdentifier {
     role("second-system-assistant")
 }
 
-fn poet() -> RoleName {
+fn poet() -> RoleIdentifier {
     role("poet")
 }
 
-fn poet_assistant() -> RoleName {
+fn poet_assistant() -> RoleIdentifier {
     role("poet-assistant")
 }
 
@@ -824,28 +824,6 @@ fn repository_main_contended_round_trips_each_redirect() {
 }
 
 #[test]
-fn generated_worktree_mirror_uses_canonical_status_field_name() {
-    use signal_orchestrate::schema::lib as generated;
-
-    let worktree = generated::Worktree {
-        repository_name: generated::RepositoryName::new("signal-orchestrate"),
-        branch_name: generated::BranchName::new("main"),
-        wire_path: generated::WirePath::new(
-            "/home/li/wt/github.com/LiGoldragon/signal-orchestrate/main",
-        ),
-        lane_name: generated::LaneName::new("operator"),
-        worktree_status: generated::WorktreeStatus::Active,
-        purpose_text: generated::PurposeText::new(
-            "schema mirror should match canonical field names",
-        ),
-        timestamp_nanos: generated::TimestampNanos::new(1_730_000_002_000_000_000),
-        pushed_state: generated::PushedState::Pushed,
-    };
-
-    assert_eq!(worktree.worktree_status, generated::WorktreeStatus::Active);
-}
-
-#[test]
 fn role_vector_round_trips_through_nota() {
     use nota::{NotaEncode, NotaSource};
 
@@ -1043,10 +1021,13 @@ fn role_name_parses_workspace_coordination_tokens() {
         ("poet-assistant", poet_assistant()),
     ];
 
-    assert_eq!(RoleName::CURRENT_WORKSPACE_ROLE_TOKENS.len(), cases.len());
+    assert_eq!(
+        RoleIdentifier::CURRENT_WORKSPACE_ROLE_TOKENS.len(),
+        cases.len()
+    );
     for (token, role) in cases {
-        assert_eq!(RoleName::from_wire_token(token), Ok(role.clone()));
-        assert_eq!(token.parse::<RoleName>(), Ok(role.clone()));
+        assert_eq!(RoleIdentifier::from_wire_token(token), Ok(role.clone()));
+        assert_eq!(token.parse::<RoleIdentifier>(), Ok(role.clone()));
         assert_eq!(role.as_wire_token(), token);
         assert_eq!(role.to_string(), token);
     }
@@ -1158,15 +1139,17 @@ fn orchestrate_request_exposes_contract_owned_operation_kind() {
 #[test]
 fn orchestrate_contract_has_no_sema_observation_or_classification_roots() {
     let manifest = include_str!("../Cargo.toml");
+    let runtime_manifest = manifest
+        .split_once("[build-dependencies]")
+        .map_or(manifest, |(runtime, _)| runtime);
     assert!(
-        !manifest.contains("signal-sema"),
+        !runtime_manifest.contains("signal-sema"),
         "ordinary signal contracts must not depend on signal-sema for public wire vocabulary"
     );
 
     for source in [
         include_str!("../src/lib.rs"),
-        include_str!("../schema/lib.schema"),
-        include_str!("../schema/signal-orchestrate.concept.schema"),
+        include_str!("../schema/coordination.ethos"),
     ] {
         assert!(
             !source.contains("SemaObservation"),
@@ -1229,7 +1212,7 @@ fn scope_primitives_reject_invalid_values() {
         Err(Error::InvalidScopeReason { .. })
     ));
     assert!(matches!(
-        RoleName::from_wire_token("bad role"),
+        RoleIdentifier::from_wire_token("bad role"),
         Err(Error::InvalidRoleIdentifier { .. })
     ));
     assert!(matches!(
