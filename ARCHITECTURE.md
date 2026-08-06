@@ -134,7 +134,7 @@ validated newtypes. Construct them through `from_wire_token`,
 `from_camel_case_name`, `from_absolute_path`, `from_wire_token`, and
 `from_text` respectively.
 Invalid values are rejected at the contract boundary and also during
-NOTA decode.
+DOTOS decode.
 
 ## 4 · Daemon Lowering Boundary
 
@@ -166,7 +166,7 @@ This crate does not own:
 - daemon actors or request handlers;
 - the `orchestrate.redb` database;
 - lock-file projections;
-- CLI argv parsing or NOTA rendering policy;
+- CLI argv parsing or DOTOS rendering policy;
 - socket paths, reconnect policy, or transport lifecycle;
 - meta orchestration orders.
 - LLM providers, workflow scheduling, retry policy, or criome verdict
@@ -203,7 +203,7 @@ contract consumers.
 - every reply variant round-trips through an `OrchestrateFrame`;
 - `PartialApplied` carries successful and failed downstream legs as
   typed data, not strings;
-- operation roots encode as contract-local NOTA heads;
+- operation roots encode as contract-local DOTOS heads;
 - dynamic role identifiers round-trip as ordinary payload data;
 - sessions, per-session lanes, and all-lane observations round-trip with
   passive age, lifecycle status, and resource-claim projections;

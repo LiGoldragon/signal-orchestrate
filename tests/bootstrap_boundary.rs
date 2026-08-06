@@ -19,8 +19,21 @@ fn build_uses_one_exact_verified_bootstrap_boundary() {
     let manifest = include_str!("../Cargo.toml");
     let build = include_str!("../build.rs");
 
-    assert!(manifest.contains("9e36587c85bd69357e9042729ba2df0052799756"));
+    for revision in [
+        "43b48c779c54ee9f05cbcc111d5d88074b162461",
+        "081e99596826b15e2ff7f1356ae8d797b18aeffc",
+        "664335240a40728826cfaa09e3100cd867031912",
+        "287fbd728a05b1a6be1dc8a28bcf3ca06d9916b3",
+        "3f41813dd63904c7e2b3da4382eff64ed1bf12fe",
+        "8aa0bcaeb29fe9e461a11706a469638d2fd109ac",
+        "f2480bbe5486d1e1c168da684a99dec47887fa97",
+        "9436a3b8ffc2ee508ee1aaec807f5fe293187d59",
+        "c05eacf167b9bee5245bdf46906428c8dee47c1b",
+    ] {
+        assert!(manifest.contains(revision), "missing revision {revision}");
+    }
     assert_eq!(manifest.matches("schema-rust =").count(), 1);
+    assert!(!manifest.contains("features = [\"bootstrap\"]"));
     assert_eq!(build.matches("BootstrapInterfaceGeneration").count(), 2);
     assert!(build.contains("BootstrapTransactionAssembler"));
     assert!(build.contains("RustTypePath::try_new"));

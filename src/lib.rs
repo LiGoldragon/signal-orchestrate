@@ -24,12 +24,9 @@
 //! boundaries; `~/primary/skills/contract-repo.md` for the
 //! contract-repo discipline this crate follows.
 
-use nota::{Block, Delimiter, NotaBlock, NotaDecode, NotaDecodeError, NotaEncode};
+use dotos::{Block, Delimiter, DotosBlock, DotosDecode, DotosDecodeError, DotosEncode};
 use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
-use signal_criome::{
-    AuthorizedObjectReference, ContractDigest, EvaluationDecision, ObjectDigest, OperationDigest,
-    WorkflowDigest, WorkflowReceipt,
-};
+use signal_criome::schema::lib::{z2VSX9, z2VSrv, z2VXA2, z2VZZu, z2VaDY, z2VbxF, z2VdZJ, z2Vevu};
 use signal_frame::signal_channel;
 pub use signal_harness::{
     CapabilityProfile, ClaudeSessionIdentifier, CodexContinuationIdentifier, ContinuationHandle,
@@ -47,6 +44,16 @@ pub const COORDINATION_INTERFACE_SOURCE: &str = include_str!("../schema/coordina
 
 /// Checked structural Rust projection of the verified coordination Interface.
 pub const COORDINATION_INTERFACE_RUST: &str = include_str!("schema/coordination/generated.rs");
+
+/// The ordinary Orchestrate contract occupies the first wire seat in its family.
+pub enum OrchestrateWire {}
+
+impl signal_frame::WireContract for OrchestrateWire {
+    const BINDING: signal_frame::ContractBinding = signal_frame::ContractBinding::new(
+        signal_frame::ContractId::new(core::num::NonZeroU32::MIN),
+        signal_frame::WireRevision::new(core::num::NonZeroU16::MIN),
+    );
+}
 
 // ─── Error ────────────────────────────────────────────────
 
@@ -130,18 +137,18 @@ pub enum Error {
     InvalidMissionDescription { mission: String },
 }
 
-macro_rules! validated_string_nota_codec {
+macro_rules! validated_string_dotos_codec {
     ($type:ty, $constructor:path) => {
-        impl NotaDecode for $type {
-            fn from_nota_block(block: &Block) -> std::result::Result<Self, NotaDecodeError> {
-                let text = String::from_nota_block(block)?;
-                $constructor(text).map_err(|error| NotaDecodeError::Parse(error.to_string()))
+        impl DotosDecode for $type {
+            fn from_dotos_block(block: &Block) -> std::result::Result<Self, DotosDecodeError> {
+                let text = String::from_dotos_block(block)?;
+                $constructor(text).map_err(|error| DotosDecodeError::Parse(error.to_string()))
             }
         }
 
-        impl NotaEncode for $type {
-            fn to_nota(&self) -> String {
-                self.as_str().to_owned().to_nota()
+        impl DotosEncode for $type {
+            fn to_dotos(&self) -> String {
+                self.as_str().to_owned().to_dotos()
             }
         }
     };
@@ -237,7 +244,7 @@ impl AsRef<str> for RoleIdentifier {
     }
 }
 
-validated_string_nota_codec!(RoleIdentifier, RoleIdentifier::from_wire_token);
+validated_string_dotos_codec!(RoleIdentifier, RoleIdentifier::from_wire_token);
 
 macro_rules! validated_token_type {
     ($type:ident, $constructor:ident, $error:ident, $field:ident) => {
@@ -299,7 +306,7 @@ macro_rules! validated_token_type {
             }
         }
 
-        validated_string_nota_codec!($type, $type::$constructor);
+        validated_string_dotos_codec!($type, $type::$constructor);
     };
 }
 
@@ -355,10 +362,10 @@ impl AsRef<str> for RoleToken {
     }
 }
 
-validated_string_nota_codec!(RoleToken, RoleToken::from_text);
+validated_string_dotos_codec!(RoleToken, RoleToken::from_text);
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct Role {
     pub tokens: Vec<RoleToken>,
@@ -446,14 +453,14 @@ impl AsRef<str> for SessionIdentifier {
     }
 }
 
-validated_string_nota_codec!(SessionIdentifier, SessionIdentifier::from_camel_case_name);
+validated_string_dotos_codec!(SessionIdentifier, SessionIdentifier::from_camel_case_name);
 
 #[derive(
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -527,7 +534,7 @@ impl AsRef<str> for LaneIdentifier {
     }
 }
 
-validated_string_nota_codec!(LaneIdentifier, LaneIdentifier::from_wire_token);
+validated_string_dotos_codec!(LaneIdentifier, LaneIdentifier::from_wire_token);
 
 // ─── Worktree identity ────────────────────────────────────
 
@@ -585,7 +592,7 @@ impl AsRef<str> for RepositoryName {
     }
 }
 
-validated_string_nota_codec!(RepositoryName, RepositoryName::from_text);
+validated_string_dotos_codec!(RepositoryName, RepositoryName::from_text);
 
 /// The host a repository really lives on — the `github.com` segment of a
 /// canonical identity. Single DNS-name segment: no whitespace, no path
@@ -641,7 +648,7 @@ impl AsRef<str> for RepositoryHost {
     }
 }
 
-validated_string_nota_codec!(RepositoryHost, RepositoryHost::from_text);
+validated_string_dotos_codec!(RepositoryHost, RepositoryHost::from_text);
 
 /// The owner path under the host — `LiGoldragon` on GitHub, possibly a
 /// multi-segment group path elsewhere, so interior `/` is allowed; leading or
@@ -698,7 +705,7 @@ impl AsRef<str> for RepositoryOwner {
     }
 }
 
-validated_string_nota_codec!(RepositoryOwner, RepositoryOwner::from_text);
+validated_string_dotos_codec!(RepositoryOwner, RepositoryOwner::from_text);
 
 /// The real identity of a repository — where it truly lives, independent of
 /// any local hosting path: `host/owner/name`, e.g.
@@ -708,8 +715,8 @@ validated_string_nota_codec!(RepositoryOwner, RepositoryOwner::from_text);
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     PartialEq,
@@ -827,7 +834,7 @@ impl AsRef<str> for RepositoryIdentityGap {
     }
 }
 
-validated_string_nota_codec!(RepositoryIdentityGap, RepositoryIdentityGap::from_text);
+validated_string_dotos_codec!(RepositoryIdentityGap, RepositoryIdentityGap::from_text);
 
 /// Whether the repository's real identity is established. `Identified`
 /// carries the canonical identity; `IdentityUnknown` keeps the row honest —
@@ -835,7 +842,7 @@ validated_string_nota_codec!(RepositoryIdentityGap, RepositoryIdentityGap::from_
 /// and the gap says why. Entries reflect reality; an unreadable identity is
 /// recorded, never dropped.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub enum RepositoryIdentityState {
     Identified(RepositoryIdentity),
@@ -904,7 +911,7 @@ impl AsRef<str> for BranchName {
     }
 }
 
-validated_string_nota_codec!(BranchName, BranchName::from_text);
+validated_string_dotos_codec!(BranchName, BranchName::from_text);
 
 /// The lane that owns a worktree (the harness window's exact
 /// role-name, e.g. `designer`, `second-operator`). Same shape
@@ -961,7 +968,7 @@ impl AsRef<str> for LaneName {
     }
 }
 
-validated_string_nota_codec!(LaneName, LaneName::from_text);
+validated_string_dotos_codec!(LaneName, LaneName::from_text);
 
 /// Free-text purpose of a worktree — what the branch is for.
 /// Single-line like [`ScopeReason`].
@@ -1008,7 +1015,7 @@ impl AsRef<str> for PurposeText {
     }
 }
 
-validated_string_nota_codec!(PurposeText, PurposeText::from_text);
+validated_string_dotos_codec!(PurposeText, PurposeText::from_text);
 
 /// Worktree lifecycle state. `Active` while in use; `Merged`
 /// once integrated; `Archived` retained as a GC-manifest record;
@@ -1019,8 +1026,8 @@ validated_string_nota_codec!(PurposeText, PurposeText::from_text);
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -1045,8 +1052,8 @@ pub enum WorktreeStatus {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -1065,7 +1072,7 @@ pub enum PushedState {
 /// agent-supplied. The `(repository, branch)` pair is the
 /// identity.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct Worktree {
     pub repository: RepositoryName,
@@ -1086,7 +1093,7 @@ pub struct Worktree {
 /// caller supplies only intent. Reply on rejection:
 /// [`WorktreeRequestRejected`].
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorktreeRequest {
     pub repository: RepositoryName,
@@ -1103,8 +1110,8 @@ pub struct WorktreeRequest {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -1121,7 +1128,7 @@ pub enum WorktreeConclusion {
 /// tears its workspace down. Reply: [`WorktreeConcluded`] on teardown,
 /// [`WorktreeTeardownRefused`] when the safety gate blocks it.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorktreeConclusionRequest {
     pub owning_lane: LaneName,
@@ -1131,7 +1138,7 @@ pub struct WorktreeConclusionRequest {
 /// Ack for [`WorktreeRequest`] — echoes the scaffolded worktree with
 /// its daemon-minted path and derived facts.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorktreeScaffolded {
     pub worktree: Worktree,
@@ -1145,8 +1152,8 @@ pub struct WorktreeScaffolded {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     PartialEq,
@@ -1164,7 +1171,7 @@ pub enum WorktreeRequestRejection {
 
 /// Rejection reply for [`WorktreeRequest`].
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorktreeRequestRejected {
     pub reason: WorktreeRequestRejection,
@@ -1180,8 +1187,8 @@ pub struct WorktreeRequestRejected {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -1200,7 +1207,7 @@ pub enum MainIntegration {
 /// teardown, in its terminal [`WorktreeStatus`], and how the work reached
 /// `main`.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorktreeConcluded {
     pub worktree: Worktree,
@@ -1217,8 +1224,8 @@ pub struct WorktreeConcluded {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -1235,7 +1242,7 @@ pub enum TeardownRefusal {
 /// Refusal reply for [`WorktreeConclusionRequest`] — echoes the
 /// untouched worktree with the blocking [`TeardownRefusal`].
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorktreeTeardownRefused {
     pub worktree: Worktree,
@@ -1246,7 +1253,7 @@ pub struct WorktreeTeardownRefused {
 /// the daemon either scaffolded a fresh feature worktree named after the
 /// claimant's lane, or found one already standing for that identity.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub enum FeatureWorktree {
     Scaffolded(Worktree),
@@ -1259,7 +1266,7 @@ pub enum FeatureWorktree {
 /// feature worktree (branch named after the claimant's lane) so work starts
 /// immediately instead of waiting.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct RepositoryMainContended {
     pub repository: RepositoryName,
@@ -1312,14 +1319,14 @@ impl AsRef<str> for LaneDetails {
     }
 }
 
-validated_string_nota_codec!(LaneDetails, LaneDetails::from_text);
+validated_string_dotos_codec!(LaneDetails, LaneDetails::from_text);
 
 #[derive(
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -1356,7 +1363,7 @@ impl LaneStatus {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct LaneOwner {
     pub role: Role,
@@ -1364,7 +1371,7 @@ pub struct LaneOwner {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct LaneAssignment {
     pub session: SessionIdentifier,
@@ -1374,7 +1381,7 @@ pub struct LaneAssignment {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct LaneRegistration {
     pub assignment: LaneAssignment,
@@ -1386,8 +1393,8 @@ pub struct LaneRegistration {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -1431,8 +1438,8 @@ impl fmt::Display for HarnessKind {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     PartialEq,
@@ -1506,7 +1513,7 @@ impl AsRef<str> for WirePath {
     }
 }
 
-validated_string_nota_codec!(WirePath, WirePath::from_absolute_path);
+validated_string_dotos_codec!(WirePath, WirePath::from_absolute_path);
 
 /// A bracketed task identifier (stored without brackets).
 /// Bracketed form like `[primary-f99]` is the human surface;
@@ -1558,7 +1565,7 @@ impl AsRef<str> for TaskToken {
     }
 }
 
-validated_string_nota_codec!(TaskToken, TaskToken::from_wire_token);
+validated_string_dotos_codec!(TaskToken, TaskToken::from_wire_token);
 
 // ─── Reason ───────────────────────────────────────────────
 
@@ -1607,7 +1614,7 @@ impl AsRef<str> for ScopeReason {
     }
 }
 
-validated_string_nota_codec!(ScopeReason, ScopeReason::from_text);
+validated_string_dotos_codec!(ScopeReason, ScopeReason::from_text);
 
 // ─── Time ─────────────────────────────────────────────────
 
@@ -1625,8 +1632,8 @@ validated_string_nota_codec!(ScopeReason, ScopeReason::from_text);
     Hash,
     PartialOrd,
     Ord,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
 )]
 pub struct TimestampNanos(u64);
 
@@ -1654,8 +1661,8 @@ impl TimestampNanos {
     Hash,
     PartialOrd,
     Ord,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
 )]
 pub struct DurationNanos(u64);
 
@@ -1690,16 +1697,16 @@ validated_token_type!(HostName, from_wire_token, InvalidHostName, name);
 /// Request to run one content-addressed adjudication workflow for one
 /// content-addressed operation under one criome contract.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowRunRequest {
-    pub workflow: WorkflowDigest,
-    pub operation: AuthorizedObjectReference,
-    pub contract: ContractDigest,
+    pub workflow: z2VdZJ,
+    pub operation: z2VaDY,
+    pub contract: z2Vevu,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ResolvedWorkflowRunRequest {
     pub workflow_run: WorkflowRunRequest,
@@ -1708,7 +1715,7 @@ pub struct ResolvedWorkflowRunRequest {
 
 /// Subscribe to one workflow run's lifecycle.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowRunObservation {
     pub run: WorkflowRunDigest,
@@ -1716,28 +1723,28 @@ pub struct WorkflowRunObservation {
 
 /// Close one workflow-run subscription.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowRunObservationToken {
     pub run: WorkflowRunDigest,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowRunHandle {
     pub run: WorkflowRunDigest,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowRunAccepted {
     pub handle: WorkflowRunHandle,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowRunResolution {
     pub handle: WorkflowRunHandle,
@@ -1745,7 +1752,7 @@ pub struct WorkflowRunResolution {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowResolutionUnavailable {
     pub handle: WorkflowRunHandle,
@@ -1754,30 +1761,30 @@ pub struct WorkflowResolutionUnavailable {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowReceiptProduced {
     pub handle: WorkflowRunHandle,
-    pub receipt: WorkflowReceipt,
+    pub receipt: z2VSX9,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowResolvedReceiptProduced {
     pub run: WorkflowRunResolution,
-    pub receipt: WorkflowReceipt,
+    pub receipt: z2VSX9,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowRunLogReported {
     pub log: WorkflowRunLog,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowRunLog {
     pub run: WorkflowRunDigest,
@@ -1785,7 +1792,7 @@ pub struct WorkflowRunLog {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct StepLog {
     pub step: WorkflowStepName,
@@ -1794,44 +1801,44 @@ pub struct StepLog {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ModelAttestation {
     pub provider: ProviderName,
     pub model: ModelName,
     pub host: HostName,
-    pub call: OperationDigest,
+    pub call: z2VSrv,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub enum StepOutcome {
-    Produced(EvaluationDecision),
+    Produced(z2VZZu),
     Failed(ScopeReason),
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowDefinition {
     pub steps: Vec<WorkflowStep>,
     pub combination: CombinationRule,
-    pub escalation: Option<signal_criome::EscalationTarget>,
+    pub escalation: Option<z2VXA2>,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowStep {
     pub name: WorkflowStepName,
-    pub prompt: ObjectDigest,
+    pub prompt: z2VbxF,
     pub provider: Option<ProviderName>,
     pub dependencies: Vec<WorkflowStepName>,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub enum CombinationRule {
     Threshold(StepThreshold),
@@ -1843,8 +1850,8 @@ pub enum CombinationRule {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -1865,16 +1872,16 @@ impl StepThreshold {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowRunSnapshot {
     pub handle: WorkflowRunHandle,
     pub latest_log: Option<WorkflowRunLog>,
-    pub receipt: Option<WorkflowReceipt>,
+    pub receipt: Option<z2VSX9>,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowRunObservationOpened {
     pub token: WorkflowRunObservationToken,
@@ -1882,19 +1889,19 @@ pub struct WorkflowRunObservationOpened {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowRunObservationClosed {
     pub token: WorkflowRunObservationToken,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorkflowRunUpdate {
     pub run: WorkflowRunDigest,
     pub log: Option<WorkflowRunLog>,
-    pub receipt: Option<WorkflowReceipt>,
+    pub receipt: Option<z2VSX9>,
 }
 
 // ─── Claim verbs ──────────────────────────────────────────
@@ -1903,7 +1910,7 @@ pub struct WorkflowRunUpdate {
 /// reason. Reply: `ClaimAcceptance` on success, `ClaimRejection`
 /// listing every conflict on failure.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct RoleClaim {
     pub role: RoleIdentifier,
@@ -1912,7 +1919,7 @@ pub struct RoleClaim {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ClaimAcceptance {
     pub role: RoleIdentifier,
@@ -1920,7 +1927,7 @@ pub struct ClaimAcceptance {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ClaimRejection {
     pub role: RoleIdentifier,
@@ -1928,7 +1935,7 @@ pub struct ClaimRejection {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ScopeConflict {
     pub scope: ScopeReference,
@@ -1941,14 +1948,14 @@ pub struct ScopeConflict {
 /// A role releases all of its currently-held scopes.
 /// Reply: `ReleaseAcknowledgment` listing what was released.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct RoleRelease {
     pub role: RoleIdentifier,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ReleaseAcknowledgment {
     pub role: RoleIdentifier,
@@ -1966,7 +1973,7 @@ pub struct ReleaseAcknowledgment {
 /// Reply: `HandoffAcceptance` on success, `HandoffRejection`
 /// with a typed reason on failure.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct RoleHandoff {
     pub from: RoleIdentifier,
@@ -1976,7 +1983,7 @@ pub struct RoleHandoff {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct HandoffAcceptance {
     pub from: RoleIdentifier,
@@ -1985,7 +1992,7 @@ pub struct HandoffAcceptance {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct HandoffRejection {
     pub from: RoleIdentifier,
@@ -1994,7 +2001,7 @@ pub struct HandoffRejection {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub enum HandoffRejectionReason {
     /// The `from` role doesn't currently hold the named scopes.
@@ -2009,7 +2016,7 @@ pub enum HandoffRejectionReason {
 
 /// Select what the `Observe` operation reads.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub enum Observation {
     Roles,
@@ -2029,7 +2036,7 @@ pub enum Observation {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct RoleSnapshot {
     pub roles: Vec<RoleStatus>,
@@ -2037,21 +2044,21 @@ pub struct RoleSnapshot {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct SessionsObserved {
     pub sessions: Vec<SessionProjection>,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct LanesObserved {
     pub lanes: Vec<LaneProjection>,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct SessionProjection {
     pub session: SessionIdentifier,
@@ -2059,7 +2066,7 @@ pub struct SessionProjection {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct LaneProjection {
     pub registration: LaneRegistration,
@@ -2069,7 +2076,7 @@ pub struct LaneProjection {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct LaneResourceClaim {
     pub scope: ScopeReference,
@@ -2079,7 +2086,7 @@ pub struct LaneResourceClaim {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct WorktreesObserved {
     pub worktrees: Vec<Worktree>,
@@ -2089,7 +2096,7 @@ pub struct WorktreesObserved {
 /// `name` is the local index alias (the git-index directory name); `path` is
 /// where the checkout happens to live on this host.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct Repository {
     pub identity: RepositoryIdentityState,
@@ -2102,14 +2109,14 @@ pub struct Repository {
 /// Reply to `Observe Repositories`: the repository index with each
 /// repository's real identity.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct RepositoriesObserved {
     pub repositories: Vec<Repository>,
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct RoleStatus {
     pub role: RoleIdentifier,
@@ -2118,7 +2125,7 @@ pub struct RoleStatus {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ClaimEntry {
     pub scope: ScopeReference,
@@ -2133,7 +2140,7 @@ pub struct ClaimEntry {
 /// store-supplied (per ESSENCE infrastructure-mints rule —
 /// the agent never invents timestamps).
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct Activity {
     pub role: RoleIdentifier,
@@ -2146,7 +2153,7 @@ pub struct Activity {
 /// `stamped_at` on commit. Reply: `ActivityAcknowledgment`
 /// carrying the slot the record landed in.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ActivitySubmission {
     pub role: RoleIdentifier,
@@ -2158,8 +2165,8 @@ pub struct ActivitySubmission {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -2180,25 +2187,25 @@ pub struct ActivityQuery {
     pub filters: Vec<ActivityFilter>,
 }
 
-impl NotaDecode for ActivityQuery {
-    fn from_nota_block(block: &Block) -> std::result::Result<Self, NotaDecodeError> {
+impl DotosDecode for ActivityQuery {
+    fn from_dotos_block(block: &Block) -> std::result::Result<Self, DotosDecodeError> {
         let children =
-            NotaBlock::new(block).expect_children(Delimiter::Parenthesis, "ActivityQuery", 2)?;
-        let limit = u32::try_from(u64::from_nota_block(&children[0])?)
-            .map_err(|error| NotaDecodeError::Parse(error.to_string()))?;
-        let filters = Vec::<ActivityFilter>::from_nota_block(&children[1])?;
+            DotosBlock::new(block).expect_children(Delimiter::Parenthesis, "ActivityQuery", 2)?;
+        let limit = u32::try_from(u64::from_dotos_block(&children[0])?)
+            .map_err(|error| DotosDecodeError::Parse(error.to_string()))?;
+        let filters = Vec::<ActivityFilter>::from_dotos_block(&children[1])?;
         Ok(Self { limit, filters })
     }
 }
 
-impl NotaEncode for ActivityQuery {
-    fn to_nota(&self) -> String {
-        Delimiter::Parenthesis.wrap([u64::from(self.limit).to_nota(), self.filters.to_nota()])
+impl DotosEncode for ActivityQuery {
+    fn to_dotos(&self) -> String {
+        Delimiter::Parenthesis.wrap([u64::from(self.limit).to_dotos(), self.filters.to_dotos()])
     }
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub enum ActivityFilter {
     /// Only entries from this role.
@@ -2212,7 +2219,7 @@ pub enum ActivityFilter {
 }
 
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ActivityList {
     /// Ordered most-recent first.
@@ -2227,8 +2234,8 @@ pub struct ActivityList {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -2248,7 +2255,7 @@ pub enum DownstreamComponent {
 
 /// Successful leg of a fanned-out mutation.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ApplicationSuccess {
     pub component: DownstreamComponent,
@@ -2261,8 +2268,8 @@ pub struct ApplicationSuccess {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -2280,7 +2287,7 @@ pub enum ApplicationFailureReason {
 
 /// Failed leg of a fanned-out mutation.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ApplicationFailure {
     pub component: DownstreamComponent,
@@ -2291,7 +2298,7 @@ pub struct ApplicationFailure {
 /// Reply when one or more downstream mutation legs were durably
 /// applied and one or more sibling legs failed.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct PartialApplied {
     pub succeeded: Vec<ApplicationSuccess>,
@@ -2303,7 +2310,7 @@ pub struct PartialApplied {
 /// Subscribe to contract-operation and effect observations on
 /// the public socket.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct ObservationSubscription {
     pub include_operations: bool,
@@ -2314,8 +2321,8 @@ pub struct ObservationSubscription {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -2339,8 +2346,8 @@ impl ObservationToken {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -2355,8 +2362,8 @@ pub struct ObservationOpened {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -2367,7 +2374,7 @@ pub struct ObservationClosed {
     pub token: ObservationToken,
 }
 
-#[cfg_attr(feature = "nota-text", derive(NotaEncode, NotaDecode))]
+#[cfg_attr(feature = "dotos-text", derive(DotosEncode, DotosDecode))]
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
 pub struct OperationReceived {
     pub operation: OperationKind,
@@ -2377,8 +2384,8 @@ pub struct OperationReceived {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -2396,14 +2403,14 @@ pub enum EffectOutcome {
     NoChange,
 }
 
-#[cfg_attr(feature = "nota-text", derive(NotaEncode, NotaDecode))]
+#[cfg_attr(feature = "dotos-text", derive(DotosEncode, DotosDecode))]
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EffectEmitted {
     pub operation: OperationKind,
     pub outcome: EffectOutcome,
 }
 
-#[cfg_attr(feature = "nota-text", derive(NotaEncode, NotaDecode))]
+#[cfg_attr(feature = "dotos-text", derive(DotosEncode, DotosDecode))]
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
 pub enum ObservationEvent {
     OperationReceived(OperationReceived),
@@ -2475,7 +2482,7 @@ impl AsRef<str> for TopicName {
     }
 }
 
-validated_string_nota_codec!(TopicName, TopicName::from_text);
+validated_string_dotos_codec!(TopicName, TopicName::from_text);
 
 /// The mission an agent registers with. Mandatory in both registration
 /// modes: the topic judge and every future orchestrator function reads
@@ -2523,12 +2530,12 @@ impl AsRef<str> for MissionDescription {
     }
 }
 
-validated_string_nota_codec!(MissionDescription, MissionDescription::from_text);
+validated_string_dotos_codec!(MissionDescription, MissionDescription::from_text);
 
 /// One topic in the orchestrator topic tree. `parent` is the path of
 /// the containing topic, absent for a root topic.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct OrchestratorTopic {
     pub path: OrchestratorTopicPath,
@@ -2577,8 +2584,8 @@ impl OrchestratorTopicPath {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -2612,7 +2619,7 @@ impl OrchestratorAgentStatus {
 
 /// A directory entry for one registered agent.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct OrchestratorAgentSummary {
     pub agent_identifier: OrchestratorAgentIdentifier,
@@ -2627,8 +2634,8 @@ pub struct OrchestratorAgentSummary {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -2646,7 +2653,7 @@ pub enum TopicAssignmentSource {
 /// makes no judge call. There is no caller-supplied reachability slot:
 /// reachability is discovered by the daemon at registration.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub enum TopicSelection {
     Automatic,
@@ -2658,7 +2665,7 @@ pub enum TopicSelection {
 /// mints at registration. `PreMinted` binds the named allocated identity —
 /// registration binds, it does not mint.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub enum MintedIdentitySelection {
     None,
@@ -2670,7 +2677,7 @@ pub enum MintedIdentitySelection {
 /// success, `AgentRegistrationRejected` with the current topic list on
 /// failure.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct OrchestratorAgentRegistration {
     pub session: SessionIdentifier,
@@ -2685,7 +2692,7 @@ pub struct OrchestratorAgentRegistration {
 /// registry row is honest from birth. Reply: `AgentIdentityMinted` carrying
 /// the reserved identifier; mint failures ride the typed engine refusal.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct AgentIdentityMintRequest {
     pub session: SessionIdentifier,
@@ -2696,7 +2703,7 @@ pub struct AgentIdentityMintRequest {
 /// A freshly allocated agent identity, reserved in the registry as
 /// `Allocated` until the launched process registers and binds it.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct AgentIdentityMinted {
     pub agent_identifier: OrchestratorAgentIdentifier,
@@ -2706,7 +2713,7 @@ pub struct AgentIdentityMinted {
 /// harness component to spawn the session with the pre-minted identity
 /// delivered in its initial prompt.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct AgentLaunchRequest {
     pub agent_identifier: OrchestratorAgentIdentifier,
@@ -2715,7 +2722,7 @@ pub struct AgentLaunchRequest {
 /// The launched session's facts: the harness child pid and, when the launch
 /// went through a PTY-owning terminal cell, its session directory.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct AgentLaunched {
     pub agent_identifier: OrchestratorAgentIdentifier,
@@ -2727,8 +2734,8 @@ pub struct AgentLaunched {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -2746,7 +2753,7 @@ pub enum AgentLaunchRefusalReason {
 /// Typed launch refusal; `detail` is operator diagnostics, the reason is
 /// the actionable fact.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct AgentLaunchRefused {
     pub agent_identifier: OrchestratorAgentIdentifier,
@@ -2757,7 +2764,7 @@ pub struct AgentLaunchRefused {
 /// Successful registration: the minted address, the topics the agent
 /// was seated on, and where that seating came from.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct AgentRegistered {
     pub agent_identifier: OrchestratorAgentIdentifier,
@@ -2773,8 +2780,8 @@ pub struct AgentRegistered {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -2794,7 +2801,7 @@ pub enum AgentRegistrationRejectionReason {
 /// Rejected registration carrying the current topic list so a judge-down
 /// caller can retry with an explicit topic selection.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct AgentRegistrationRejected {
     pub reason: AgentRegistrationRejectionReason,
@@ -2803,7 +2810,7 @@ pub struct AgentRegistrationRejected {
 
 /// The whole orchestrator topic tree. Reply to `Observe(Observation::Topics)`.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct TopicTree {
     pub topics: Vec<OrchestratorTopic>,
@@ -2812,7 +2819,7 @@ pub struct TopicTree {
 /// One topic and the agents seated on it. Reply to
 /// `Observe(Observation::Topic(path))`.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct TopicDetail {
     pub topic: OrchestratorTopic,
@@ -2821,7 +2828,7 @@ pub struct TopicDetail {
 
 /// The registered-agent directory. Reply to `Observe(Observation::Agents)`.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct AgentDirectory {
     pub agents: Vec<OrchestratorAgentSummary>,
@@ -2835,7 +2842,7 @@ pub struct AgentDirectory {
 /// single semantic authority (kind, subject, content); this contract adds
 /// only the transport envelope around it.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct OrchestratorMessageSubmission {
     pub sender: OrchestratorAgentIdentifier,
@@ -2846,7 +2853,7 @@ pub struct OrchestratorMessageSubmission {
 /// Where an orchestrator message is addressed: a specific registered agent,
 /// or the orchestrator seat itself (an escalation).
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub enum OrchestratorMessageRecipient {
     Agent(OrchestratorAgentIdentifier),
@@ -2857,7 +2864,7 @@ pub enum OrchestratorMessageRecipient {
 /// handed to the co-resident messenger, or that best-effort hop degraded
 /// with the named detail (the triage record is committed either way).
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub enum MessengerDeliveryState {
     Submitted,
@@ -2866,7 +2873,7 @@ pub enum MessengerDeliveryState {
 
 /// Why the messenger hop degraded, as human-readable detail.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct MessengerDegradationDetail(pub String);
 
@@ -2883,7 +2890,7 @@ impl MessengerDegradationDetail {
 /// Reply to a routed `SendOrchestratorMessage`: the committed triage slot,
 /// the resolved recipients, and the messenger hop's outcome.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct OrchestratorMessageRouted {
     pub triage_slot: u64,
@@ -2899,8 +2906,8 @@ pub struct OrchestratorMessageRouted {
     Archive,
     RkyvSerialize,
     RkyvDeserialize,
-    NotaEncode,
-    NotaDecode,
+    DotosEncode,
+    DotosDecode,
     Debug,
     Clone,
     Copy,
@@ -2916,7 +2923,7 @@ pub enum OrchestratorMessageRejection {
 
 /// Reply to a `SendOrchestratorMessage` that was not routed.
 #[derive(
-    Archive, RkyvSerialize, RkyvDeserialize, NotaEncode, NotaDecode, Debug, Clone, PartialEq, Eq,
+    Archive, RkyvSerialize, RkyvDeserialize, DotosEncode, DotosDecode, Debug, Clone, PartialEq, Eq,
 )]
 pub struct OrchestratorMessageRejected {
     pub rejection: OrchestratorMessageRejection,
@@ -2925,7 +2932,7 @@ pub struct OrchestratorMessageRejected {
 // ─── Channel declaration ──────────────────────────────────
 
 signal_channel! {
-    channel Orchestrate {
+    channel Orchestrate contract OrchestrateWire {
         operation Claim(RoleClaim),
         operation Release(RoleRelease),
         operation Handoff(RoleHandoff),

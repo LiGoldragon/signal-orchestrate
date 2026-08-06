@@ -6,14 +6,12 @@
 //! proves the macro-emitted type round-trips through a
 //! length-prefixed Frame.
 
-use signal_criome::{
-    AuthorizedObjectKind, AuthorizedObjectReference, ComponentKind, ContractDigest,
-    EscalationTarget, EvaluationDecision, ObjectDigest, OperationDigest, WorkflowDigest,
-    WorkflowProvenanceDigest, WorkflowReceipt,
+use signal_criome::schema::lib::{
+    z2VLn9, z2VSX9, z2VSrv, z2VXA2, z2VY7s, z2VZZu, z2VaDY, z2VbxF, z2VdZJ, z2VduC, z2Vevu,
 };
 use signal_frame::{
-    ExchangeIdentifier, ExchangeLane, LaneSequence, NonEmpty, Reply, RequestPayload, SessionEpoch,
-    SignalOperationHeads, SubReply,
+    ExchangeIdentifier, ExchangeLane, LaneSequence, LogVariant, NonEmpty, Reply, RequestPayload,
+    RootCode, SessionEpoch, SignalOperationHeads, SubReply, VariantCode, WireRoute,
 };
 use signal_harness::HarnessKind as ResolvedHarnessKind;
 use signal_orchestrate::{
@@ -63,10 +61,11 @@ fn exchange() -> ExchangeIdentifier {
 }
 
 fn round_trip_request(request: OrchestrateRequest) -> OrchestrateRequest {
-    let frame = OrchestrateFrame::new(OrchestrateFrameBody::Request {
-        exchange: exchange(),
-        request: request.into_request(),
-    });
+    let expected_route = WireRoute::try_from_log_variant(request.log_variant()).expect("route");
+    let frame = request
+        .into_frame(exchange())
+        .expect("request route is declared");
+    assert_eq!(frame.short_header().route(), expected_route);
     let bytes = frame.encode_length_prefixed().expect("encode");
     let decoded = OrchestrateFrame::decode_length_prefixed(&bytes).expect("decode");
     match decoded.into_body() {
@@ -79,10 +78,14 @@ fn round_trip_request(request: OrchestrateRequest) -> OrchestrateRequest {
 }
 
 fn round_trip_reply(reply: OrchestrateReply) -> OrchestrateReply {
-    let frame = OrchestrateFrame::new(OrchestrateFrameBody::Reply {
-        exchange: exchange(),
-        reply: Reply::committed(NonEmpty::single(SubReply::Ok(reply))),
-    });
+    let route = WireRoute::new(RootCode::new(0), VariantCode::new(0));
+    let frame = OrchestrateFrame::new(
+        route,
+        OrchestrateFrameBody::Reply {
+            exchange: exchange(),
+            reply: Reply::committed(NonEmpty::single(SubReply::Ok(reply))),
+        },
+    );
     let bytes = frame.encode_length_prefixed().expect("encode");
     let decoded = OrchestrateFrame::decode_length_prefixed(&bytes).expect("decode");
     match decoded.into_body() {
@@ -98,15 +101,30 @@ fn round_trip_reply(reply: OrchestrateReply) -> OrchestrateReply {
 }
 
 fn round_trip_event(event: OrchestrateEvent) -> OrchestrateEvent {
-    let frame = OrchestrateFrame::new(OrchestrateFrameBody::SubscriptionEvent {
-        event_identifier: signal_frame::StreamEventIdentifier::new(
-            SessionEpoch::new(1),
-            ExchangeLane::Acceptor,
-            LaneSequence::first(),
-        ),
-        token: signal_frame::SubscriptionTokenInner::new(7),
-        event: event.clone(),
-    });
+    let stream_opener = match &event {
+        OrchestrateEvent::WorkflowRunUpdated(_) => {
+            OrchestrateRequest::ObserveWorkflowRun(WorkflowRunObservation {
+                run: workflow_run_digest(),
+            })
+        }
+        OrchestrateEvent::Observed(_) => OrchestrateRequest::Watch(ObservationSubscription {
+            include_operations: true,
+            include_effects: true,
+        }),
+    };
+    let route =
+        WireRoute::try_from_log_variant(stream_opener.log_variant()).expect("stream opener route");
+    let frame = OrchestrateFrame::new(
+        route,
+        OrchestrateFrameBody::SubscriptionEvent {
+            event_identifier: signal_frame::StreamEventIdentifier::acceptor(
+                SessionEpoch::new(1),
+                LaneSequence::first(),
+            ),
+            token: signal_frame::SubscriptionTokenInner::new(7),
+            event: event.clone(),
+        },
+    );
     let bytes = frame.encode_length_prefixed().expect("encode");
     let decoded = OrchestrateFrame::decode_length_prefixed(&bytes).expect("decode");
     match decoded.into_body() {
@@ -248,20 +266,20 @@ fn lane_projection(
     }
 }
 
-fn object_digest(text: &str) -> ObjectDigest {
-    ObjectDigest::from_bytes(text.as_bytes())
+fn object_digest(text: &str) -> z2VbxF {
+    z2VbxF::new(text.to_owned())
 }
 
-fn workflow_digest() -> WorkflowDigest {
-    WorkflowDigest::from_bytes(b"guardian-workflow")
+fn workflow_digest() -> z2VdZJ {
+    z2VdZJ::new(object_digest("guardian-workflow"))
 }
 
-fn contract_digest() -> ContractDigest {
-    ContractDigest::from_bytes(b"criome-contract")
+fn contract_digest() -> z2Vevu {
+    z2Vevu::new(object_digest("criome-contract"))
 }
 
-fn operation_digest() -> OperationDigest {
-    OperationDigest::from_bytes(b"spirit-head-record")
+fn operation_digest() -> z2VSrv {
+    z2VSrv::new(object_digest("spirit-head-record"))
 }
 
 fn workflow_run_digest() -> WorkflowRunDigest {
@@ -274,20 +292,20 @@ fn workflow_run_handle() -> WorkflowRunHandle {
     }
 }
 
-fn authorized_object_reference() -> AuthorizedObjectReference {
-    AuthorizedObjectReference {
-        component_kind: ComponentKind::Spirit,
-        object_digest: operation_digest().object_digest().clone(),
-        authorized_object_kind: AuthorizedObjectKind::Head,
+fn authorized_object_reference() -> z2VaDY {
+    z2VaDY {
+        field_0: z2VduC::z2VemG,
+        field_1: operation_digest().payload().clone(),
+        field_2: z2VLn9::z2Vccv,
     }
 }
 
-fn workflow_receipt() -> WorkflowReceipt {
-    WorkflowReceipt {
-        workflow_digest: workflow_digest(),
-        operation_digest: operation_digest(),
-        evaluation_decision: EvaluationDecision::Authorized,
-        workflow_provenance_digest: WorkflowProvenanceDigest::from_bytes(b"workflow-provenance"),
+fn workflow_receipt() -> z2VSX9 {
+    z2VSX9 {
+        field_0: workflow_digest(),
+        field_1: operation_digest(),
+        field_2: z2VZZu::z2VPcz,
+        field_3: z2VY7s::new(object_digest("workflow-provenance")),
     }
 }
 
@@ -296,7 +314,7 @@ fn model_attestation() -> ModelAttestation {
         provider: ProviderName::from_wire_token("local-provider").expect("provider"),
         model: ModelName::from_wire_token("guardian-model").expect("model"),
         host: HostName::from_wire_token("localhost").expect("host"),
-        call: OperationDigest::from_bytes(b"llm-call"),
+        call: z2VSrv::new(object_digest("llm-call")),
     }
 }
 
@@ -304,7 +322,7 @@ fn step_log() -> StepLog {
     StepLog {
         step: WorkflowStepName::from_wire_token("guardian").expect("step"),
         attestation: model_attestation(),
-        outcome: StepOutcome::Produced(EvaluationDecision::Authorized),
+        outcome: StepOutcome::Produced(z2VZZu::z2VPcz),
     }
 }
 
@@ -824,13 +842,15 @@ fn repository_main_contended_round_trips_each_redirect() {
 }
 
 #[test]
-fn role_vector_round_trips_through_nota() {
-    use nota::{NotaEncode, NotaSource};
+fn role_vector_round_trips_through_dotos() {
+    use dotos::{DotosEncode, DotosSource};
 
     let role = role_vector(&["PersonaSignal", "Designer"]);
-    let text = role.to_nota();
+    let text = role.to_dotos();
 
-    let decoded = NotaSource::new(&text).parse::<Role>().expect("decode role");
+    let decoded = DotosSource::new(&text)
+        .parse::<Role>()
+        .expect("decode role");
     assert_eq!(decoded, role);
 }
 
@@ -940,7 +960,7 @@ fn workflow_definition_carries_dag_and_escalation_shape() {
             },
         ],
         combination: CombinationRule::Threshold(StepThreshold::new(2)),
-        escalation: Some(EscalationTarget::Psyche),
+        escalation: Some(z2VXA2::z2VXZu),
     };
 
     assert_eq!(definition.steps.len(), 2);
@@ -948,7 +968,7 @@ fn workflow_definition_carries_dag_and_escalation_shape() {
         definition.combination,
         CombinationRule::Threshold(StepThreshold::new(2))
     );
-    assert_eq!(definition.escalation, Some(EscalationTarget::Psyche));
+    assert_eq!(definition.escalation, Some(z2VXA2::z2VXZu));
 }
 
 #[test]
@@ -1174,21 +1194,21 @@ fn orchestrate_contract_has_no_sema_observation_or_classification_roots() {
 }
 
 #[test]
-#[cfg(feature = "nota-text")]
-fn orchestrate_operations_encode_as_contract_local_nota_heads() {
-    use nota::{NotaEncode, NotaSource};
+#[cfg(feature = "dotos-text")]
+fn orchestrate_operations_encode_as_contract_local_dotos_heads() {
+    use dotos::{DotosEncode, DotosSource};
 
     let request = OrchestrateRequest::Query(ActivityQuery {
         limit: 8,
         filters: vec![ActivityFilter::RoleFilter(operator())],
     });
-    let text = request.into_request().to_nota();
+    let text = request.into_request().to_dotos();
 
     assert!(text.starts_with("(Query "));
     assert!(!text.contains("Match"));
     assert!(!text.contains("Assert"));
 
-    let decoded = NotaSource::new(&text)
+    let decoded = DotosSource::new(&text)
         .parse::<signal_orchestrate::OrchestrateChannelRequest>()
         .expect("decode request");
     assert_eq!(
