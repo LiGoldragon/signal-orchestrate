@@ -519,7 +519,7 @@ dependencies = [
 [[package]]
 name = "signal-harness"
 version = "0.5.1"
-source = "git+https://github.com/LiGoldragon/signal-harness.git?rev=c05eacf167b9bee5245bdf46906428c8dee47c1b#c05eacf167b9bee5245bdf46906428c8dee47c1b"
+source = "git+https://github.com/LiGoldragon/signal-harness.git?rev=cdfd4e3cd9bba8d8fab3e1d2f65490639db0069c#cdfd4e3cd9bba8d8fab3e1d2f65490639db0069c"
 dependencies = [
  "dotos",
  "rkyv",
@@ -561,7 +561,7 @@ dependencies = [
 [[package]]
 name = "signal-persona"
 version = "0.3.1"
-source = "git+https://github.com/LiGoldragon/signal-persona.git?rev=2802259fb1344495b1ad3b701fe81e0b7f9df9c3#2802259fb1344495b1ad3b701fe81e0b7f9df9c3"
+source = "git+https://github.com/LiGoldragon/signal-persona.git?rev=0baf90c8c7da11330b5e220a2a00665272ad93b3#0baf90c8c7da11330b5e220a2a00665272ad93b3"
 dependencies = [
  "core-ethos",
  "dotos",

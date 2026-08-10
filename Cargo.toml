@@ -22,7 +22,7 @@ dotos-text = ["signal-frame/dotos-text"]
 signal-frame = { git = "https://github.com/LiGoldragon/signal-frame.git", rev = "8aa0bcaeb29fe9e461a11706a469638d2fd109ac", default-features = false }
 signal-orchestrator-message = { git = "https://github.com/LiGoldragon/signal-orchestrator-message.git", rev = "f2480bbe5486d1e1c168da684a99dec47887fa97", default-features = false, features = ["dotos-text"] }
 signal-criome = { git = "https://github.com/LiGoldragon/signal-criome.git", rev = "39d110c1fcd8d405823e7e565d23014177e10f17", default-features = false, features = ["dotos-text"] }
-signal-harness = { git = "https://github.com/LiGoldragon/signal-harness.git", rev = "c05eacf167b9bee5245bdf46906428c8dee47c1b", default-features = false, features = ["dotos-text"] }
+signal-harness = { git = "https://github.com/LiGoldragon/signal-harness.git", rev = "cdfd4e3cd9bba8d8fab3e1d2f65490639db0069c", default-features = false, features = ["dotos-text"] }
 dotos = { git = "https://github.com/LiGoldragon/dotos.git", rev = "80c7b17f7ad3cf547d2624c6a243e5de5f85c9f3" }
 rkyv        = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 thiserror   = "2"
@@ -32,7 +32,7 @@ core-ethos = { git = "https://github.com/LiGoldragon/core-ethos.git", rev = "43b
 name-table = { git = "https://github.com/LiGoldragon/name-table.git", rev = "a22f48d8040ab9235f3552ad8654ff8e27b8157d" }
 rust-logos = { git = "https://github.com/LiGoldragon/rust-logos.git", rev = "081e99596826b15e2ff7f1356ae8d797b18aeffc" }
 schema-rust = { git = "https://github.com/LiGoldragon/schema-rust.git", rev = "664335240a40728826cfaa09e3100cd867031912" }
-sema-translator = { git = "https://github.com/LiGoldragon/sema-translator.git", rev = "287fbd728a05b1a6be1dc8a28bcf3ca06d9916b3", default-features = false }
+sema-translator = { git = "https://github.com/LiGoldragon/sema-translator.git", rev = "287fbd728a05b1a6be1dc8a28bcf3ca06d9916b3", default-features = false, features = ["bootstrap"] }
 signal-sema-translator = { git = "https://github.com/LiGoldragon/signal-sema-translator.git", rev = "3f41813dd63904c7e2b3da4382eff64ed1bf12fe" }
 structural-codec = { git = "https://github.com/LiGoldragon/structural-codec.git", rev = "879d76f91facedd6d5cbca79e282260e1beb9478" }
 
