@@ -46,7 +46,7 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 [[package]]
 name = "datom"
 version = "0.2.0"
-source = "git+https://github.com/LiGoldragon/datom.git?rev=1b60b0c864ab96a82c307def27aae4d466ef0ec4#1b60b0c864ab96a82c307def27aae4d466ef0ec4"
+source = "git+https://github.com/LiGoldragon/datom.git?rev=4435f763af57a44f3eb3fb0d28062c2df023a5fd#4435f763af57a44f3eb3fb0d28062c2df023a5fd"
 dependencies = [
  "protos",
 ]
@@ -266,7 +266,7 @@ dependencies = [
 
 [[package]]
 name = "signal-orchestrate"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "datom",
  "rkyv",

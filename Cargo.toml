@@ -1,6 +1,6 @@
 [package]
 name         = "signal-orchestrate"
-version      = "0.14.0"
+version      = "0.15.0"
 edition      = "2024"
 rust-version = "1.89"
 license      = "MIT OR Apache-2.0"
@@ -14,11 +14,12 @@ path = "src/lib.rs"
 
 [dependencies]
 signal-frame = { git = "https://github.com/LiGoldragon/signal-frame.git", rev = "8aa0bcaeb29fe9e461a11706a469638d2fd109ac", default-features = false }
-datom = { git = "https://github.com/LiGoldragon/datom.git", rev = "1b60b0c864ab96a82c307def27aae4d466ef0ec4" }
+datom = { git = "https://github.com/LiGoldragon/datom.git", rev = "4435f763af57a44f3eb3fb0d28062c2df023a5fd" }
 rkyv        = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 
 [lints.rust]
 unsafe_code = "forbid"
 unused      = { level = "warn", priority = -1 }
 dead_code   = "warn"
+# `signal_channel!` probes this feature; this crate does not implement it.
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("dotos-text"))'] }
