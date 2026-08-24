@@ -1,8 +1,0 @@
-Interface.{1 0 0}
-[]
-{
-  []
-  []
-  []
-  [RoleRelease.RoleIdentifier LaneResourceClaims.Vector<LaneResourceClaim> Worktree.{RepositoryName BranchName WirePath LaneName WorktreeStatus PurposeText TimestampNanos PushedState} LaneAuthority.[Support Structural] RoleToken.String SessionIdentifier.String DurationNanos.Integer LaneOwner.{Role LaneAuthority} TaskToken.String BranchName.String LaneIdentifier.String RoleTokens.Vector<RoleToken> RoleClaim.{RoleIdentifier ScopeReferences ScopeReason} RepositoryName.String LaneName.String TimestampNanos.Integer ScopeReason.String LaneResourceClaim.{ScopeReference ScopeReason TimestampNanos DurationNanos} ScopeConflict.{ScopeReference RoleIdentifier ScopeReason} Worktrees.Vector<Worktree> ScopeReference.[Task.TaskToken Path.WirePath] RoleIdentifier.String Role.RoleTokens WorktreeStatus.[Merged Abandoned Recycled Active Archived] ClaimAcceptance.{RoleIdentifier ScopeReferences} WirePath.String ScopeConflicts.Vector<ScopeConflict> LaneStatus.[HandoverEnded Released Suspect Active] ScopeReferences.Vector<ScopeReference> PushedState.[Unpushed Pushed AncestorOfMain] LaneAssignment.{SessionIdentifier LaneIdentifier LaneOwner LaneDetails} LaneDetails.String ClaimRejection.{RoleIdentifier ScopeConflicts} ReleaseAcknowledgment.{RoleIdentifier ScopeReferences Worktrees} PurposeText.String]
-}

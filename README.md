@@ -1,47 +1,26 @@
 # signal-orchestrate
 
-The ordinary Signal contract for **`orchestrate`**:
-role claim/release/handoff/observation plus activity submission
-and query.
+The generated ordinary Signal wire contract for Orchestrate PathLocks. Its
+source of truth is the three-file Ethos component in `ethos/`; `build.rs` uses
+`ethos-monolith` to regenerate the committed Rust modules in `src/generated/`.
 
-Read `src/lib.rs` for the public interface — two enums
-(`OrchestrateRequest`, `OrchestrateReply`) declared via the
-`signal_channel!` macro. The variants ARE the messages this
-channel carries:
+The signal channel has ContractId 1 and WireRevision 4. It carries the closed
+request/reply surface:
 
-- **Role lifecycle:** `RoleClaim`, `RoleRelease`, and `RoleHandoff`.
-- **Activity log:** `ActivitySubmission`, `ActivityQuery`.
+- `OrchestrateRequest::Register(PathLock)` and `::Release(PathLockRelease)`.
+- `OrchestrateReply::{PathLockRegistered, PathLockRegistrationRejected,
+  PathLockReleased, PathLockReleaseRejected}`.
 
-## Quick reference
+The ordinary textual contact points are concrete payloads, rather than their
+wire enum envelopes:
 
-```rust
-use signal_orchestrate::{
-    OrchestrateRequest, RoleClaim, RoleIdentifier, ScopeReason, ScopeReference, WirePath,
-};
-
-// Designer claims a path and a task scope
-let request = OrchestrateRequest::RoleClaim(RoleClaim {
-    role: RoleIdentifier::from_wire_token("design-system-refresh")?,
-    scopes: vec![
-        ScopeReference::Path(
-            WirePath::from_absolute_path("/git/.../signal/ARCHITECTURE.md")?
-        ),
-    ],
-    reason: ScopeReason::from_text("rescope per /91 §3.1")?,
-});
-// Hand the request to orchestrate's daemon over OrchestrateFrame.
+```text
+PathLock.{orchestrate-interfaces [/git/github.com/LiGoldragon/signal-orchestrate] (generated contract witness)}
+PathLockRelease.{orchestrate-interfaces}
 ```
 
-The state actor replies with `OrchestrateReply::ClaimAcceptance`
-on success or `OrchestrateReply::ClaimRejection` (carrying
-typed `ScopeConflict` records) on overlap.
+`Frame` is generated alongside the source-owned `OrchestrateWire` binding and
+can encode/decode the request/reply channel through `signal-frame`.
 
-## See also
-
-- `ARCHITECTURE.md` — channel role + boundaries
-- `~/primary/skills/contract-repo.md` — contract-repo
-  discipline
-- `signal-frame` — kernel that supplies `Frame`,
-  `Request`, `Reply`, `signal_channel!`
-- `orchestrate` — the consumer that implements
-  this contract
+The crate owns neither the daemon, socket lifecycle, persistence, nor CLI
+argument parsing.

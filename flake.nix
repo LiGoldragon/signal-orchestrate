@@ -1,5 +1,5 @@
 {
-  description = "signal-orchestrate — Signal contract for `orchestrate` CLI ↔ orchestrate (role claim/release/handoff/observation + activity log)";
+  description = "signal-orchestrate — generated ordinary PathLock Signal contract";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -32,9 +32,9 @@
         checks = {
           build = craneLib.cargoBuild (commonArgs // { inherit cargoArtifacts; });
           test  = craneLib.cargoTest  (commonArgs // { inherit cargoArtifacts; });
-          test-round-trip = craneLib.cargoTest (commonArgs // {
+          test-generated-contract = craneLib.cargoTest (commonArgs // {
             inherit cargoArtifacts;
-            cargoTestExtraArgs = "--test round_trip";
+            cargoTestExtraArgs = "--test generated_contract";
           });
           test-doc = craneLib.cargoTest (commonArgs // {
             inherit cargoArtifacts;
