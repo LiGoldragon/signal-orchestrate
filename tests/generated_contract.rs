@@ -10,18 +10,11 @@ use signal_orchestrate::{
     PathLockReleased,
 };
 
-#[test]
-fn build_generates_only_in_cargo_out_dir_and_checks_committed_projection() {
-    let build = include_str!("../build.rs");
-
-    assert!(build.contains("env::var_os(\"OUT_DIR\")"));
-    assert!(build.contains("ComponentGeneration::new(root.join(\"ethos\"), &generated_directory)"));
-    assert!(build.contains("fs::read(root.join(\"src/generated\").join(module))"));
-    assert!(
-        !build.contains(
-            "ComponentGeneration::new(root.join(\"ethos\"), root.join(\"src/generated\"))"
-        )
-    );
+fn wire_fixture(source: &str) -> Vec<u8> {
+    source
+        .split_ascii_whitespace()
+        .map(|byte| byte.parse().expect("decimal wire byte"))
+        .collect()
 }
 
 #[test]
@@ -117,4 +110,46 @@ fn generated_contract_textualizes_register_and_release() {
         frame
     );
     assert!(matches!(release, OrchestrateRequest::Release(_)));
+}
+
+#[test]
+fn generated_contract_preserves_register_and_release_wire_bytes() {
+    let exchange = ExchangeIdentifier::new(
+        SessionEpoch::new(42),
+        ExchangeLane::Connector,
+        LaneSequence::first(),
+    );
+    let path_lock = PathLock {
+        path_lock_name: PathLockName("wire-byte-fixture".into()),
+        path_lock_paths: PathLockPaths(vec![PathLockPath(
+            "/git/github.com/LiGoldragon/signal-orchestrate".into(),
+        )]),
+        path_lock_description: PathLockDescription("stable register witness".into()),
+    };
+    let register = Frame::request_frame(
+        exchange,
+        OrchestrateRequest::Register(path_lock).into_request(),
+    )
+    .expect("frame register")
+    .encode_client_frame()
+    .expect("encode register frame");
+    let release = Frame::request_frame(
+        exchange,
+        OrchestrateRequest::Release(PathLockRelease {
+            path_lock_name: PathLockName("wire-byte-fixture".into()),
+        })
+        .into_request(),
+    )
+    .expect("frame release")
+    .encode_client_frame()
+    .expect("encode release frame");
+
+    assert_eq!(
+        register,
+        wire_fixture(include_str!("fixtures/register-wire.bytes"))
+    );
+    assert_eq!(
+        release,
+        wire_fixture(include_str!("fixtures/release-wire.bytes"))
+    );
 }

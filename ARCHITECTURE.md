@@ -1,10 +1,9 @@
 # signal-orchestrate architecture
 
-`ethos/signal.ethos` owns the ordinary wire contract. `ethos/nexus.ethos` and
-`ethos/sema.ethos` are the required empty component modules. A Cargo build
-invokes `ethos-monolith::ComponentGeneration` over that exact directory and
-rejects stale committed output. Consequently `src/generated/signal.rs` is
-provenance-marked generated output, not a second handwritten interface.
+`ethos/signal.ethos` owns the ordinary wire contract. A Cargo build invokes
+`ethos-monolith::SignalGeneration` for that source and rejects stale committed
+`src/generated/signal.rs` output. Consequently that file is provenance-marked
+generated output, not a second handwritten interface.
 
 The `Channel.{Orchestrate 1 4}` declaration generates the source-owned
 `OrchestrateWire` binding, request operation, closed reply enum, Dotos codecs,

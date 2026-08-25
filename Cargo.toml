@@ -1,6 +1,6 @@
 [package]
 name         = "signal-orchestrate"
-version      = "0.16.1"
+version      = "0.16.2"
 edition      = "2024"
 rust-version = "1.89"
 license      = "MIT OR Apache-2.0"
@@ -24,7 +24,7 @@ dotos = { git = "https://github.com/LiGoldragon/dotos.git", rev = "80c7b17f7ad3c
 rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 
 [build-dependencies]
-ethos-monolith = { git = "https://github.com/LiGoldragon/ethos-monolith.git", rev = "cc3ee3221401bf4edec0e6c9b1c1b2ce35e28ff6" }
+ethos-monolith = { git = "https://github.com/LiGoldragon/ethos-monolith.git", rev = "b273030ee68f71184e3c9ae2e24f474d954555ce" }
 
 [lints.rust]
 unsafe_code = "forbid"

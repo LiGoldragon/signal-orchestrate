@@ -1,8 +1,8 @@
 # signal-orchestrate
 
 The generated ordinary Signal wire contract for Orchestrate PathLocks. Its
-source of truth is the three-file Ethos component in `ethos/`; `build.rs` uses
-`ethos-monolith` to regenerate the committed Rust modules in `src/generated/`.
+source of truth is `ethos/signal.ethos`; `build.rs` uses `ethos-monolith` to
+regenerate the committed `src/generated/signal.rs` projection.
 
 The signal channel has ContractId 1 and WireRevision 4. It carries the closed
 request/reply surface:

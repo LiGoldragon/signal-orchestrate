@@ -70,8 +70,8 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "ethos-monolith"
-version = "0.3.0"
-source = "git+https://github.com/LiGoldragon/ethos-monolith.git?rev=cc3ee3221401bf4edec0e6c9b1c1b2ce35e28ff6#cc3ee3221401bf4edec0e6c9b1c1b2ce35e28ff6"
+version = "0.4.0"
+source = "git+https://github.com/LiGoldragon/ethos-monolith.git?rev=b273030ee68f71184e3c9ae2e24f474d954555ce#b273030ee68f71184e3c9ae2e24f474d954555ce"
 dependencies = [
  "protos",
  "syn 3.0.4",
@@ -288,7 +288,7 @@ dependencies = [
 
 [[package]]
 name = "signal-orchestrate"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "dotos",
  "ethos-monolith",

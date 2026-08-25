@@ -20,9 +20,10 @@
         };
         inherit (rust) craneLib toolchain;
         ethosFilter = path: type: type == "regular" && pkgs.lib.hasSuffix ".ethos" path;
+        wireFixtureFilter = path: type: type == "regular" && pkgs.lib.hasSuffix ".bytes" path;
         src = rust.cleanSource {
           root = ./.;
-          extraFilters = [ ethosFilter ];
+          extraFilters = [ ethosFilter wireFixtureFilter ];
         };
         commonArgs = { inherit src; strictDeps = true; };
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
