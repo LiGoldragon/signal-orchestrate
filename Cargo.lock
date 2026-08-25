@@ -288,7 +288,7 @@ dependencies = [
 
 [[package]]
 name = "signal-orchestrate"
-version = "0.16.0"
+version = "0.16.1"
 dependencies = [
  "dotos",
  "ethos-monolith",
