@@ -10,1000 +10,737 @@ pub enum OrchestrateWire {}
 impl WireContract for OrchestrateWire {
     const BINDING: ContractBinding = ContractBinding::new(
         ContractId::new(NonZeroU32::new(1).expect("Ethos Channel contract id is nonzero")),
-        WireRevision::new(NonZeroU16::new(4).expect("Ethos Channel wire revision is nonzero")),
+        WireRevision::new(NonZeroU16::new(5).expect("Ethos Channel wire revision is nonzero")),
     );
 }
 
-trait EthosValueEncoding {
-    fn to_ethos_value(&self) -> String;
-}
+use datom::{DatomRoot, PositionAdvancing};
+use protos::{
+    Block, Head, Headed, RealizeScope, RealizeScoping, Shape, TextualizeScope, TextualizeScoping,
+};
 
-trait EthosValueDecoding: Sized {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError>;
-}
-
-impl EthosValueEncoding for String {
-    fn to_ethos_value(&self) -> String {
-        ::dotos::DotosEncode::to_dotos(self)
-    }
-}
-
-impl EthosValueDecoding for String {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        ::dotos::DotosDecode::from_dotos_block(block)
-    }
-}
-
-impl EthosValueEncoding for i64 {
-    fn to_ethos_value(&self) -> String {
-        ::dotos::DotosEncode::to_dotos(self)
-    }
-}
-
-impl EthosValueDecoding for i64 {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        ::dotos::DotosDecode::from_dotos_block(block)
-    }
-}
-
-impl<Value> EthosValueEncoding for Vec<Value>
-where
-    Value: EthosValueEncoding,
-{
-    fn to_ethos_value(&self) -> String {
-        ::dotos::Delimiter::SquareBracket.wrap(self.iter().map(EthosValueEncoding::to_ethos_value))
-    }
-}
-
-impl<Value> EthosValueDecoding for Vec<Value>
-where
-    Value: EthosValueDecoding,
-{
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        ::dotos::DotosCollection::new(block).parse_vector(EthosValueDecoding::from_ethos_value)
-    }
+trait EthosDatomRecord: Sized {
+    fn realize_fields(scope: &mut RealizeScope<'_>) -> Result<Self, datom::DatomFault>;
+    fn textualize_fields(&self, scope: &mut TextualizeScope<'_>) -> Result<(), datom::DatomFault>;
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PathLockName(pub String);
+pub struct LockName(pub String);
 
-impl EthosValueEncoding for PathLockName {
-    fn to_ethos_value(&self) -> String {
-        <String as EthosValueEncoding>::to_ethos_value(&self.0)
-    }
-}
-
-impl EthosValueDecoding for PathLockName {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        Ok(Self(<String as EthosValueDecoding>::from_ethos_value(
-            block,
+impl ::datom::DatomRealizing for LockName {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        Ok(Self(<String as ::datom::DatomRealizing>::realize_block(
+            scope, block,
         )?))
     }
 }
 
-impl ::dotos::DotosEncode for PathLockName {
-    fn to_dotos(&self) -> String {
-        format!(
-            "PathLockName.{}",
-            <Self as EthosValueEncoding>::to_ethos_value(self)
-        )
-    }
-}
-
-impl ::dotos::DotosDecode for PathLockName {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let (head, payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLockName",
-                    delimiter: "named dotted application",
-                })?;
-        let head = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "named type head",
-            })?;
-        if head != "PathLockName" {
-            return Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLockName",
-                variant: head.to_owned(),
-            });
-        }
-        <Self as EthosValueDecoding>::from_ethos_value(payload)
-    }
-}
-
-impl ::dotos::DotosBodyEncode for PathLockName {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![::dotos::DotosEncode::to_dotos(self)])
-    }
-}
-
-impl ::dotos::DotosBodyDecode for PathLockName {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLockName", 1)?;
-        <Self as ::dotos::DotosDecode>::from_dotos_block(&fields[0])
+impl ::datom::DatomTextualizing for LockName {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        <String as ::datom::DatomTextualizing>::textualize_in(&self.0, scope)
     }
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PathLockPath(pub String);
+pub struct FlowId(pub String);
 
-impl EthosValueEncoding for PathLockPath {
-    fn to_ethos_value(&self) -> String {
-        <String as EthosValueEncoding>::to_ethos_value(&self.0)
-    }
-}
-
-impl EthosValueDecoding for PathLockPath {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        Ok(Self(<String as EthosValueDecoding>::from_ethos_value(
-            block,
+impl ::datom::DatomRealizing for FlowId {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        Ok(Self(<String as ::datom::DatomRealizing>::realize_block(
+            scope, block,
         )?))
     }
 }
 
-impl ::dotos::DotosEncode for PathLockPath {
-    fn to_dotos(&self) -> String {
-        format!(
-            "PathLockPath.{}",
-            <Self as EthosValueEncoding>::to_ethos_value(self)
-        )
-    }
-}
-
-impl ::dotos::DotosDecode for PathLockPath {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let (head, payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLockPath",
-                    delimiter: "named dotted application",
-                })?;
-        let head = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "named type head",
-            })?;
-        if head != "PathLockPath" {
-            return Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLockPath",
-                variant: head.to_owned(),
-            });
-        }
-        <Self as EthosValueDecoding>::from_ethos_value(payload)
-    }
-}
-
-impl ::dotos::DotosBodyEncode for PathLockPath {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![::dotos::DotosEncode::to_dotos(self)])
-    }
-}
-
-impl ::dotos::DotosBodyDecode for PathLockPath {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLockPath", 1)?;
-        <Self as ::dotos::DotosDecode>::from_dotos_block(&fields[0])
+impl ::datom::DatomTextualizing for FlowId {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        <String as ::datom::DatomTextualizing>::textualize_in(&self.0, scope)
     }
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PathLockPaths(pub Vec<PathLockPath>);
+pub struct LockPath(pub String);
 
-impl EthosValueEncoding for PathLockPaths {
-    fn to_ethos_value(&self) -> String {
-        <Vec<PathLockPath> as EthosValueEncoding>::to_ethos_value(&self.0)
+impl ::datom::DatomRealizing for LockPath {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        Ok(Self(<String as ::datom::DatomRealizing>::realize_block(
+            scope, block,
+        )?))
     }
 }
 
-impl EthosValueDecoding for PathLockPaths {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
+impl ::datom::DatomTextualizing for LockPath {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        <String as ::datom::DatomTextualizing>::textualize_in(&self.0, scope)
+    }
+}
+
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
+pub struct LockPaths(pub Vec<LockPath>);
+
+impl ::datom::DatomRealizing for LockPaths {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
         Ok(Self(
-            <Vec<PathLockPath> as EthosValueDecoding>::from_ethos_value(block)?,
+            <Vec<LockPath> as ::datom::DatomRealizing>::realize_block(scope, block)?,
         ))
     }
 }
 
-impl ::dotos::DotosEncode for PathLockPaths {
-    fn to_dotos(&self) -> String {
-        format!(
-            "PathLockPaths.{}",
-            <Self as EthosValueEncoding>::to_ethos_value(self)
-        )
-    }
-}
-
-impl ::dotos::DotosDecode for PathLockPaths {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let (head, payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLockPaths",
-                    delimiter: "named dotted application",
-                })?;
-        let head = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "named type head",
-            })?;
-        if head != "PathLockPaths" {
-            return Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLockPaths",
-                variant: head.to_owned(),
-            });
-        }
-        <Self as EthosValueDecoding>::from_ethos_value(payload)
-    }
-}
-
-impl ::dotos::DotosBodyEncode for PathLockPaths {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![::dotos::DotosEncode::to_dotos(self)])
-    }
-}
-
-impl ::dotos::DotosBodyDecode for PathLockPaths {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLockPaths", 1)?;
-        <Self as ::dotos::DotosDecode>::from_dotos_block(&fields[0])
+impl ::datom::DatomTextualizing for LockPaths {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        <Vec<LockPath> as ::datom::DatomTextualizing>::textualize_in(&self.0, scope)
     }
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PathLockDescription(pub String);
+pub struct LockReason(pub String);
 
-impl EthosValueEncoding for PathLockDescription {
-    fn to_ethos_value(&self) -> String {
-        <String as EthosValueEncoding>::to_ethos_value(&self.0)
-    }
-}
-
-impl EthosValueDecoding for PathLockDescription {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        Ok(Self(<String as EthosValueDecoding>::from_ethos_value(
-            block,
+impl ::datom::DatomRealizing for LockReason {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        Ok(Self(<String as ::datom::DatomRealizing>::realize_block(
+            scope, block,
         )?))
     }
 }
 
-impl ::dotos::DotosEncode for PathLockDescription {
-    fn to_dotos(&self) -> String {
-        format!(
-            "PathLockDescription.{}",
-            <Self as EthosValueEncoding>::to_ethos_value(self)
-        )
-    }
-}
-
-impl ::dotos::DotosDecode for PathLockDescription {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let (head, payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLockDescription",
-                    delimiter: "named dotted application",
-                })?;
-        let head = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "named type head",
-            })?;
-        if head != "PathLockDescription" {
-            return Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLockDescription",
-                variant: head.to_owned(),
-            });
-        }
-        <Self as EthosValueDecoding>::from_ethos_value(payload)
-    }
-}
-
-impl ::dotos::DotosBodyEncode for PathLockDescription {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![::dotos::DotosEncode::to_dotos(self)])
-    }
-}
-
-impl ::dotos::DotosBodyDecode for PathLockDescription {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLockDescription", 1)?;
-        <Self as ::dotos::DotosDecode>::from_dotos_block(&fields[0])
+impl ::datom::DatomTextualizing for LockReason {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        <String as ::datom::DatomTextualizing>::textualize_in(&self.0, scope)
     }
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PathLock {
-    pub path_lock_name: PathLockName,
-    pub path_lock_paths: PathLockPaths,
-    pub path_lock_description: PathLockDescription,
+pub struct LockRequest {
+    pub lock_name: LockName,
+    pub flow_id: FlowId,
+    pub lock_paths: LockPaths,
+    pub lock_reason: LockReason,
 }
 
-impl EthosValueEncoding for PathLock {
-    fn to_ethos_value(&self) -> String {
-        <Self as ::dotos::DotosBodyEncode>::to_dotos_body(self)
-            .to_delimited_dotos(::dotos::Delimiter::Brace)
+impl EthosDatomRecord for LockRequest {
+    fn realize_fields(scope: &mut RealizeScope<'_>) -> Result<Self, ::datom::DatomFault> {
+        let mut position = datom::RecordPosition::default();
+        let mut lock_name = None;
+        let mut flow_id = None;
+        let mut lock_paths = None;
+        let mut lock_reason = None;
+        scope.realize_body(&mut |child_scope, child| {
+            match PositionAdvancing::next_position(&mut position) {
+                0 => {
+                    lock_name = Some(<LockName as ::datom::DatomRealizing>::realize_block(
+                        child_scope,
+                        child,
+                    )?)
+                }
+                1 => {
+                    flow_id = Some(<FlowId as ::datom::DatomRealizing>::realize_block(
+                        child_scope,
+                        child,
+                    )?)
+                }
+                2 => {
+                    lock_paths = Some(<LockPaths as ::datom::DatomRealizing>::realize_block(
+                        child_scope,
+                        child,
+                    )?)
+                }
+                3 => {
+                    lock_reason = Some(<LockReason as ::datom::DatomRealizing>::realize_block(
+                        child_scope,
+                        child,
+                    )?)
+                }
+                _ => {
+                    return Err(::datom::DatomFault {
+                        problem: ::datom::DatomProblem::ExtraPosition,
+                    });
+                }
+            }
+            Ok(())
+        })?;
+        Ok(Self {
+            lock_name: lock_name.ok_or(::datom::DatomFault {
+                problem: ::datom::DatomProblem::MissingPosition,
+            })?,
+            flow_id: flow_id.ok_or(::datom::DatomFault {
+                problem: ::datom::DatomProblem::MissingPosition,
+            })?,
+            lock_paths: lock_paths.ok_or(::datom::DatomFault {
+                problem: ::datom::DatomProblem::MissingPosition,
+            })?,
+            lock_reason: lock_reason.ok_or(::datom::DatomFault {
+                problem: ::datom::DatomProblem::MissingPosition,
+            })?,
+        })
+    }
+
+    fn textualize_fields(
+        &self,
+        scope: &mut TextualizeScope<'_>,
+    ) -> Result<(), ::datom::DatomFault> {
+        ::datom::DatomTextualizing::textualize_in(&self.lock_name, scope)?;
+        ::datom::DatomTextualizing::textualize_in(&self.flow_id, scope)?;
+        ::datom::DatomTextualizing::textualize_in(&self.lock_paths, scope)?;
+        ::datom::DatomTextualizing::textualize_in(&self.lock_reason, scope)?;
+        Ok(())
     }
 }
 
-impl EthosValueDecoding for PathLock {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let body =
-            ::dotos::DotosBlock::new(block).expect_body(::dotos::Delimiter::Brace, "PathLock")?;
-        <Self as ::dotos::DotosBodyDecode>::from_dotos_body(&body)
-    }
-}
-
-impl ::dotos::DotosBodyEncode for PathLock {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![
-            EthosValueEncoding::to_ethos_value(&self.path_lock_name),
-            EthosValueEncoding::to_ethos_value(&self.path_lock_paths),
-            EthosValueEncoding::to_ethos_value(&self.path_lock_description),
-        ])
-    }
-}
-
-impl ::dotos::DotosEncode for PathLock {
-    fn to_dotos(&self) -> String {
-        format!(
-            "PathLock.{}",
-            <Self as ::dotos::DotosBodyEncode>::to_dotos_body(self)
-                .to_delimited_dotos(::dotos::Delimiter::Brace)
-        )
-    }
-}
-
-impl ::dotos::DotosDecode for PathLock {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let (head, payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLock",
-                    delimiter: "named dotted application",
-                })?;
-        let head = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "named type head",
-            })?;
-        if head != "PathLock" {
-            return Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLock",
-                variant: head.to_owned(),
+impl ::datom::DatomRealizing for LockRequest {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        if block.shape != Shape::Braced || block.head().is_some() {
+            return Err(::datom::DatomFault {
+                problem: ::datom::DatomProblem::Shape,
             });
         }
-        <Self as EthosValueDecoding>::from_ethos_value(payload)
+        <Self as EthosDatomRecord>::realize_fields(scope)
     }
 }
 
-impl ::dotos::DotosBodyDecode for PathLock {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLock", 3)?;
-        Ok(Self {
-            path_lock_name: <PathLockName as EthosValueDecoding>::from_ethos_value(&fields[0])?,
-            path_lock_paths: <PathLockPaths as EthosValueDecoding>::from_ethos_value(&fields[1])?,
-            path_lock_description: <PathLockDescription as EthosValueDecoding>::from_ethos_value(
-                &fields[2],
-            )?,
+impl ::datom::DatomTextualizing for LockRequest {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        scope.textualize_block(Shape::Braced, None, |body| {
+            <Self as EthosDatomRecord>::textualize_fields(self, body)
         })
     }
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PathLockRelease {
-    pub path_lock_name: PathLockName,
-}
+pub struct LockId(pub i64);
 
-impl EthosValueEncoding for PathLockRelease {
-    fn to_ethos_value(&self) -> String {
-        <Self as ::dotos::DotosBodyEncode>::to_dotos_body(self)
-            .to_delimited_dotos(::dotos::Delimiter::Brace)
+impl ::datom::DatomRealizing for LockId {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        Ok(Self(<i64 as ::datom::DatomRealizing>::realize_block(
+            scope, block,
+        )?))
     }
 }
 
-impl EthosValueDecoding for PathLockRelease {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let body = ::dotos::DotosBlock::new(block)
-            .expect_body(::dotos::Delimiter::Brace, "PathLockRelease")?;
-        <Self as ::dotos::DotosBodyDecode>::from_dotos_body(&body)
+impl ::datom::DatomTextualizing for LockId {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        <i64 as ::datom::DatomTextualizing>::textualize_in(&self.0, scope)
     }
 }
 
-impl ::dotos::DotosBodyEncode for PathLockRelease {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![EthosValueEncoding::to_ethos_value(
-            &self.path_lock_name,
-        )])
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
+pub struct Lock {
+    pub lock_id: LockId,
+    pub lock_name: LockName,
+    pub flow_id: FlowId,
+    pub lock_paths: LockPaths,
+    pub lock_reason: LockReason,
+}
+
+impl EthosDatomRecord for Lock {
+    fn realize_fields(scope: &mut RealizeScope<'_>) -> Result<Self, ::datom::DatomFault> {
+        let mut position = datom::RecordPosition::default();
+        let mut lock_id = None;
+        let mut lock_name = None;
+        let mut flow_id = None;
+        let mut lock_paths = None;
+        let mut lock_reason = None;
+        scope.realize_body(&mut |child_scope, child| {
+            match PositionAdvancing::next_position(&mut position) {
+                0 => {
+                    lock_id = Some(<LockId as ::datom::DatomRealizing>::realize_block(
+                        child_scope,
+                        child,
+                    )?)
+                }
+                1 => {
+                    lock_name = Some(<LockName as ::datom::DatomRealizing>::realize_block(
+                        child_scope,
+                        child,
+                    )?)
+                }
+                2 => {
+                    flow_id = Some(<FlowId as ::datom::DatomRealizing>::realize_block(
+                        child_scope,
+                        child,
+                    )?)
+                }
+                3 => {
+                    lock_paths = Some(<LockPaths as ::datom::DatomRealizing>::realize_block(
+                        child_scope,
+                        child,
+                    )?)
+                }
+                4 => {
+                    lock_reason = Some(<LockReason as ::datom::DatomRealizing>::realize_block(
+                        child_scope,
+                        child,
+                    )?)
+                }
+                _ => {
+                    return Err(::datom::DatomFault {
+                        problem: ::datom::DatomProblem::ExtraPosition,
+                    });
+                }
+            }
+            Ok(())
+        })?;
+        Ok(Self {
+            lock_id: lock_id.ok_or(::datom::DatomFault {
+                problem: ::datom::DatomProblem::MissingPosition,
+            })?,
+            lock_name: lock_name.ok_or(::datom::DatomFault {
+                problem: ::datom::DatomProblem::MissingPosition,
+            })?,
+            flow_id: flow_id.ok_or(::datom::DatomFault {
+                problem: ::datom::DatomProblem::MissingPosition,
+            })?,
+            lock_paths: lock_paths.ok_or(::datom::DatomFault {
+                problem: ::datom::DatomProblem::MissingPosition,
+            })?,
+            lock_reason: lock_reason.ok_or(::datom::DatomFault {
+                problem: ::datom::DatomProblem::MissingPosition,
+            })?,
+        })
+    }
+
+    fn textualize_fields(
+        &self,
+        scope: &mut TextualizeScope<'_>,
+    ) -> Result<(), ::datom::DatomFault> {
+        ::datom::DatomTextualizing::textualize_in(&self.lock_id, scope)?;
+        ::datom::DatomTextualizing::textualize_in(&self.lock_name, scope)?;
+        ::datom::DatomTextualizing::textualize_in(&self.flow_id, scope)?;
+        ::datom::DatomTextualizing::textualize_in(&self.lock_paths, scope)?;
+        ::datom::DatomTextualizing::textualize_in(&self.lock_reason, scope)?;
+        Ok(())
     }
 }
 
-impl ::dotos::DotosEncode for PathLockRelease {
-    fn to_dotos(&self) -> String {
-        format!(
-            "PathLockRelease.{}",
-            <Self as ::dotos::DotosBodyEncode>::to_dotos_body(self)
-                .to_delimited_dotos(::dotos::Delimiter::Brace)
-        )
-    }
-}
-
-impl ::dotos::DotosDecode for PathLockRelease {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let (head, payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLockRelease",
-                    delimiter: "named dotted application",
-                })?;
-        let head = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "named type head",
-            })?;
-        if head != "PathLockRelease" {
-            return Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLockRelease",
-                variant: head.to_owned(),
+impl ::datom::DatomRealizing for Lock {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        if block.shape != Shape::Braced || block.head().is_some() {
+            return Err(::datom::DatomFault {
+                problem: ::datom::DatomProblem::Shape,
             });
         }
-        <Self as EthosValueDecoding>::from_ethos_value(payload)
+        <Self as EthosDatomRecord>::realize_fields(scope)
     }
 }
 
-impl ::dotos::DotosBodyDecode for PathLockRelease {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLockRelease", 1)?;
-        Ok(Self {
-            path_lock_name: <PathLockName as EthosValueDecoding>::from_ethos_value(&fields[0])?,
+impl ::datom::DatomTextualizing for Lock {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        scope.textualize_block(Shape::Braced, None, |body| {
+            <Self as EthosDatomRecord>::textualize_fields(self, body)
         })
     }
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PathLockOverlap {
-    pub path_lock_path: PathLockPath,
-    pub path_lock: PathLock,
-}
+pub struct DuplicateName(pub Lock);
 
-impl EthosValueEncoding for PathLockOverlap {
-    fn to_ethos_value(&self) -> String {
-        <Self as ::dotos::DotosBodyEncode>::to_dotos_body(self)
-            .to_delimited_dotos(::dotos::Delimiter::Brace)
+impl ::datom::DatomRealizing for DuplicateName {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        Ok(Self(<Lock as ::datom::DatomRealizing>::realize_block(
+            scope, block,
+        )?))
     }
 }
 
-impl EthosValueDecoding for PathLockOverlap {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let body = ::dotos::DotosBlock::new(block)
-            .expect_body(::dotos::Delimiter::Brace, "PathLockOverlap")?;
-        <Self as ::dotos::DotosBodyDecode>::from_dotos_body(&body)
+impl ::datom::DatomTextualizing for DuplicateName {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        <Lock as ::datom::DatomTextualizing>::textualize_in(&self.0, scope)
     }
 }
 
-impl ::dotos::DotosBodyEncode for PathLockOverlap {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![
-            EthosValueEncoding::to_ethos_value(&self.path_lock_path),
-            EthosValueEncoding::to_ethos_value(&self.path_lock),
-        ])
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
+pub struct LockOverlap {
+    pub lock_path: LockPath,
+    pub lock: Lock,
+}
+
+impl EthosDatomRecord for LockOverlap {
+    fn realize_fields(scope: &mut RealizeScope<'_>) -> Result<Self, ::datom::DatomFault> {
+        let mut position = datom::RecordPosition::default();
+        let mut lock_path = None;
+        let mut lock = None;
+        scope.realize_body(&mut |child_scope, child| {
+            match PositionAdvancing::next_position(&mut position) {
+                0 => {
+                    lock_path = Some(<LockPath as ::datom::DatomRealizing>::realize_block(
+                        child_scope,
+                        child,
+                    )?)
+                }
+                1 => {
+                    lock = Some(<Lock as ::datom::DatomRealizing>::realize_block(
+                        child_scope,
+                        child,
+                    )?)
+                }
+                _ => {
+                    return Err(::datom::DatomFault {
+                        problem: ::datom::DatomProblem::ExtraPosition,
+                    });
+                }
+            }
+            Ok(())
+        })?;
+        Ok(Self {
+            lock_path: lock_path.ok_or(::datom::DatomFault {
+                problem: ::datom::DatomProblem::MissingPosition,
+            })?,
+            lock: lock.ok_or(::datom::DatomFault {
+                problem: ::datom::DatomProblem::MissingPosition,
+            })?,
+        })
+    }
+
+    fn textualize_fields(
+        &self,
+        scope: &mut TextualizeScope<'_>,
+    ) -> Result<(), ::datom::DatomFault> {
+        ::datom::DatomTextualizing::textualize_in(&self.lock_path, scope)?;
+        ::datom::DatomTextualizing::textualize_in(&self.lock, scope)?;
+        Ok(())
     }
 }
 
-impl ::dotos::DotosEncode for PathLockOverlap {
-    fn to_dotos(&self) -> String {
-        format!(
-            "PathLockOverlap.{}",
-            <Self as ::dotos::DotosBodyEncode>::to_dotos_body(self)
-                .to_delimited_dotos(::dotos::Delimiter::Brace)
-        )
-    }
-}
-
-impl ::dotos::DotosDecode for PathLockOverlap {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let (head, payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLockOverlap",
-                    delimiter: "named dotted application",
-                })?;
-        let head = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "named type head",
-            })?;
-        if head != "PathLockOverlap" {
-            return Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLockOverlap",
-                variant: head.to_owned(),
+impl ::datom::DatomRealizing for LockOverlap {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        if block.shape != Shape::Braced || block.head().is_some() {
+            return Err(::datom::DatomFault {
+                problem: ::datom::DatomProblem::Shape,
             });
         }
-        <Self as EthosValueDecoding>::from_ethos_value(payload)
+        <Self as EthosDatomRecord>::realize_fields(scope)
     }
 }
 
-impl ::dotos::DotosBodyDecode for PathLockOverlap {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLockOverlap", 2)?;
-        Ok(Self {
-            path_lock_path: <PathLockPath as EthosValueDecoding>::from_ethos_value(&fields[0])?,
-            path_lock: <PathLock as EthosValueDecoding>::from_ethos_value(&fields[1])?,
+impl ::datom::DatomTextualizing for LockOverlap {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        scope.textualize_block(Shape::Braced, None, |body| {
+            <Self as EthosDatomRecord>::textualize_fields(self, body)
         })
     }
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub enum PathLockRegistrationRefusal {
-    DuplicateActiveName(PathLock),
-    PathOverlap(PathLockOverlap),
+pub enum LockRejection {
+    DuplicateName(Lock),
+    PathOverlap(LockOverlap),
 }
 
-impl EthosValueEncoding for PathLockRegistrationRefusal {
-    fn to_ethos_value(&self) -> String {
-        match self {
-            Self::DuplicateActiveName(payload) => format!(
-                "DuplicateActiveName.{}",
-                EthosValueEncoding::to_ethos_value(payload)
+impl ::datom::DatomRealizing for LockRejection {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        match (block.shape, block.head()) {
+            (Shape::DottedBraced, Some(head)) if head.0 == "DuplicateName" => Ok(
+                Self::DuplicateName(<Lock as EthosDatomRecord>::realize_fields(scope)?),
             ),
-            Self::PathOverlap(payload) => format!(
-                "PathOverlap.{}",
-                EthosValueEncoding::to_ethos_value(payload)
-            ),
-        }
-    }
-}
-
-impl EthosValueDecoding for PathLockRegistrationRefusal {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        if let Some(variant) = block.atom().map(|atom| atom.text()) {
-            return Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLockRegistrationRefusal",
-                variant: variant.to_owned(),
-            });
-        }
-        let (head, _payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLockRegistrationRefusal",
-                    delimiter: "enum variant application",
-                })?;
-        let variant = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "enum variant",
-            })?;
-        match variant {
-            "DuplicateActiveName" => Ok(Self::DuplicateActiveName(
-                <PathLock as EthosValueDecoding>::from_ethos_value(_payload)?,
+            (Shape::DottedBraced, Some(head)) if head.0 == "PathOverlap" => Ok(Self::PathOverlap(
+                <LockOverlap as EthosDatomRecord>::realize_fields(scope)?,
             )),
-            "PathOverlap" => Ok(Self::PathOverlap(
-                <PathLockOverlap as EthosValueDecoding>::from_ethos_value(_payload)?,
-            )),
-            other => Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLockRegistrationRefusal",
-                variant: other.to_owned(),
+            _ => Err(::datom::DatomFault {
+                problem: ::datom::DatomProblem::Shape,
             }),
         }
     }
 }
 
-impl ::dotos::DotosEncode for PathLockRegistrationRefusal {
-    fn to_dotos(&self) -> String {
-        EthosValueEncoding::to_ethos_value(self)
-    }
-}
-
-impl ::dotos::DotosDecode for PathLockRegistrationRefusal {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        <Self as EthosValueDecoding>::from_ethos_value(block)
-    }
-}
-
-impl ::dotos::DotosBodyEncode for PathLockRegistrationRefusal {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![::dotos::DotosEncode::to_dotos(self)])
-    }
-}
-
-impl ::dotos::DotosBodyDecode for PathLockRegistrationRefusal {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLockRegistrationRefusal", 1)?;
-        <Self as ::dotos::DotosDecode>::from_dotos_block(&fields[0])
-    }
-}
-
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PathLockRegistered {
-    pub path_lock: PathLock,
-}
-
-impl EthosValueEncoding for PathLockRegistered {
-    fn to_ethos_value(&self) -> String {
-        <Self as ::dotos::DotosBodyEncode>::to_dotos_body(self)
-            .to_delimited_dotos(::dotos::Delimiter::Brace)
-    }
-}
-
-impl EthosValueDecoding for PathLockRegistered {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let body = ::dotos::DotosBlock::new(block)
-            .expect_body(::dotos::Delimiter::Brace, "PathLockRegistered")?;
-        <Self as ::dotos::DotosBodyDecode>::from_dotos_body(&body)
-    }
-}
-
-impl ::dotos::DotosBodyEncode for PathLockRegistered {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![EthosValueEncoding::to_ethos_value(&self.path_lock)])
-    }
-}
-
-impl ::dotos::DotosEncode for PathLockRegistered {
-    fn to_dotos(&self) -> String {
-        format!(
-            "PathLockRegistered.{}",
-            <PathLock as ::dotos::DotosBodyEncode>::to_dotos_body(&self.path_lock)
-                .to_delimited_dotos(::dotos::Delimiter::Brace)
-        )
-    }
-}
-
-impl ::dotos::DotosDecode for PathLockRegistered {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let (head, payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLockRegistered",
-                    delimiter: "named dotted application",
-                })?;
-        let head = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "named type head",
-            })?;
-        if head != "PathLockRegistered" {
-            return Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLockRegistered",
-                variant: head.to_owned(),
-            });
-        }
-        let body = ::dotos::DotosBlock::new(payload)
-            .expect_body(::dotos::Delimiter::Brace, "PathLockRegistered")?;
-        Ok(Self {
-            path_lock: <PathLock as ::dotos::DotosBodyDecode>::from_dotos_body(&body)?,
-        })
-    }
-}
-
-impl ::dotos::DotosBodyDecode for PathLockRegistered {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLockRegistered", 1)?;
-        Ok(Self {
-            path_lock: <PathLock as EthosValueDecoding>::from_ethos_value(&fields[0])?,
-        })
-    }
-}
-
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PathLockRegistrationRejected {
-    pub path_lock: PathLock,
-    pub path_lock_registration_refusal: PathLockRegistrationRefusal,
-}
-
-impl EthosValueEncoding for PathLockRegistrationRejected {
-    fn to_ethos_value(&self) -> String {
-        <Self as ::dotos::DotosBodyEncode>::to_dotos_body(self)
-            .to_delimited_dotos(::dotos::Delimiter::Brace)
-    }
-}
-
-impl EthosValueDecoding for PathLockRegistrationRejected {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let body = ::dotos::DotosBlock::new(block)
-            .expect_body(::dotos::Delimiter::Brace, "PathLockRegistrationRejected")?;
-        <Self as ::dotos::DotosBodyDecode>::from_dotos_body(&body)
-    }
-}
-
-impl ::dotos::DotosBodyEncode for PathLockRegistrationRejected {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![
-            EthosValueEncoding::to_ethos_value(&self.path_lock),
-            EthosValueEncoding::to_ethos_value(&self.path_lock_registration_refusal),
-        ])
-    }
-}
-
-impl ::dotos::DotosEncode for PathLockRegistrationRejected {
-    fn to_dotos(&self) -> String {
-        format!(
-            "PathLockRegistrationRejected.{}",
-            <Self as ::dotos::DotosBodyEncode>::to_dotos_body(self)
-                .to_delimited_dotos(::dotos::Delimiter::Brace)
-        )
-    }
-}
-
-impl ::dotos::DotosDecode for PathLockRegistrationRejected {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let (head, payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLockRegistrationRejected",
-                    delimiter: "named dotted application",
-                })?;
-        let head = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "named type head",
-            })?;
-        if head != "PathLockRegistrationRejected" {
-            return Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLockRegistrationRejected",
-                variant: head.to_owned(),
-            });
-        }
-        <Self as EthosValueDecoding>::from_ethos_value(payload)
-    }
-}
-
-impl ::dotos::DotosBodyDecode for PathLockRegistrationRejected {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLockRegistrationRejected", 2)?;
-        Ok(Self {
-            path_lock: <PathLock as EthosValueDecoding>::from_ethos_value(&fields[0])?,
-            path_lock_registration_refusal:
-                <PathLockRegistrationRefusal as EthosValueDecoding>::from_ethos_value(&fields[1])?,
-        })
-    }
-}
-
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub enum PathLockReleaseRefusal {
-    UnknownActiveName,
-}
-
-impl EthosValueEncoding for PathLockReleaseRefusal {
-    fn to_ethos_value(&self) -> String {
+impl ::datom::DatomTextualizing for LockRejection {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
         match self {
-            Self::UnknownActiveName => "UnknownActiveName".to_owned(),
+            Self::DuplicateName(payload) => {
+                let head = Head("DuplicateName".into());
+                scope.textualize_block(Shape::DottedBraced, Some(&head), |body| {
+                    <Lock as EthosDatomRecord>::textualize_fields(payload, body)
+                })
+            }
+            Self::PathOverlap(payload) => {
+                let head = Head("PathOverlap".into());
+                scope.textualize_block(Shape::DottedBraced, Some(&head), |body| {
+                    <LockOverlap as EthosDatomRecord>::textualize_fields(payload, body)
+                })
+            }
         }
-    }
-}
-
-impl EthosValueDecoding for PathLockReleaseRefusal {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        if let Some(variant) = block.atom().map(|atom| atom.text()) {
-            return match variant {
-                "UnknownActiveName" => Ok(Self::UnknownActiveName),
-                other => Err(::dotos::DotosDecodeError::UnknownVariant {
-                    enum_name: "PathLockReleaseRefusal",
-                    variant: other.to_owned(),
-                }),
-            };
-        }
-        let (head, _payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLockReleaseRefusal",
-                    delimiter: "enum variant application",
-                })?;
-        let variant = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "enum variant",
-            })?;
-        Err(::dotos::DotosDecodeError::UnknownVariant {
-            enum_name: "PathLockReleaseRefusal",
-            variant: variant.to_owned(),
-        })
-    }
-}
-
-impl ::dotos::DotosEncode for PathLockReleaseRefusal {
-    fn to_dotos(&self) -> String {
-        EthosValueEncoding::to_ethos_value(self)
-    }
-}
-
-impl ::dotos::DotosDecode for PathLockReleaseRefusal {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        <Self as EthosValueDecoding>::from_ethos_value(block)
-    }
-}
-
-impl ::dotos::DotosBodyEncode for PathLockReleaseRefusal {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![::dotos::DotosEncode::to_dotos(self)])
-    }
-}
-
-impl ::dotos::DotosBodyDecode for PathLockReleaseRefusal {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLockReleaseRefusal", 1)?;
-        <Self as ::dotos::DotosDecode>::from_dotos_block(&fields[0])
     }
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PathLockReleased {
-    pub path_lock_release: PathLockRelease,
+pub enum ReleaseRejection {
+    UnknownLockId,
 }
 
-impl EthosValueEncoding for PathLockReleased {
-    fn to_ethos_value(&self) -> String {
-        <Self as ::dotos::DotosBodyEncode>::to_dotos_body(self)
-            .to_delimited_dotos(::dotos::Delimiter::Brace)
-    }
-}
-
-impl EthosValueDecoding for PathLockReleased {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let body = ::dotos::DotosBlock::new(block)
-            .expect_body(::dotos::Delimiter::Brace, "PathLockReleased")?;
-        <Self as ::dotos::DotosBodyDecode>::from_dotos_body(&body)
-    }
-}
-
-impl ::dotos::DotosBodyEncode for PathLockReleased {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![EthosValueEncoding::to_ethos_value(
-            &self.path_lock_release,
-        )])
-    }
-}
-
-impl ::dotos::DotosEncode for PathLockReleased {
-    fn to_dotos(&self) -> String {
-        format!(
-            "PathLockReleased.{}",
-            <PathLockRelease as ::dotos::DotosBodyEncode>::to_dotos_body(&self.path_lock_release)
-                .to_delimited_dotos(::dotos::Delimiter::Brace)
-        )
-    }
-}
-
-impl ::dotos::DotosDecode for PathLockReleased {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let (head, payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLockReleased",
-                    delimiter: "named dotted application",
-                })?;
-        let head = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "named type head",
-            })?;
-        if head != "PathLockReleased" {
-            return Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLockReleased",
-                variant: head.to_owned(),
-            });
+impl ::datom::DatomRealizing for ReleaseRejection {
+    fn realize_block(
+        _scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        match (block.shape, block.head()) {
+            (Shape::Bare, None) if block.body.0 == "UnknownLockId" => Ok(Self::UnknownLockId),
+            _ => Err(::datom::DatomFault {
+                problem: ::datom::DatomProblem::Shape,
+            }),
         }
-        let body = ::dotos::DotosBlock::new(payload)
-            .expect_body(::dotos::Delimiter::Brace, "PathLockReleased")?;
+    }
+}
+
+impl ::datom::DatomTextualizing for ReleaseRejection {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        match self {
+            Self::UnknownLockId => scope.textualize_block(Shape::Bare, None, |body| {
+                body.emit_scalar("UnknownLockId");
+                Ok(())
+            }),
+        }
+    }
+}
+
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
+pub enum ObserveSelection {
+    Locks,
+}
+
+impl ::datom::DatomRealizing for ObserveSelection {
+    fn realize_block(
+        _scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        match (block.shape, block.head()) {
+            (Shape::Bare, None) if block.body.0 == "Locks" => Ok(Self::Locks),
+            _ => Err(::datom::DatomFault {
+                problem: ::datom::DatomProblem::Shape,
+            }),
+        }
+    }
+}
+
+impl ::datom::DatomTextualizing for ObserveSelection {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        match self {
+            Self::Locks => scope.textualize_block(Shape::Bare, None, |body| {
+                body.emit_scalar("Locks");
+                Ok(())
+            }),
+        }
+    }
+}
+
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
+pub struct Locks(pub Vec<Lock>);
+
+impl ::datom::DatomRealizing for Locks {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        Ok(Self(<Vec<Lock> as ::datom::DatomRealizing>::realize_block(
+            scope, block,
+        )?))
+    }
+}
+
+impl ::datom::DatomTextualizing for Locks {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        <Vec<Lock> as ::datom::DatomTextualizing>::textualize_in(&self.0, scope)
+    }
+}
+
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
+pub struct LockSnapshot {
+    pub locks: Locks,
+}
+
+impl EthosDatomRecord for LockSnapshot {
+    fn realize_fields(scope: &mut RealizeScope<'_>) -> Result<Self, ::datom::DatomFault> {
+        let mut position = datom::RecordPosition::default();
+        let mut locks = None;
+        scope.realize_body(&mut |child_scope, child| {
+            match PositionAdvancing::next_position(&mut position) {
+                0 => {
+                    locks = Some(<Locks as ::datom::DatomRealizing>::realize_block(
+                        child_scope,
+                        child,
+                    )?)
+                }
+                _ => {
+                    return Err(::datom::DatomFault {
+                        problem: ::datom::DatomProblem::ExtraPosition,
+                    });
+                }
+            }
+            Ok(())
+        })?;
         Ok(Self {
-            path_lock_release: <PathLockRelease as ::dotos::DotosBodyDecode>::from_dotos_body(
-                &body,
-            )?,
+            locks: locks.ok_or(::datom::DatomFault {
+                problem: ::datom::DatomProblem::MissingPosition,
+            })?,
         })
     }
+
+    fn textualize_fields(
+        &self,
+        scope: &mut TextualizeScope<'_>,
+    ) -> Result<(), ::datom::DatomFault> {
+        ::datom::DatomTextualizing::textualize_in(&self.locks, scope)?;
+        Ok(())
+    }
 }
 
-impl ::dotos::DotosBodyDecode for PathLockReleased {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLockReleased", 1)?;
-        Ok(Self {
-            path_lock_release: <PathLockRelease as EthosValueDecoding>::from_ethos_value(
-                &fields[0],
-            )?,
+impl ::datom::DatomRealizing for LockSnapshot {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        if block.shape != Shape::Braced || block.head().is_some() {
+            return Err(::datom::DatomFault {
+                problem: ::datom::DatomProblem::Shape,
+            });
+        }
+        <Self as EthosDatomRecord>::realize_fields(scope)
+    }
+}
+
+impl ::datom::DatomTextualizing for LockSnapshot {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        scope.textualize_block(Shape::Braced, None, |body| {
+            <Self as EthosDatomRecord>::textualize_fields(self, body)
         })
     }
 }
 
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Debug, Clone, PartialEq, Eq)]
-pub struct PathLockReleaseRejected {
-    pub path_lock_release: PathLockRelease,
-    pub path_lock_release_refusal: PathLockReleaseRefusal,
+pub enum Observation {
+    Locks(LockSnapshot),
 }
 
-impl EthosValueEncoding for PathLockReleaseRejected {
-    fn to_ethos_value(&self) -> String {
-        <Self as ::dotos::DotosBodyEncode>::to_dotos_body(self)
-            .to_delimited_dotos(::dotos::Delimiter::Brace)
-    }
-}
-
-impl EthosValueDecoding for PathLockReleaseRejected {
-    fn from_ethos_value(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let body = ::dotos::DotosBlock::new(block)
-            .expect_body(::dotos::Delimiter::Brace, "PathLockReleaseRejected")?;
-        <Self as ::dotos::DotosBodyDecode>::from_dotos_body(&body)
-    }
-}
-
-impl ::dotos::DotosBodyEncode for PathLockReleaseRejected {
-    fn to_dotos_body(&self) -> ::dotos::DotosBodyEncoding {
-        ::dotos::DotosBodyEncoding::new(vec![
-            EthosValueEncoding::to_ethos_value(&self.path_lock_release),
-            EthosValueEncoding::to_ethos_value(&self.path_lock_release_refusal),
-        ])
-    }
-}
-
-impl ::dotos::DotosEncode for PathLockReleaseRejected {
-    fn to_dotos(&self) -> String {
-        format!(
-            "PathLockReleaseRejected.{}",
-            <Self as ::dotos::DotosBodyEncode>::to_dotos_body(self)
-                .to_delimited_dotos(::dotos::Delimiter::Brace)
-        )
-    }
-}
-
-impl ::dotos::DotosDecode for PathLockReleaseRejected {
-    fn from_dotos_block(block: &::dotos::Block) -> Result<Self, ::dotos::DotosDecodeError> {
-        let (head, payload) =
-            block
-                .as_application()
-                .ok_or(::dotos::DotosDecodeError::ExpectedDelimited {
-                    type_name: "PathLockReleaseRejected",
-                    delimiter: "named dotted application",
-                })?;
-        let head = head
-            .demote_to_string()
-            .ok_or(::dotos::DotosDecodeError::ExpectedAtom {
-                type_name: "named type head",
-            })?;
-        if head != "PathLockReleaseRejected" {
-            return Err(::dotos::DotosDecodeError::UnknownVariant {
-                enum_name: "PathLockReleaseRejected",
-                variant: head.to_owned(),
-            });
+impl ::datom::DatomRealizing for Observation {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        match (block.shape, block.head()) {
+            (Shape::DottedBraced, Some(head)) if head.0 == "Locks" => Ok(Self::Locks(
+                <LockSnapshot as EthosDatomRecord>::realize_fields(scope)?,
+            )),
+            _ => Err(::datom::DatomFault {
+                problem: ::datom::DatomProblem::Shape,
+            }),
         }
-        <Self as EthosValueDecoding>::from_ethos_value(payload)
     }
 }
 
-impl ::dotos::DotosBodyDecode for PathLockReleaseRejected {
-    fn from_dotos_body(body: &::dotos::DotosBody<'_>) -> Result<Self, ::dotos::DotosDecodeError> {
-        let fields = body.expect_fields("PathLockReleaseRejected", 2)?;
-        Ok(Self {
-            path_lock_release: <PathLockRelease as EthosValueDecoding>::from_ethos_value(
-                &fields[0],
-            )?,
-            path_lock_release_refusal:
-                <PathLockReleaseRefusal as EthosValueDecoding>::from_ethos_value(&fields[1])?,
-        })
+impl ::datom::DatomTextualizing for Observation {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        match self {
+            Self::Locks(payload) => {
+                let head = Head("Locks".into());
+                scope.textualize_block(Shape::DottedBraced, Some(&head), |body| {
+                    <LockSnapshot as EthosDatomRecord>::textualize_fields(payload, body)
+                })
+            }
+        }
     }
 }
 
 signal_channel! {
     channel Orchestrate contract OrchestrateWire {
-        operation Register(PathLock),
-        operation Release(PathLockRelease),
+        operation Lock(LockRequest),
+        operation Release(LockId),
+        operation Observe(ObserveSelection),
     }
     reply OrchestrateReply {
-        PathLockRegistered(PathLockRegistered),
-        PathLockRegistrationRejected(PathLockRegistrationRejected),
-        PathLockReleased(PathLockReleased),
-        PathLockReleaseRejected(PathLockReleaseRejected),
+        Locked(Lock),
+        LockRejected(LockRejection),
+        Released(Lock),
+        ReleaseRejected(ReleaseRejection),
+        Observed(Observation),
+    }
+}
+
+impl ::datom::DatomRealizing for Operation {
+    fn realize_block(
+        scope: &mut RealizeScope<'_>,
+        block: &Block,
+    ) -> Result<Self, ::datom::DatomFault> {
+        match (block.shape, block.head()) {
+            (Shape::DottedBraced, Some(head)) if head.0 == "Lock" => Ok(Self::Lock(
+                <LockRequest as EthosDatomRecord>::realize_fields(scope)?,
+            )),
+            (Shape::DottedBraced, Some(head)) if head.0 == "Release" => {
+                let mut values = scope.realize_body(&mut |child_scope, child| {
+                    <LockId as ::datom::DatomRealizing>::realize_block(child_scope, child)
+                })?;
+                if values.len() != 1 {
+                    return Err(::datom::DatomFault {
+                        problem: ::datom::DatomProblem::Position,
+                    });
+                }
+                Ok(Self::Release(values.remove(0)))
+            }
+            (Shape::DottedBare, Some(head)) if head.0 == "Observe" && block.body.0 == "Locks" => {
+                Ok(Self::Observe(ObserveSelection::Locks))
+            }
+            _ => Err(::datom::DatomFault {
+                problem: ::datom::DatomProblem::Shape,
+            }),
+        }
+    }
+}
+
+impl ::datom::DatomTextualizing for Operation {
+    fn textualize_in(&self, scope: &mut TextualizeScope<'_>) -> Result<(), ::datom::DatomFault> {
+        match self {
+            Self::Lock(payload) => {
+                let head = Head("Lock".into());
+                scope.textualize_block(Shape::DottedBraced, Some(&head), |body| {
+                    <LockRequest as EthosDatomRecord>::textualize_fields(payload, body)
+                })
+            }
+            Self::Release(payload) => {
+                let head = Head("Release".into());
+                scope.textualize_block(Shape::DottedBraced, Some(&head), |body| {
+                    ::datom::DatomTextualizing::textualize_in(payload, body)
+                })
+            }
+            Self::Observe(ObserveSelection::Locks) => {
+                let head = Head("Observe".into());
+                scope.textualize_block(Shape::DottedBare, Some(&head), |body| {
+                    body.emit_scalar("Locks");
+                    Ok(())
+                })
+            }
+        }
     }
 }
 
 pub type OrchestrateRequest = Operation;
+
+impl DatomRoot for Operation {}

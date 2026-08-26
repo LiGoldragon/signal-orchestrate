@@ -1,11 +1,11 @@
 [package]
 name         = "signal-orchestrate"
-version      = "0.16.2"
+version      = "0.17.0"
 edition      = "2024"
 rust-version = "1.89"
 license      = "MIT OR Apache-2.0"
 repository   = "https://github.com/LiGoldragon/signal-orchestrate"
-description  = "Signal contract for Orchestrate path-lock reservation and release."
+description  = "Signal contract for Orchestrate Lock coordination."
 publish      = false
 links        = "signal-orchestrate"
 build        = "build.rs"
@@ -14,19 +14,17 @@ build        = "build.rs"
 name = "signal_orchestrate"
 path = "src/lib.rs"
 
-[features]
-default    = ["dotos-text"]
-dotos-text = ["signal-frame/dotos-text"]
-
 [dependencies]
-signal-frame = { git = "https://github.com/LiGoldragon/signal-frame.git", rev = "8aa0bcaeb29fe9e461a11706a469638d2fd109ac", default-features = false }
-dotos = { git = "https://github.com/LiGoldragon/dotos.git", rev = "80c7b17f7ad3cf547d2624c6a243e5de5f85c9f3" }
+signal-frame = { git = "https://github.com/LiGoldragon/signal-frame.git", rev = "000d86684d91ab6b38dd0bce7a5d8bae6db7b147", default-features = false }
+datom = { git = "https://github.com/LiGoldragon/datom.git", rev = "4e13442be314ebfdf7bbd32d095c88a084bde42e" }
+protos = { git = "https://github.com/LiGoldragon/protos", rev = "3b190f9fc2c2a074ceeb6ababfea89e3dd504996" }
 rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 
 [build-dependencies]
-ethos-monolith = { git = "https://github.com/LiGoldragon/ethos-monolith.git", rev = "b273030ee68f71184e3c9ae2e24f474d954555ce" }
+ethos-monolith = { git = "https://github.com/LiGoldragon/ethos-monolith.git", rev = "5fd6aa4c5cf24aff65e5b99406aa773b9cdc2640" }
 
 [lints.rust]
 unsafe_code = "forbid"
 unused      = { level = "warn", priority = -1 }
 dead_code   = "warn"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("dotos-text"))'] }

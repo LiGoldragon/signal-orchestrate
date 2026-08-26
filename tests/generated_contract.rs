@@ -1,155 +1,119 @@
-use dotos::{DotosEncode, DotosSource};
-use signal_frame::{
-    ClientFrame, ExchangeIdentifier, ExchangeLane, LaneSequence, RequestPayload, SessionEpoch,
-    WireContract,
-};
+use datom::{DatomRoot, DatomText};
+use protos::{Realize, SourceText};
+use signal_frame::{ExchangeIdentifier, ExchangeLane, LaneSequence, SessionEpoch, WireContract};
 use signal_orchestrate::{
-    Frame, OrchestrateRequest, OrchestrateWire, PathLock, PathLockDescription, PathLockName,
-    PathLockPath, PathLockPaths, PathLockRegistered, PathLockRegistrationRefusal,
-    PathLockRegistrationRejected, PathLockRelease, PathLockReleaseRefusal, PathLockReleaseRejected,
-    PathLockReleased,
+    FlowId, Frame, Lock, LockId, LockName, LockPath, LockPaths, LockReason, LockRejection,
+    LockRequest, LockSnapshot, Locks, Observation, ObserveSelection, OrchestrateReply,
+    OrchestrateRequest, OrchestrateWire, ReleaseRejection,
 };
 
-fn wire_fixture(source: &str) -> Vec<u8> {
-    source
-        .split_ascii_whitespace()
-        .map(|byte| byte.parse().expect("decimal wire byte"))
-        .collect()
+fn lock() -> Lock {
+    Lock {
+        lock_id: LockId(17),
+        lock_name: LockName("orchestrate-interfaces".into()),
+        flow_id: FlowId("01a03eda".into()),
+        lock_paths: LockPaths(vec![LockPath(
+            "/git/github.com/LiGoldragon/signal-orchestrate".into(),
+        )]),
+        lock_reason: LockReason("generated contract witness".into()),
+    }
 }
 
 #[test]
-fn generated_contract_textualizes_register_and_release() {
+fn approved_contract_has_its_distinct_wire_binding_and_complete_snapshots() {
     assert_eq!(OrchestrateWire::BINDING.contract().value(), 1);
-    assert_eq!(OrchestrateWire::BINDING.revision().value(), 4);
-    let path_lock = PathLock {
-        path_lock_name: PathLockName("orchestrate-interfaces".into()),
-        path_lock_paths: PathLockPaths(vec![PathLockPath(
-            "/git/github.com/LiGoldragon/signal-orchestrate".into(),
-        )]),
-        path_lock_description: PathLockDescription("generated contract witness".into()),
-    };
-    let register = OrchestrateRequest::Register(path_lock.clone());
-    let release_payload = PathLockRelease {
-        path_lock_name: PathLockName("orchestrate-interfaces".into()),
-    };
-    let release = OrchestrateRequest::Release(release_payload.clone());
-    let registered = PathLockRegistered {
-        path_lock: path_lock.clone(),
-    };
-    let registration_rejected = PathLockRegistrationRejected {
-        path_lock: path_lock.clone(),
-        path_lock_registration_refusal: PathLockRegistrationRefusal::DuplicateActiveName(
-            path_lock.clone(),
-        ),
-    };
-    let released = PathLockReleased {
-        path_lock_release: release_payload.clone(),
-    };
-    let release_rejected = PathLockReleaseRejected {
-        path_lock_release: release_payload.clone(),
-        path_lock_release_refusal: PathLockReleaseRefusal::UnknownActiveName,
-    };
+    assert_eq!(OrchestrateWire::BINDING.revision().value(), 5);
 
-    assert_eq!(
-        path_lock.to_dotos(),
-        "PathLock.{orchestrate-interfaces [/git/github.com/LiGoldragon/signal-orchestrate] (generated contract witness)}"
-    );
-    assert_eq!(
-        release_payload.to_dotos(),
-        "PathLockRelease.{orchestrate-interfaces}"
-    );
-    assert_eq!(
-        registered.to_dotos(),
-        "PathLockRegistered.{orchestrate-interfaces [/git/github.com/LiGoldragon/signal-orchestrate] (generated contract witness)}"
-    );
-    assert_eq!(
-        released.to_dotos(),
-        "PathLockReleased.{orchestrate-interfaces}"
-    );
-    assert_eq!(
-        registration_rejected.to_dotos(),
-        "PathLockRegistrationRejected.{{orchestrate-interfaces [/git/github.com/LiGoldragon/signal-orchestrate] (generated contract witness)} DuplicateActiveName.{orchestrate-interfaces [/git/github.com/LiGoldragon/signal-orchestrate] (generated contract witness)}}"
-    );
-    assert_eq!(
-        release_rejected.to_dotos(),
-        "PathLockReleaseRejected.{{orchestrate-interfaces} UnknownActiveName}"
-    );
-    assert_eq!(
-        DotosSource::new(&path_lock.to_dotos())
-            .parse::<PathLock>()
-            .expect("decode path lock"),
-        path_lock
-    );
-    assert_eq!(
-        DotosSource::new(&release_payload.to_dotos())
-            .parse::<PathLockRelease>()
-            .expect("decode release"),
-        release_payload
-    );
-    assert_eq!(
-        DotosSource::new(&registration_rejected.to_dotos())
-            .parse::<PathLockRegistrationRejected>()
-            .expect("decode registration rejection"),
-        registration_rejected
-    );
-    assert_eq!(
-        DotosSource::new(&release_rejected.to_dotos())
-            .parse::<PathLockReleaseRejected>()
-            .expect("decode release rejection"),
-        release_rejected
-    );
+    let lock = lock();
+    let request = OrchestrateRequest::Lock(LockRequest {
+        lock_name: lock.lock_name.clone(),
+        flow_id: lock.flow_id.clone(),
+        lock_paths: lock.lock_paths.clone(),
+        lock_reason: lock.lock_reason.clone(),
+    });
+    let observe = OrchestrateRequest::Observe(ObserveSelection::Locks);
+    let replies = [
+        OrchestrateReply::Locked(lock.clone()),
+        OrchestrateReply::LockRejected(LockRejection::DuplicateName(lock.clone())),
+        OrchestrateReply::Released(lock.clone()),
+        OrchestrateReply::ReleaseRejected(ReleaseRejection::UnknownLockId),
+        OrchestrateReply::Observed(Observation::Locks(LockSnapshot {
+            locks: Locks(vec![lock.clone()]),
+        })),
+    ];
+
     let exchange = ExchangeIdentifier::new(
         SessionEpoch::new(1),
         ExchangeLane::Connector,
         LaneSequence::first(),
     );
-    let frame = Frame::request_frame(exchange, register.into_request()).expect("frame register");
-    let bytes = frame.encode_client_frame().expect("encode register frame");
-    assert_eq!(
-        Frame::decode_client_frame(&bytes).expect("decode register frame"),
-        frame
-    );
-    assert!(matches!(release, OrchestrateRequest::Release(_)));
+    let frame = request.into_frame(exchange).expect("request frame");
+    let bytes = frame.encode().expect("encode request frame");
+    assert_eq!(Frame::decode(&bytes).expect("decode request frame"), frame);
+    assert!(matches!(observe, OrchestrateRequest::Observe(_)));
+    assert_eq!(replies.len(), 5);
 }
 
 #[test]
-fn generated_contract_preserves_register_and_release_wire_bytes() {
-    let exchange = ExchangeIdentifier::new(
-        SessionEpoch::new(42),
-        ExchangeLane::Connector,
-        LaneSequence::first(),
-    );
-    let path_lock = PathLock {
-        path_lock_name: PathLockName("wire-byte-fixture".into()),
-        path_lock_paths: PathLockPaths(vec![PathLockPath(
+fn generated_datom_request_round_trips_without_legacy_command_aliases() {
+    let request = OrchestrateRequest::Lock(LockRequest {
+        lock_name: LockName("orchestrate-interfaces".into()),
+        flow_id: FlowId("01a03eda".into()),
+        lock_paths: LockPaths(vec![LockPath(
             "/git/github.com/LiGoldragon/signal-orchestrate".into(),
         )]),
-        path_lock_description: PathLockDescription("stable register witness".into()),
-    };
-    let register = Frame::request_frame(
-        exchange,
-        OrchestrateRequest::Register(path_lock).into_request(),
-    )
-    .expect("frame register")
-    .encode_client_frame()
-    .expect("encode register frame");
-    let release = Frame::request_frame(
-        exchange,
-        OrchestrateRequest::Release(PathLockRelease {
-            path_lock_name: PathLockName("wire-byte-fixture".into()),
-        })
-        .into_request(),
-    )
-    .expect("frame release")
-    .encode_client_frame()
-    .expect("encode release frame");
+        lock_reason: LockReason("generated-contract-witness".into()),
+    });
+    let source = request.textualize_source().expect("generated Datom text");
+    assert_eq!(
+        DatomText::<OrchestrateRequest>::from(source.clone())
+            .realize()
+            .expect("generated Datom text realizes"),
+        request
+    );
+    assert!(!source.0.contains("PathLock"));
+    assert!(!source.0.contains("Register"));
 
+    let selection = OrchestrateRequest::Observe(ObserveSelection::Locks);
+    let source = selection.textualize_source().expect("selection Datom text");
+    assert_eq!(source.0, "Observe.Locks");
     assert_eq!(
-        register,
-        wire_fixture(include_str!("fixtures/register-wire.bytes"))
+        DatomText::<OrchestrateRequest>::from(source)
+            .realize()
+            .expect("selection realizes"),
+        selection
     );
+
+    for obsolete in ["Register.{}", "PathLock.{}", "Observe.{Locks.{Current}}"] {
+        assert!(
+            DatomText::<OrchestrateRequest>::from(SourceText(obsolete.into()))
+                .realize()
+                .is_err(),
+            "obsolete contract text must reject: {obsolete}"
+        );
+    }
+}
+
+#[test]
+fn lock_id_is_a_canonical_bare_decimal_inside_release() {
+    let release = OrchestrateRequest::Release(LockId(-42));
+    let source = release
+        .textualize_source()
+        .expect("release Datom text projects");
+    assert_eq!(source.0, "Release.{-42}");
     assert_eq!(
-        release,
-        wire_fixture(include_str!("fixtures/release-wire.bytes"))
+        DatomText::<OrchestrateRequest>::from(source)
+            .realize()
+            .expect("release Datom text realizes"),
+        release
     );
+
+    for noncanonical in ["Release.{+42}", "Release.{042}", "Release.{-0}"] {
+        assert!(
+            DatomText::<OrchestrateRequest>::from(SourceText(noncanonical.into()))
+                .realize()
+                .is_err(),
+            "noncanonical LockId must reject: {noncanonical}"
+        );
+    }
 }

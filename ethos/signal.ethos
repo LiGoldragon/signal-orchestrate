@@ -1,24 +1,31 @@
-Interface.{0 1 0}
-Channel.{Orchestrate 1 4}
+Interface.{0 2 0}
+Channel.{Orchestrate 1 5}
 []
 {
-  [Register.PathLock Release.PathLockRelease]
-  [PathLockRegistered.PathLockRegistered PathLockRegistrationRejected.PathLockRegistrationRejected PathLockReleased.PathLockReleased PathLockReleaseRejected.PathLockReleaseRejected]
+  [Lock.LockRequest Release.LockId Observe.ObserveSelection]
+  [Locked.Lock LockRejected.LockRejection Released.Lock ReleaseRejected.ReleaseRejection Observed.Observation]
   []
   []
   [
-    PathLockName.String
-    PathLockPath.String
-    PathLockPaths.Vector<PathLockPath>
-    PathLockDescription.String
-    PathLock.{PathLockName PathLockPaths PathLockDescription}
-    PathLockRelease.{PathLockName}
-    PathLockOverlap.{PathLockPath PathLock}
-    PathLockRegistrationRefusal.[DuplicateActiveName.PathLock PathOverlap.PathLockOverlap]
-    PathLockRegistered.{PathLock}
-    PathLockRegistrationRejected.{PathLock PathLockRegistrationRefusal}
-    PathLockReleaseRefusal.[UnknownActiveName]
-    PathLockReleased.{PathLockRelease}
-    PathLockReleaseRejected.{PathLockRelease PathLockReleaseRefusal}
+    LockName.String
+    FlowId.String
+    LockPath.String
+    LockPaths.Vector<LockPath>
+    LockReason.String
+    LockRequest.{LockName FlowId LockPaths LockReason}
+
+    LockId.Integer
+    Lock.{LockId LockName FlowId LockPaths LockReason}
+
+    DuplicateName.Lock
+    LockOverlap.{LockPath Lock}
+    LockRejection.[DuplicateName.Lock PathOverlap.LockOverlap]
+    ReleaseRejection.[UnknownLockId]
+
+    ObserveSelection.[Locks]
+
+    Locks.Vector<Lock>
+    LockSnapshot.{Locks}
+    Observation.[Locks.LockSnapshot]
   ]
 }

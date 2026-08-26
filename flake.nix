@@ -1,5 +1,5 @@
 {
-  description = "signal-orchestrate — generated ordinary PathLock Signal contract";
+  description = "signal-orchestrate — generated ordinary Lock Signal contract";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -20,10 +20,9 @@
         };
         inherit (rust) craneLib toolchain;
         ethosFilter = path: type: type == "regular" && pkgs.lib.hasSuffix ".ethos" path;
-        wireFixtureFilter = path: type: type == "regular" && pkgs.lib.hasSuffix ".bytes" path;
         src = rust.cleanSource {
           root = ./.;
-          extraFilters = [ ethosFilter wireFixtureFilter ];
+          extraFilters = [ ethosFilter ];
         };
         commonArgs = { inherit src; strictDeps = true; };
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
