@@ -34,7 +34,7 @@
           test  = craneLib.cargoTest  (commonArgs // { inherit cargoArtifacts; });
           test-generated-contract = craneLib.cargoTest (commonArgs // {
             inherit cargoArtifacts;
-            cargoTestExtraArgs = "--test generated_contract";
+            cargoTestExtraArgs = "--test contract";
           });
           test-doc = craneLib.cargoTest (commonArgs // {
             inherit cargoArtifacts;
