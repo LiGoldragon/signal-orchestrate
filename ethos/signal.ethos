@@ -1,10 +1,10 @@
-Interface.{0 2 0}
-Channel.{Orchestrate 1 5}
+Interface.{0 3 0}
+Channel.{Orchestrate 1 6}
 []
 {
   [Lock.LockRequest Release.LockId Observe.ObserveSelection]
-  [Locked.Lock LockRejected.LockRejection Released.Lock ReleaseRejected.ReleaseRejection Observed.Observation]
-  []
+  [Locked.Lock Released.Lock Observed.Observation]
+  [LockRejected.LockRejection ReleaseRejected.ReleaseRejection]
   []
   [
     LockName.String
@@ -25,7 +25,6 @@ Channel.{Orchestrate 1 5}
     ObserveSelection.[Locks]
 
     Locks.Vector<Lock>
-    LockSnapshot.{Locks}
-    Observation.[Locks.LockSnapshot]
+    Observation.[Locks.Locks]
   ]
 }
