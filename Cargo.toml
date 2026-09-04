@@ -18,7 +18,7 @@ datomic = { git = "https://github.com/LiGoldragon/datomic", rev = "768426ea5f34"
 rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 
 [dev-dependencies]
-ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "52c975e4247223df4e91a53541e230496a0e7123" }
+ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "c85e9f7659fa2213ba9bcfb783c7fe061028e0cf" }
 
 [lints.rust]
 unsafe_code = "forbid"

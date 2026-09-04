@@ -4,16 +4,15 @@
 ; Every lock carries an integer id, a name, a flow, absolute paths,
 ; and a reason.
 ;
-; Target Rust (each line is the generated type):
-;   pub type LockId = i64;
+; Target Rust:
 ;   pub struct LockRequest(pub protos::Text, pub protos::Text, pub Vec<protos::Text>, pub protos::Text);
-;   pub struct Lock(pub i64, pub protos::Text, pub protos::Text, pub Vec<protos::Text>, pub protos::Text);
+;   pub struct Lock(pub protos::Integer, pub protos::Text, pub protos::Text, pub Vec<protos::Text>, pub protos::Text);
 ;   pub struct LockOverlap(pub protos::Text, pub Lock);
 ;   pub enum LockRejection { DuplicateName(Lock), PathOverlap(LockOverlap) }
 ;   pub enum ReleaseRejection { UnknownLockId }
 ;   pub enum ObserveSelection { Locks }
 ;   pub enum Observation { Locks(Vec<Lock>) }
-;   pub enum Request { Lock(LockRequest), Release(LockId), Observe(ObserveSelection) }
+;   pub enum Request { Lock(LockRequest), Release(protos::Integer), Observe(ObserveSelection) }
 ;   pub enum Reply { Locked(Lock), Released(Lock), Observed(Observation),
 ;                    LockRejected(LockRejection), ReleaseRejected(ReleaseRejection) }
 
@@ -21,14 +20,13 @@ Signal.{ 1 0 0 }
 
 []
 
-[ Lock.LockRequest  Release.LockId  Observe.ObserveSelection ]
+[ Lock.LockRequest  Release.Integer  Observe.ObserveSelection ]
 
 [ Locked.Lock  Released.Lock  Observed.Observation
   LockRejected.LockRejection  ReleaseRejected.ReleaseRejection ]
 
-[ LockId.Integer
-  LockRequest.{ Text Text Vector<Text> Text }
-  Lock.{ LockId Text Text Vector<Text> Text }
+[ LockRequest.{ Text Text Vector<Text> Text }
+  Lock.{ Integer Text Text Vector<Text> Text }
   LockOverlap.{ Text Lock }
   LockRejection.[ DuplicateName.Lock  PathOverlap.LockOverlap ]
   ReleaseRejection.[ UnknownLockId ]
