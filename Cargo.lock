@@ -45,18 +45,18 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
 name = "datomic"
-version = "0.7.1"
-source = "git+https://github.com/LiGoldragon/datomic?rev=b670c72d0c2cb94ad1e39b372271f6569d91e214#b670c72d0c2cb94ad1e39b372271f6569d91e214"
+version = "0.8.0"
+source = "git+https://github.com/LiGoldragon/datomic?rev=768426ea5f34#768426ea5f34318f929d4d39188e16bc5ae75bb2"
 dependencies = [
- "protos 0.14.0",
+ "protos 0.15.0 (git+https://github.com/LiGoldragon/protos?rev=56c683ec8d1e)",
 ]
 
 [[package]]
 name = "datomic"
 version = "0.8.0"
-source = "git+https://github.com/LiGoldragon/datomic?rev=e448736972a3#e448736972a3ac30ce94c4e9c81f299fbe894be9"
+source = "git+https://github.com/LiGoldragon/datomic?rev=e448736972a3ac30ce94c4e9c81f299fbe894be9#e448736972a3ac30ce94c4e9c81f299fbe894be9"
 dependencies = [
- "protos 0.15.0",
+ "protos 0.15.0 (git+https://github.com/LiGoldragon/protos?rev=317a77134208)",
 ]
 
 [[package]]
@@ -67,12 +67,12 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "ethos-zero"
-version = "0.5.0"
-source = "git+https://github.com/LiGoldragon/ethos-zero?rev=2309e5b968b8702f2ecc679cd577b3e2bce0e99e#2309e5b968b8702f2ecc679cd577b3e2bce0e99e"
+version = "1.0.0"
+source = "git+https://github.com/LiGoldragon/ethos-zero?rev=52c975e4247223df4e91a53541e230496a0e7123#52c975e4247223df4e91a53541e230496a0e7123"
 dependencies = [
- "datomic 0.7.1",
+ "datomic 0.8.0 (git+https://github.com/LiGoldragon/datomic?rev=e448736972a3ac30ce94c4e9c81f299fbe894be9)",
  "proc-macro2",
- "protos 0.14.0",
+ "protos 0.15.0 (git+https://github.com/LiGoldragon/protos?rev=317a77134208549bf34b1b4f644366f04bc55e09)",
  "quote",
  "syn 3.0.4",
  "thiserror",
@@ -172,13 +172,18 @@ dependencies = [
 
 [[package]]
 name = "protos"
-version = "0.14.0"
-source = "git+https://github.com/LiGoldragon/protos?rev=bfde3b878dd3de2991d7f605b59f57a13ef8f20b#bfde3b878dd3de2991d7f605b59f57a13ef8f20b"
+version = "0.15.0"
+source = "git+https://github.com/LiGoldragon/protos?rev=317a77134208#317a77134208549bf34b1b4f644366f04bc55e09"
 
 [[package]]
 name = "protos"
 version = "0.15.0"
-source = "git+https://github.com/LiGoldragon/protos?rev=317a77134208#317a77134208549bf34b1b4f644366f04bc55e09"
+source = "git+https://github.com/LiGoldragon/protos?rev=317a77134208549bf34b1b4f644366f04bc55e09#317a77134208549bf34b1b4f644366f04bc55e09"
+
+[[package]]
+name = "protos"
+version = "0.15.0"
+source = "git+https://github.com/LiGoldragon/protos?rev=56c683ec8d1e#56c683ec8d1ec8f8f80e9e12251fbfd08d27d728"
 
 [[package]]
 name = "ptr_meta"
@@ -265,11 +270,11 @@ checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
 name = "signal-orchestrate"
-version = "0.18.0"
+version = "0.19.0"
 dependencies = [
- "datomic 0.8.0",
+ "datomic 0.8.0 (git+https://github.com/LiGoldragon/datomic?rev=768426ea5f34)",
  "ethos-zero",
- "protos 0.15.0",
+ "protos 0.15.0 (git+https://github.com/LiGoldragon/protos?rev=56c683ec8d1e)",
  "rkyv",
 ]
 

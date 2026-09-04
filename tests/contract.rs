@@ -1,4 +1,5 @@
-use datomic::{DatomicActualizable, Datomic, Textualizable};
+use datomic::{Datomic, Textualizable};
+use protos::Actualizable;
 use signal_orchestrate::*;
 
 fn lock() -> Lock {
@@ -17,7 +18,7 @@ where
 {
     let text = value.textualize();
     assert_eq!(text, expected_text);
-    let potential = protos::Potential::<T>::from(text);
+    let potential = protos::Potential::<T, datomic::Datom>::from(text);
     let round_tripped: T = potential.actualize().expect("round-trip actualize");
     assert_eq!(round_tripped, value);
 }
