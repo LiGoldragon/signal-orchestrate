@@ -18,6 +18,7 @@ datomic = { git = "https://github.com/LiGoldragon/datomic", rev = "768426ea5f34"
 rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 
 [dev-dependencies]
+tempfile = "3"
 ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "b869598d13d220b8566170ed716017f42a840fad" }
 
 [lints.rust]
