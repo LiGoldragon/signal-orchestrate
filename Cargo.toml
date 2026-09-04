@@ -1,6 +1,6 @@
 [package]
 name         = "signal-orchestrate"
-version      = "0.20.0"
+version      = "0.20.1"
 edition      = "2024"
 rust-version = "1.89"
 license      = "MIT OR Apache-2.0"
@@ -13,12 +13,12 @@ name = "signal_orchestrate"
 path = "src/lib.rs"
 
 [dependencies]
-protos = { git = "https://github.com/LiGoldragon/protos", rev = "56c683ec8d1e" }
-datomic = { git = "https://github.com/LiGoldragon/datomic", rev = "e4430bfe" }
+protos = { git = "https://github.com/LiGoldragon/protos", rev = "48061367872b" }
+datomic = { git = "https://github.com/LiGoldragon/datomic", rev = "4712361c0194" }
 rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 
 [dev-dependencies]
-ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "8bcb0b9402fb" }
+ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "0f198968d208" }
 
 [lints.rust]
 unsafe_code = "forbid"

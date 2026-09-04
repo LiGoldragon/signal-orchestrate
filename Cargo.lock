@@ -45,8 +45,8 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
 name = "datomic"
-version = "0.9.0"
-source = "git+https://github.com/LiGoldragon/datomic?rev=e4430bfe#e4430bfedb5c05134c1480b04e3890d3dad64c4b"
+version = "0.9.1"
+source = "git+https://github.com/LiGoldragon/datomic?rev=4712361c0194#4712361c0194fd4e251b2b79a80b2c298f82ce4b"
 dependencies = [
  "protos",
 ]
@@ -59,8 +59,8 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "ethos-zero"
-version = "1.2.0"
-source = "git+https://github.com/LiGoldragon/ethos-zero?rev=8bcb0b9402fb#8bcb0b9402fbfc378c41e32562662b65f753dde1"
+version = "1.3.1"
+source = "git+https://github.com/LiGoldragon/ethos-zero?rev=0f198968d208#0f198968d20842d224bed957c55ed774a46c3335"
 dependencies = [
  "datomic",
  "proc-macro2",
@@ -164,8 +164,8 @@ dependencies = [
 
 [[package]]
 name = "protos"
-version = "0.15.0"
-source = "git+https://github.com/LiGoldragon/protos?rev=56c683ec8d1e#56c683ec8d1ec8f8f80e9e12251fbfd08d27d728"
+version = "0.15.1"
+source = "git+https://github.com/LiGoldragon/protos?rev=48061367872b#48061367872b4d6f209df1f1f65f40f2818ffe1b"
 
 [[package]]
 name = "ptr_meta"
@@ -252,7 +252,7 @@ checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
 name = "signal-orchestrate"
-version = "0.20.0"
+version = "0.20.1"
 dependencies = [
  "datomic",
  "ethos-zero",

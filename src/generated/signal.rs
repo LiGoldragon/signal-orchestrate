@@ -183,7 +183,7 @@ impl datomic::Datomic for LockRejection {
         }
     }
 }
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ReleaseRejection {
     UnknownLockId,
 }
@@ -206,7 +206,7 @@ impl datomic::Datomic for ReleaseRejection {
         }
     }
 }
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ObserveSelection {
     Locks,
 }
