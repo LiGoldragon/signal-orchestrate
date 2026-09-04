@@ -60,7 +60,7 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 [[package]]
 name = "ethos-zero"
 version = "1.0.0"
-source = "git+https://github.com/LiGoldragon/ethos-zero?rev=c85e9f7659fa2213ba9bcfb783c7fe061028e0cf#c85e9f7659fa2213ba9bcfb783c7fe061028e0cf"
+source = "git+https://github.com/LiGoldragon/ethos-zero?rev=b869598d13d220b8566170ed716017f42a840fad#b869598d13d220b8566170ed716017f42a840fad"
 dependencies = [
  "datomic",
  "proc-macro2",

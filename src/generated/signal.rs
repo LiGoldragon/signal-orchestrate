@@ -7,17 +7,25 @@ pub struct LockRequest(
     pub Vec<protos::Text>,
     pub protos::Text,
 );
-impl protos::Corporal<datomic::Datom> for LockRequest {
+impl datomic::Corporal<datomic::Datom> for LockRequest {
     type Fault = datomic::Fault;
-    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
-        match datom {
+    fn incorporate(concept: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match concept {
             datomic::Datom::Struct(fields) if fields.len() == 4usize => {
                 let mut iter = fields.into_iter();
                 Ok(Self(
-                    <protos::Text as protos::Corporal<datomic::Datom>>::incorporate(iter.next().unwrap())?,
-                    <protos::Text as protos::Corporal<datomic::Datom>>::incorporate(iter.next().unwrap())?,
-                    <Vec<protos::Text> as protos::Corporal<datomic::Datom>>::incorporate(iter.next().unwrap())?,
-                    <protos::Text as protos::Corporal<datomic::Datom>>::incorporate(iter.next().unwrap())?,
+                    <protos::Text as datomic::Corporal<datomic::Datom>>::incorporate(
+                        iter.next().unwrap(),
+                    )?,
+                    <protos::Text as datomic::Corporal<datomic::Datom>>::incorporate(
+                        iter.next().unwrap(),
+                    )?,
+                    <Vec<protos::Text> as datomic::Corporal<datomic::Datom>>::incorporate(
+                        iter.next().unwrap(),
+                    )?,
+                    <protos::Text as datomic::Corporal<datomic::Datom>>::incorporate(
+                        iter.next().unwrap(),
+                    )?,
                 ))
             }
             datomic::Datom::Struct(fields) => Err(datomic::Fault::Corporal(
@@ -31,7 +39,6 @@ impl protos::Corporal<datomic::Datom> for LockRequest {
         }
     }
 }
-
 impl datomic::Datomic for LockRequest {
     fn datomize(&self) -> datomic::Datom {
         datomic::Datom::Struct(vec![
@@ -50,18 +57,28 @@ pub struct Lock(
     pub Vec<protos::Text>,
     pub protos::Text,
 );
-impl protos::Corporal<datomic::Datom> for Lock {
+impl datomic::Corporal<datomic::Datom> for Lock {
     type Fault = datomic::Fault;
-    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
-        match datom {
+    fn incorporate(concept: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match concept {
             datomic::Datom::Struct(fields) if fields.len() == 5usize => {
                 let mut iter = fields.into_iter();
                 Ok(Self(
-                    <protos::Integer as protos::Corporal<datomic::Datom>>::incorporate(iter.next().unwrap())?,
-                    <protos::Text as protos::Corporal<datomic::Datom>>::incorporate(iter.next().unwrap())?,
-                    <protos::Text as protos::Corporal<datomic::Datom>>::incorporate(iter.next().unwrap())?,
-                    <Vec<protos::Text> as protos::Corporal<datomic::Datom>>::incorporate(iter.next().unwrap())?,
-                    <protos::Text as protos::Corporal<datomic::Datom>>::incorporate(iter.next().unwrap())?,
+                    <protos::Integer as datomic::Corporal<datomic::Datom>>::incorporate(
+                        iter.next().unwrap(),
+                    )?,
+                    <protos::Text as datomic::Corporal<datomic::Datom>>::incorporate(
+                        iter.next().unwrap(),
+                    )?,
+                    <protos::Text as datomic::Corporal<datomic::Datom>>::incorporate(
+                        iter.next().unwrap(),
+                    )?,
+                    <Vec<protos::Text> as datomic::Corporal<datomic::Datom>>::incorporate(
+                        iter.next().unwrap(),
+                    )?,
+                    <protos::Text as datomic::Corporal<datomic::Datom>>::incorporate(
+                        iter.next().unwrap(),
+                    )?,
                 ))
             }
             datomic::Datom::Struct(fields) => Err(datomic::Fault::Corporal(
@@ -75,7 +92,6 @@ impl protos::Corporal<datomic::Datom> for Lock {
         }
     }
 }
-
 impl datomic::Datomic for Lock {
     fn datomize(&self) -> datomic::Datom {
         datomic::Datom::Struct(vec![
@@ -89,15 +105,17 @@ impl datomic::Datomic for Lock {
 }
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LockOverlap(pub protos::Text, pub Lock);
-impl protos::Corporal<datomic::Datom> for LockOverlap {
+impl datomic::Corporal<datomic::Datom> for LockOverlap {
     type Fault = datomic::Fault;
-    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
-        match datom {
+    fn incorporate(concept: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match concept {
             datomic::Datom::Struct(fields) if fields.len() == 2usize => {
                 let mut iter = fields.into_iter();
                 Ok(Self(
-                    <protos::Text as protos::Corporal<datomic::Datom>>::incorporate(iter.next().unwrap())?,
-                    <Lock as protos::Corporal<datomic::Datom>>::incorporate(iter.next().unwrap())?,
+                    <protos::Text as datomic::Corporal<datomic::Datom>>::incorporate(
+                        iter.next().unwrap(),
+                    )?,
+                    <Lock as datomic::Corporal<datomic::Datom>>::incorporate(iter.next().unwrap())?,
                 ))
             }
             datomic::Datom::Struct(fields) => Err(datomic::Fault::Corporal(
@@ -111,7 +129,6 @@ impl protos::Corporal<datomic::Datom> for LockOverlap {
         }
     }
 }
-
 impl datomic::Datomic for LockOverlap {
     fn datomize(&self) -> datomic::Datom {
         datomic::Datom::Struct(vec![
@@ -125,23 +142,23 @@ pub enum LockRejection {
     DuplicateName(Lock),
     PathOverlap(LockOverlap),
 }
-impl protos::Corporal<datomic::Datom> for LockRejection {
+impl datomic::Corporal<datomic::Datom> for LockRejection {
     type Fault = datomic::Fault;
-    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
-        match datom {
+    fn incorporate(concept: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match concept {
             datomic::Datom::Variant(head, protos::Separator::Period, Some(body))
                 if head == stringify!(DuplicateName) =>
             {
-                Ok(Self::DuplicateName(
-                    <Lock as protos::Corporal<datomic::Datom>>::incorporate(*body)?,
-                ))
+                Ok(Self::DuplicateName(<Lock as datomic::Corporal<
+                    datomic::Datom,
+                >>::incorporate(*body)?))
             }
             datomic::Datom::Variant(head, protos::Separator::Period, Some(body))
                 if head == stringify!(PathOverlap) =>
             {
-                Ok(Self::PathOverlap(
-                    <LockOverlap as protos::Corporal<datomic::Datom>>::incorporate(*body)?,
-                ))
+                Ok(Self::PathOverlap(<LockOverlap as datomic::Corporal<
+                    datomic::Datom,
+                >>::incorporate(*body)?))
             }
             other => Err(datomic::Fault::Corporal(
                 vec![],
@@ -150,7 +167,6 @@ impl protos::Corporal<datomic::Datom> for LockRejection {
         }
     }
 }
-
 impl datomic::Datomic for LockRejection {
     fn datomize(&self) -> datomic::Datom {
         match self {
@@ -171,10 +187,10 @@ impl datomic::Datomic for LockRejection {
 pub enum ReleaseRejection {
     UnknownLockId,
 }
-impl protos::Corporal<datomic::Datom> for ReleaseRejection {
+impl datomic::Corporal<datomic::Datom> for ReleaseRejection {
     type Fault = datomic::Fault;
-    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
-        match datom {
+    fn incorporate(concept: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match concept {
             datomic::Datom::Bare(s) if s == stringify!(UnknownLockId) => Ok(Self::UnknownLockId),
             other => Err(datomic::Fault::Corporal(
                 vec![],
@@ -183,7 +199,6 @@ impl protos::Corporal<datomic::Datom> for ReleaseRejection {
         }
     }
 }
-
 impl datomic::Datomic for ReleaseRejection {
     fn datomize(&self) -> datomic::Datom {
         match self {
@@ -195,10 +210,10 @@ impl datomic::Datomic for ReleaseRejection {
 pub enum ObserveSelection {
     Locks,
 }
-impl protos::Corporal<datomic::Datom> for ObserveSelection {
+impl datomic::Corporal<datomic::Datom> for ObserveSelection {
     type Fault = datomic::Fault;
-    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
-        match datom {
+    fn incorporate(concept: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match concept {
             datomic::Datom::Bare(s) if s == stringify!(Locks) => Ok(Self::Locks),
             other => Err(datomic::Fault::Corporal(
                 vec![],
@@ -207,7 +222,6 @@ impl protos::Corporal<datomic::Datom> for ObserveSelection {
         }
     }
 }
-
 impl datomic::Datomic for ObserveSelection {
     fn datomize(&self) -> datomic::Datom {
         match self {
@@ -219,16 +233,16 @@ impl datomic::Datomic for ObserveSelection {
 pub enum Observation {
     Locks(Vec<Lock>),
 }
-impl protos::Corporal<datomic::Datom> for Observation {
+impl datomic::Corporal<datomic::Datom> for Observation {
     type Fault = datomic::Fault;
-    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
-        match datom {
+    fn incorporate(concept: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match concept {
             datomic::Datom::Variant(head, protos::Separator::Period, Some(body))
                 if head == stringify!(Locks) =>
             {
-                Ok(Self::Locks(<Vec<Lock> as protos::Corporal<datomic::Datom>>::incorporate(
-                    *body,
-                )?))
+                Ok(Self::Locks(<Vec<Lock> as datomic::Corporal<
+                    datomic::Datom,
+                >>::incorporate(*body)?))
             }
             other => Err(datomic::Fault::Corporal(
                 vec![],
@@ -237,7 +251,6 @@ impl protos::Corporal<datomic::Datom> for Observation {
         }
     }
 }
-
 impl datomic::Datomic for Observation {
     fn datomize(&self) -> datomic::Datom {
         match self {
@@ -255,30 +268,30 @@ pub enum Request {
     Release(protos::Integer),
     Observe(ObserveSelection),
 }
-impl protos::Corporal<datomic::Datom> for Request {
+impl datomic::Corporal<datomic::Datom> for Request {
     type Fault = datomic::Fault;
-    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
-        match datom {
+    fn incorporate(concept: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match concept {
             datomic::Datom::Variant(head, protos::Separator::Period, Some(body))
                 if head == stringify!(Lock) =>
             {
-                Ok(Self::Lock(<LockRequest as protos::Corporal<datomic::Datom>>::incorporate(
-                    *body,
-                )?))
+                Ok(Self::Lock(<LockRequest as datomic::Corporal<
+                    datomic::Datom,
+                >>::incorporate(*body)?))
             }
             datomic::Datom::Variant(head, protos::Separator::Period, Some(body))
                 if head == stringify!(Release) =>
             {
-                Ok(Self::Release(
-                    <protos::Integer as protos::Corporal<datomic::Datom>>::incorporate(*body)?,
-                ))
+                Ok(Self::Release(<protos::Integer as datomic::Corporal<
+                    datomic::Datom,
+                >>::incorporate(*body)?))
             }
             datomic::Datom::Variant(head, protos::Separator::Period, Some(body))
                 if head == stringify!(Observe) =>
             {
-                Ok(Self::Observe(
-                    <ObserveSelection as protos::Corporal<datomic::Datom>>::incorporate(*body)?,
-                ))
+                Ok(Self::Observe(<ObserveSelection as datomic::Corporal<
+                    datomic::Datom,
+                >>::incorporate(*body)?))
             }
             other => Err(datomic::Fault::Corporal(
                 vec![],
@@ -287,7 +300,6 @@ impl protos::Corporal<datomic::Datom> for Request {
         }
     }
 }
-
 impl datomic::Datomic for Request {
     fn datomize(&self) -> datomic::Datom {
         match self {
@@ -317,43 +329,43 @@ pub enum Reply {
     LockRejected(LockRejection),
     ReleaseRejected(ReleaseRejection),
 }
-impl protos::Corporal<datomic::Datom> for Reply {
+impl datomic::Corporal<datomic::Datom> for Reply {
     type Fault = datomic::Fault;
-    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
-        match datom {
+    fn incorporate(concept: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match concept {
             datomic::Datom::Variant(head, protos::Separator::Period, Some(body))
                 if head == stringify!(Locked) =>
             {
-                Ok(Self::Locked(<Lock as protos::Corporal<datomic::Datom>>::incorporate(
-                    *body,
-                )?))
+                Ok(Self::Locked(
+                    <Lock as datomic::Corporal<datomic::Datom>>::incorporate(*body)?,
+                ))
             }
             datomic::Datom::Variant(head, protos::Separator::Period, Some(body))
                 if head == stringify!(Released) =>
             {
-                Ok(Self::Released(<Lock as protos::Corporal<datomic::Datom>>::incorporate(
-                    *body,
-                )?))
+                Ok(Self::Released(<Lock as datomic::Corporal<
+                    datomic::Datom,
+                >>::incorporate(*body)?))
             }
             datomic::Datom::Variant(head, protos::Separator::Period, Some(body))
                 if head == stringify!(Observed) =>
             {
-                Ok(Self::Observed(
-                    <Observation as protos::Corporal<datomic::Datom>>::incorporate(*body)?,
-                ))
+                Ok(Self::Observed(<Observation as datomic::Corporal<
+                    datomic::Datom,
+                >>::incorporate(*body)?))
             }
             datomic::Datom::Variant(head, protos::Separator::Period, Some(body))
                 if head == stringify!(LockRejected) =>
             {
-                Ok(Self::LockRejected(
-                    <LockRejection as protos::Corporal<datomic::Datom>>::incorporate(*body)?,
-                ))
+                Ok(Self::LockRejected(<LockRejection as datomic::Corporal<
+                    datomic::Datom,
+                >>::incorporate(*body)?))
             }
             datomic::Datom::Variant(head, protos::Separator::Period, Some(body))
                 if head == stringify!(ReleaseRejected) =>
             {
                 Ok(Self::ReleaseRejected(
-                    <ReleaseRejection as protos::Corporal<datomic::Datom>>::incorporate(*body)?,
+                    <ReleaseRejection as datomic::Corporal<datomic::Datom>>::incorporate(*body)?,
                 ))
             }
             other => Err(datomic::Fault::Corporal(
@@ -363,7 +375,6 @@ impl protos::Corporal<datomic::Datom> for Reply {
         }
     }
 }
-
 impl datomic::Datomic for Reply {
     fn datomize(&self) -> datomic::Datom {
         match self {
