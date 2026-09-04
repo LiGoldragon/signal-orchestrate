@@ -1,4 +1,4 @@
-use crate::generated::signal::{Frame, Version, SIGNAL_VERSION};
+use crate::generated::signal::{Frame, SIGNAL_VERSION, Version};
 
 pub trait SignalFrameCodec: Sized {
     fn encode_length_prefixed(&self) -> Result<Vec<u8>, FrameCodecError>;

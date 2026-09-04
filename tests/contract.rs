@@ -39,10 +39,7 @@ fn all_datom_roots_round_trip() {
 
     assert_datom_round_trip(Request::Release(-42), "Release.-42");
 
-    assert_datom_round_trip(
-        Request::Observe(ObserveSelection::Locks),
-        "Observe.Locks",
-    );
+    assert_datom_round_trip(Request::Observe(ObserveSelection::Locks), "Observe.Locks");
 
     assert_datom_round_trip(
         Reply::Locked(lock.clone()),

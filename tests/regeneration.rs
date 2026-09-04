@@ -1,7 +1,12 @@
 //! Proves the committed generated module is fresh: identical to what
 //! ethos-zero produces from the authored ethos source.
 
-use std::{fs, io::Write, path::PathBuf, process::{Command, Stdio}};
+use std::{
+    fs,
+    io::Write,
+    path::PathBuf,
+    process::{Command, Stdio},
+};
 
 use ethos_zero::{Actualizing, Emitting, Potential};
 
@@ -31,8 +36,8 @@ fn format_rust(source: &str) -> String {
 #[test]
 fn committed_module_matches_ethos_zero_generation() {
     let root = project_root();
-    let source = fs::read_to_string(root.join("ethos/signal.ethos"))
-        .expect("read authored ethos source");
+    let source =
+        fs::read_to_string(root.join("ethos/signal.ethos")).expect("read authored ethos source");
     let committed = fs::read_to_string(root.join("src/generated/signal.rs"))
         .expect("read committed generated module");
 
