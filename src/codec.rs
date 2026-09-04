@@ -1,9 +1,5 @@
-use crate::generated::signal::{
-    CHANNEL_CONTRACT_ID, CHANNEL_WIRE_REVISION, ChannelContractId, ChannelWireRevision, Frame,
-    PROTOCOL_VERSION, ProtocolVersion,
-};
+use crate::generated::signal::{Frame, Version, SIGNAL_VERSION};
 
-/// The hand-owned binary envelope boundary for this generated contract.
 pub trait SignalFrameCodec: Sized {
     fn encode_length_prefixed(&self) -> Result<Vec<u8>, FrameCodecError>;
     fn decode_length_prefixed(bytes: &[u8]) -> Result<Self, FrameCodecError>;
@@ -12,30 +8,21 @@ pub trait SignalFrameCodec: Sized {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum FrameCodecError {
     LengthPrefixMissing,
-    LengthMismatch {
-        expected: usize,
-        found: usize,
-    },
+    LengthMismatch { expected: usize, found: usize },
     LengthTooLarge,
     ArchiveEncode,
     ArchiveDecode,
-    WrongChannelContract {
-        expected: ChannelContractId,
-        found: ChannelContractId,
-    },
-    WrongChannelWireRevision {
-        expected: ChannelWireRevision,
-        found: ChannelWireRevision,
-    },
-    UnsupportedProtocol {
-        expected: ProtocolVersion,
-        found: ProtocolVersion,
-    },
+    VersionMismatch { expected: Version, found: Version },
 }
 
 impl SignalFrameCodec for Frame {
     fn encode_length_prefixed(&self) -> Result<Vec<u8>, FrameCodecError> {
-        validate(self)?;
+        if self.0 != SIGNAL_VERSION {
+            return Err(FrameCodecError::VersionMismatch {
+                expected: SIGNAL_VERSION,
+                found: self.0,
+            });
+        }
         let archive = rkyv::to_bytes::<rkyv::rancor::Error>(self)
             .map_err(|_| FrameCodecError::ArchiveEncode)?;
         let length = u32::try_from(archive.len()).map_err(|_| FrameCodecError::LengthTooLarge)?;
@@ -59,29 +46,12 @@ impl SignalFrameCodec for Frame {
         }
         let frame = rkyv::from_bytes::<Self, rkyv::rancor::Error>(payload)
             .map_err(|_| FrameCodecError::ArchiveDecode)?;
-        validate(&frame)?;
+        if frame.0 != SIGNAL_VERSION {
+            return Err(FrameCodecError::VersionMismatch {
+                expected: SIGNAL_VERSION,
+                found: frame.0,
+            });
+        }
         Ok(frame)
     }
-}
-
-fn validate(frame: &Frame) -> Result<(), FrameCodecError> {
-    if frame.channel_contract_id != CHANNEL_CONTRACT_ID {
-        return Err(FrameCodecError::WrongChannelContract {
-            expected: CHANNEL_CONTRACT_ID,
-            found: frame.channel_contract_id,
-        });
-    }
-    if frame.channel_wire_revision != CHANNEL_WIRE_REVISION {
-        return Err(FrameCodecError::WrongChannelWireRevision {
-            expected: CHANNEL_WIRE_REVISION,
-            found: frame.channel_wire_revision,
-        });
-    }
-    if frame.protocol_version != PROTOCOL_VERSION {
-        return Err(FrameCodecError::UnsupportedProtocol {
-            expected: PROTOCOL_VERSION,
-            found: frame.protocol_version,
-        });
-    }
-    Ok(())
 }

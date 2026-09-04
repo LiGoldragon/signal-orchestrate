@@ -1,636 +1,653 @@
 use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ProtocolVersion {
-    pub major: u16,
-    pub minor: u16,
-    pub patch: u16,
-}
-impl ProtocolVersion {
-    pub const fn new(major: u16, minor: u16, patch: u16) -> Self {
-        Self {
-            major,
-            minor,
-            patch,
+
+// ---------------------------------------------------------------------------
+// Helper: prepend a path index to a fault (replicates datomic's private Prepending)
+// ---------------------------------------------------------------------------
+
+fn prepend_fault(fault: datomic::Fault, index: i64) -> datomic::Fault {
+    match fault {
+        datomic::Fault::Structural(f) => datomic::Fault::Structural(f),
+        datomic::Fault::Conceptual(mut path, problem) => {
+            path.insert(0, index);
+            datomic::Fault::Conceptual(path, problem)
+        }
+        datomic::Fault::Corporal(mut path, problem) => {
+            path.insert(0, index);
+            datomic::Fault::Corporal(path, problem)
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Wire envelope types (rkyv only, no Datomic)
+// ---------------------------------------------------------------------------
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ChannelContractId(pub u32);
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ChannelWireRevision(pub u16);
-pub const INTERFACE_VERSION: ProtocolVersion = ProtocolVersion::new(0u16, 3u16, 0u16);
-pub const CHANNEL_CONTRACT_ID: ChannelContractId = ChannelContractId(1u32);
-pub const CHANNEL_WIRE_REVISION: ChannelWireRevision = ChannelWireRevision(6u16);
-pub const PROTOCOL_VERSION: ProtocolVersion = INTERFACE_VERSION;
+pub struct Version(pub u16, pub u16, pub u16);
+
+pub const SIGNAL_VERSION: Version = Version(1u16, 0u16, 0u16);
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub struct LockName(String);
-impl LockName {
-    pub fn try_from_string(
-        value: String,
-    ) -> std::result::Result<Self, datomic::UnrepresentableString> {
-        datomic::DatomicString::try_from(value).map(|value| Self(value.as_ref().to_owned()))
-    }
+pub enum Refusal {
+    VersionMismatch(Version, Version),
+    Unreadable,
 }
-impl std::convert::TryFrom<String> for LockName {
-    type Error = datomic::UnrepresentableString;
-    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
-        Self::try_from_string(value)
-    }
-}
-impl<'a> std::convert::TryFrom<&'a str> for LockName {
-    type Error = datomic::UnrepresentableString;
-    fn try_from(value: &'a str) -> std::result::Result<Self, Self::Error> {
-        Self::try_from_string(value.to_owned())
-    }
-}
-impl AsRef<str> for LockName {
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
-}
+
+// ---------------------------------------------------------------------------
+// Domain types
+// ---------------------------------------------------------------------------
+
+pub type LockId = i64;
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub struct FlowId(String);
-impl FlowId {
-    pub fn try_from_string(
-        value: String,
-    ) -> std::result::Result<Self, datomic::UnrepresentableString> {
-        datomic::DatomicString::try_from(value).map(|value| Self(value.as_ref().to_owned()))
-    }
-}
-impl std::convert::TryFrom<String> for FlowId {
-    type Error = datomic::UnrepresentableString;
-    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
-        Self::try_from_string(value)
-    }
-}
-impl<'a> std::convert::TryFrom<&'a str> for FlowId {
-    type Error = datomic::UnrepresentableString;
-    fn try_from(value: &'a str) -> std::result::Result<Self, Self::Error> {
-        Self::try_from_string(value.to_owned())
-    }
-}
-impl AsRef<str> for FlowId {
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
-}
+pub struct LockRequest(
+    pub protos::Text,
+    pub protos::Text,
+    pub Vec<protos::Text>,
+    pub protos::Text,
+);
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub struct LockPath(String);
-impl LockPath {
-    pub fn try_from_string(
-        value: String,
-    ) -> std::result::Result<Self, datomic::UnrepresentableString> {
-        datomic::DatomicString::try_from(value).map(|value| Self(value.as_ref().to_owned()))
-    }
-}
-impl std::convert::TryFrom<String> for LockPath {
-    type Error = datomic::UnrepresentableString;
-    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
-        Self::try_from_string(value)
-    }
-}
-impl<'a> std::convert::TryFrom<&'a str> for LockPath {
-    type Error = datomic::UnrepresentableString;
-    fn try_from(value: &'a str) -> std::result::Result<Self, Self::Error> {
-        Self::try_from_string(value.to_owned())
-    }
-}
-impl AsRef<str> for LockPath {
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
-}
+pub struct Lock(
+    pub i64,
+    pub protos::Text,
+    pub protos::Text,
+    pub Vec<protos::Text>,
+    pub protos::Text,
+);
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub struct LockPaths(pub Vec<LockPath>);
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub struct LockReason(String);
-impl LockReason {
-    pub fn try_from_string(
-        value: String,
-    ) -> std::result::Result<Self, datomic::UnrepresentableString> {
-        datomic::DatomicString::try_from(value).map(|value| Self(value.as_ref().to_owned()))
-    }
-}
-impl std::convert::TryFrom<String> for LockReason {
-    type Error = datomic::UnrepresentableString;
-    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
-        Self::try_from_string(value)
-    }
-}
-impl<'a> std::convert::TryFrom<&'a str> for LockReason {
-    type Error = datomic::UnrepresentableString;
-    fn try_from(value: &'a str) -> std::result::Result<Self, Self::Error> {
-        Self::try_from_string(value.to_owned())
-    }
-}
-impl AsRef<str> for LockReason {
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
-}
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub struct LockRequest {
-    pub lock_name: LockName,
-    pub flow_id: FlowId,
-    pub lock_paths: LockPaths,
-    pub lock_reason: LockReason,
-}
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub struct LockId(pub i64);
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub struct Lock {
-    pub lock_id: LockId,
-    pub lock_name: LockName,
-    pub flow_id: FlowId,
-    pub lock_paths: LockPaths,
-    pub lock_reason: LockReason,
-}
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub struct DuplicateName(pub Lock);
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub struct LockOverlap {
-    pub lock_path: LockPath,
-    pub lock: Lock,
-}
+pub struct LockOverlap(pub protos::Text, pub Lock);
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
 pub enum LockRejection {
     DuplicateName(Lock),
     PathOverlap(LockOverlap),
 }
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
 pub enum ReleaseRejection {
     UnknownLockId,
 }
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
 pub enum ObserveSelection {
     Locks,
 }
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub struct Locks(pub Vec<Lock>);
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Observation {
-    Locks(Locks),
+    Locks(Vec<Lock>),
 }
-impl datomic::Datomic for LockName {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        Ok(Self(
-            <datomic::DatomicString as datomic::Datomic>::embody(portion)?
-                .as_ref()
-                .to_owned(),
-        ))
-    }
-    fn portion(&self) -> protos::Portion {
-        datomic::DatomicString::try_from(self.0.clone()).map_or_else(
-            |_| datomic::PortionBuilding::bare("wire-invalid"),
-            |value| datomic::Datomic::portion(&value),
-        )
-    }
-}
-impl datomic::Datomic for FlowId {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        Ok(Self(
-            <datomic::DatomicString as datomic::Datomic>::embody(portion)?
-                .as_ref()
-                .to_owned(),
-        ))
-    }
-    fn portion(&self) -> protos::Portion {
-        datomic::DatomicString::try_from(self.0.clone()).map_or_else(
-            |_| datomic::PortionBuilding::bare("wire-invalid"),
-            |value| datomic::Datomic::portion(&value),
-        )
-    }
-}
-impl datomic::Datomic for LockPath {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        Ok(Self(
-            <datomic::DatomicString as datomic::Datomic>::embody(portion)?
-                .as_ref()
-                .to_owned(),
-        ))
-    }
-    fn portion(&self) -> protos::Portion {
-        datomic::DatomicString::try_from(self.0.clone()).map_or_else(
-            |_| datomic::PortionBuilding::bare("wire-invalid"),
-            |value| datomic::Datomic::portion(&value),
-        )
-    }
-}
-impl datomic::Datomic for LockPaths {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        Ok(Self(<Vec<LockPath> as datomic::Datomic>::embody(portion)?))
-    }
-    fn portion(&self) -> protos::Portion {
-        <Vec<LockPath> as datomic::Datomic>::portion(&self.0)
-    }
-}
-impl datomic::Datomic for LockReason {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        Ok(Self(
-            <datomic::DatomicString as datomic::Datomic>::embody(portion)?
-                .as_ref()
-                .to_owned(),
-        ))
-    }
-    fn portion(&self) -> protos::Portion {
-        datomic::DatomicString::try_from(self.0.clone()).map_or_else(
-            |_| datomic::PortionBuilding::bare("wire-invalid"),
-            |value| datomic::Datomic::portion(&value),
-        )
-    }
-}
-impl datomic::Datomic for LockRequest {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        let Some(parts) =
-            datomic::PortionViewing::structural(portion, protos::StructuralEnclosure::Braced)
-        else {
-            return Err(datomic::PortionViewing::fault(
-                portion,
-                datomic::FaultProblem::Shape,
-            ));
-        };
-        if parts.len() != 4usize {
-            return Err(datomic::PortionViewing::fault(
-                portion,
-                datomic::FaultProblem::Arity,
-            ));
-        }
-        Ok(Self {
-            lock_name: <LockName as datomic::Datomic>::embody(&parts[0usize])?,
-            flow_id: <FlowId as datomic::Datomic>::embody(&parts[1usize])?,
-            lock_paths: <LockPaths as datomic::Datomic>::embody(&parts[2usize])?,
-            lock_reason: <LockReason as datomic::Datomic>::embody(&parts[3usize])?,
-        })
-    }
-    fn portion(&self) -> protos::Portion {
-        datomic::PortionBuilding::structural(
-            "",
-            protos::StructuralEnclosure::Braced,
-            vec![
-                datomic::Datomic::portion(&self.lock_name),
-                datomic::Datomic::portion(&self.flow_id),
-                datomic::Datomic::portion(&self.lock_paths),
-                datomic::Datomic::portion(&self.lock_reason),
-            ],
-        )
-    }
-}
-impl datomic::Datomic for LockId {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        Ok(Self(<i64 as datomic::Datomic>::embody(portion)?))
-    }
-    fn portion(&self) -> protos::Portion {
-        datomic::Datomic::portion(&self.0)
-    }
-}
-impl datomic::Datomic for Lock {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        let Some(parts) =
-            datomic::PortionViewing::structural(portion, protos::StructuralEnclosure::Braced)
-        else {
-            return Err(datomic::PortionViewing::fault(
-                portion,
-                datomic::FaultProblem::Shape,
-            ));
-        };
-        if parts.len() != 5usize {
-            return Err(datomic::PortionViewing::fault(
-                portion,
-                datomic::FaultProblem::Arity,
-            ));
-        }
-        Ok(Self {
-            lock_id: <LockId as datomic::Datomic>::embody(&parts[0usize])?,
-            lock_name: <LockName as datomic::Datomic>::embody(&parts[1usize])?,
-            flow_id: <FlowId as datomic::Datomic>::embody(&parts[2usize])?,
-            lock_paths: <LockPaths as datomic::Datomic>::embody(&parts[3usize])?,
-            lock_reason: <LockReason as datomic::Datomic>::embody(&parts[4usize])?,
-        })
-    }
-    fn portion(&self) -> protos::Portion {
-        datomic::PortionBuilding::structural(
-            "",
-            protos::StructuralEnclosure::Braced,
-            vec![
-                datomic::Datomic::portion(&self.lock_id),
-                datomic::Datomic::portion(&self.lock_name),
-                datomic::Datomic::portion(&self.flow_id),
-                datomic::Datomic::portion(&self.lock_paths),
-                datomic::Datomic::portion(&self.lock_reason),
-            ],
-        )
-    }
-}
-impl datomic::Datomic for DuplicateName {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        Ok(Self(<Lock as datomic::Datomic>::embody(portion)?))
-    }
-    fn portion(&self) -> protos::Portion {
-        <Lock as datomic::Datomic>::portion(&self.0)
-    }
-}
-impl datomic::Datomic for LockOverlap {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        let Some(parts) =
-            datomic::PortionViewing::structural(portion, protos::StructuralEnclosure::Braced)
-        else {
-            return Err(datomic::PortionViewing::fault(
-                portion,
-                datomic::FaultProblem::Shape,
-            ));
-        };
-        if parts.len() != 2usize {
-            return Err(datomic::PortionViewing::fault(
-                portion,
-                datomic::FaultProblem::Arity,
-            ));
-        }
-        Ok(Self {
-            lock_path: <LockPath as datomic::Datomic>::embody(&parts[0usize])?,
-            lock: <Lock as datomic::Datomic>::embody(&parts[1usize])?,
-        })
-    }
-    fn portion(&self) -> protos::Portion {
-        datomic::PortionBuilding::structural(
-            "",
-            protos::StructuralEnclosure::Braced,
-            vec![
-                datomic::Datomic::portion(&self.lock_path),
-                datomic::Datomic::portion(&self.lock),
-            ],
-        )
-    }
-}
-impl datomic::Datomic for LockRejection {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        if let Some(headed) = datomic::PortionViewing::headed(portion)
-            && headed.head.as_ref() == stringify!(DuplicateName)
-            && headed.separator == protos::Separator::Period
-        {
-            return Ok(Self::DuplicateName(<Lock as datomic::Datomic>::embody(
-                &headed.body,
-            )?));
-        }
-        if let Some(headed) = datomic::PortionViewing::headed(portion)
-            && headed.head.as_ref() == stringify!(PathOverlap)
-            && headed.separator == protos::Separator::Period
-        {
-            return Ok(Self::PathOverlap(
-                <LockOverlap as datomic::Datomic>::embody(&headed.body)?,
-            ));
-        }
-        Err(datomic::PortionViewing::fault(
-            portion,
-            datomic::FaultProblem::Shape,
-        ))
-    }
-    fn portion(&self) -> protos::Portion {
-        match self {
-            Self::DuplicateName(value) => datomic::PortionBuilding::headed(
-                stringify!(DuplicateName),
-                protos::Separator::Period,
-                <Lock as datomic::Datomic>::portion(value),
-            ),
-            Self::PathOverlap(value) => datomic::PortionBuilding::headed(
-                stringify!(PathOverlap),
-                protos::Separator::Period,
-                <LockOverlap as datomic::Datomic>::portion(value),
-            ),
-        }
-    }
-}
-impl datomic::Datomic for ReleaseRejection {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        if datomic::PortionViewing::bare_symbol(portion) == Some(stringify!(UnknownLockId)) {
-            return Ok(Self::UnknownLockId);
-        }
-        Err(datomic::PortionViewing::fault(
-            portion,
-            datomic::FaultProblem::Shape,
-        ))
-    }
-    fn portion(&self) -> protos::Portion {
-        match self {
-            Self::UnknownLockId => datomic::PortionBuilding::bare(stringify!(UnknownLockId)),
-        }
-    }
-}
-impl datomic::Datomic for ObserveSelection {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        if datomic::PortionViewing::bare_symbol(portion) == Some(stringify!(Locks)) {
-            return Ok(Self::Locks);
-        }
-        Err(datomic::PortionViewing::fault(
-            portion,
-            datomic::FaultProblem::Shape,
-        ))
-    }
-    fn portion(&self) -> protos::Portion {
-        match self {
-            Self::Locks => datomic::PortionBuilding::bare(stringify!(Locks)),
-        }
-    }
-}
-impl datomic::Datomic for Locks {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        Ok(Self(<Vec<Lock> as datomic::Datomic>::embody(portion)?))
-    }
-    fn portion(&self) -> protos::Portion {
-        <Vec<Lock> as datomic::Datomic>::portion(&self.0)
-    }
-}
-impl datomic::Datomic for Observation {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        if let Some(headed) = datomic::PortionViewing::headed(portion)
-            && headed.head.as_ref() == stringify!(Locks)
-            && headed.separator == protos::Separator::Period
-        {
-            return Ok(Self::Locks(<Locks as datomic::Datomic>::embody(
-                &headed.body,
-            )?));
-        }
-        Err(datomic::PortionViewing::fault(
-            portion,
-            datomic::FaultProblem::Shape,
-        ))
-    }
-    fn portion(&self) -> protos::Portion {
-        match self {
-            Self::Locks(value) => datomic::PortionBuilding::headed(
-                stringify!(Locks),
-                protos::Separator::Period,
-                <Locks as datomic::Datomic>::portion(value),
-            ),
-        }
-    }
-}
+
+// ---------------------------------------------------------------------------
+// Request / Reply / Body / Frame
+// ---------------------------------------------------------------------------
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Request {
     Lock(LockRequest),
     Release(LockId),
     Observe(ObserveSelection),
 }
-impl datomic::Datomic for Request {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        if let Some(headed) = datomic::PortionViewing::headed(portion)
-            && headed.head.as_ref() == stringify!(Lock)
-            && headed.separator == protos::Separator::Period
-        {
-            return Ok(Self::Lock(<LockRequest as datomic::Datomic>::embody(
-                &headed.body,
-            )?));
-        }
-        if let Some(headed) = datomic::PortionViewing::headed(portion)
-            && headed.head.as_ref() == stringify!(Release)
-            && headed.separator == protos::Separator::Period
-        {
-            return Ok(Self::Release(<LockId as datomic::Datomic>::embody(
-                &headed.body,
-            )?));
-        }
-        if let Some(headed) = datomic::PortionViewing::headed(portion)
-            && headed.head.as_ref() == stringify!(Observe)
-            && headed.separator == protos::Separator::Period
-        {
-            return Ok(Self::Observe(
-                <ObserveSelection as datomic::Datomic>::embody(&headed.body)?,
-            ));
-        }
-        Err(datomic::PortionViewing::fault(
-            portion,
-            datomic::FaultProblem::Shape,
-        ))
-    }
-    fn portion(&self) -> protos::Portion {
-        match self {
-            Self::Lock(value) => datomic::PortionBuilding::headed(
-                stringify!(Lock),
-                protos::Separator::Period,
-                <LockRequest as datomic::Datomic>::portion(value),
-            ),
-            Self::Release(value) => datomic::PortionBuilding::headed(
-                stringify!(Release),
-                protos::Separator::Period,
-                <LockId as datomic::Datomic>::portion(value),
-            ),
-            Self::Observe(value) => datomic::PortionBuilding::headed(
-                stringify!(Observe),
-                protos::Separator::Period,
-                <ObserveSelection as datomic::Datomic>::portion(value),
-            ),
-        }
-    }
-}
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Reply {
     Locked(Lock),
     Released(Lock),
     Observed(Observation),
-}
-impl datomic::Datomic for Reply {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        if let Some(headed) = datomic::PortionViewing::headed(portion)
-            && headed.head.as_ref() == stringify!(Locked)
-            && headed.separator == protos::Separator::Period
-        {
-            return Ok(Self::Locked(<Lock as datomic::Datomic>::embody(
-                &headed.body,
-            )?));
-        }
-        if let Some(headed) = datomic::PortionViewing::headed(portion)
-            && headed.head.as_ref() == stringify!(Released)
-            && headed.separator == protos::Separator::Period
-        {
-            return Ok(Self::Released(<Lock as datomic::Datomic>::embody(
-                &headed.body,
-            )?));
-        }
-        if let Some(headed) = datomic::PortionViewing::headed(portion)
-            && headed.head.as_ref() == stringify!(Observed)
-            && headed.separator == protos::Separator::Period
-        {
-            return Ok(Self::Observed(<Observation as datomic::Datomic>::embody(
-                &headed.body,
-            )?));
-        }
-        Err(datomic::PortionViewing::fault(
-            portion,
-            datomic::FaultProblem::Shape,
-        ))
-    }
-    fn portion(&self) -> protos::Portion {
-        match self {
-            Self::Locked(value) => datomic::PortionBuilding::headed(
-                stringify!(Locked),
-                protos::Separator::Period,
-                <Lock as datomic::Datomic>::portion(value),
-            ),
-            Self::Released(value) => datomic::PortionBuilding::headed(
-                stringify!(Released),
-                protos::Separator::Period,
-                <Lock as datomic::Datomic>::portion(value),
-            ),
-            Self::Observed(value) => datomic::PortionBuilding::headed(
-                stringify!(Observed),
-                protos::Separator::Period,
-                <Observation as datomic::Datomic>::portion(value),
-            ),
-        }
-    }
-}
-#[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub enum Refusal {
     LockRejected(LockRejection),
     ReleaseRejected(ReleaseRejection),
 }
-impl datomic::Datomic for Refusal {
-    fn embody(portion: &protos::Portion) -> std::result::Result<Self, datomic::Fault> {
-        if let Some(headed) = datomic::PortionViewing::headed(portion)
-            && headed.head.as_ref() == stringify!(LockRejected)
-            && headed.separator == protos::Separator::Period
-        {
-            return Ok(Self::LockRejected(
-                <LockRejection as datomic::Datomic>::embody(&headed.body)?,
-            ));
-        }
-        if let Some(headed) = datomic::PortionViewing::headed(portion)
-            && headed.head.as_ref() == stringify!(ReleaseRejected)
-            && headed.separator == protos::Separator::Period
-        {
-            return Ok(Self::ReleaseRejected(
-                <ReleaseRejection as datomic::Datomic>::embody(&headed.body)?,
-            ));
-        }
-        Err(datomic::PortionViewing::fault(
-            portion,
-            datomic::FaultProblem::Shape,
-        ))
-    }
-    fn portion(&self) -> protos::Portion {
-        match self {
-            Self::LockRejected(value) => datomic::PortionBuilding::headed(
-                stringify!(LockRejected),
-                protos::Separator::Period,
-                <LockRejection as datomic::Datomic>::portion(value),
-            ),
-            Self::ReleaseRejected(value) => datomic::PortionBuilding::headed(
-                stringify!(ReleaseRejected),
-                protos::Separator::Period,
-                <ReleaseRejection as datomic::Datomic>::portion(value),
-            ),
-        }
-    }
-}
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub enum FrameBody {
+pub enum Body {
     Request(Request),
     Reply(Reply),
     Refusal(Refusal),
 }
+
 #[derive(Archive, RkyvSerialize, RkyvDeserialize, Clone, Debug, PartialEq, Eq)]
-pub struct Frame {
-    pub channel_contract_id: ChannelContractId,
-    pub channel_wire_revision: ChannelWireRevision,
-    pub protocol_version: ProtocolVersion,
-    pub body: FrameBody,
+pub struct Frame(pub Version, pub Body);
+
+// ===========================================================================
+// Datomic impls for domain types
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// LockRequest: struct (Text, Text, Vec<Text>, Text)
+// ---------------------------------------------------------------------------
+
+impl datomic::Datomic for LockRequest {
+    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        let datomic::Datom::Struct(fields) = datom else {
+            return Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Shape(datomic::Expected::Struct, datom),
+            ));
+        };
+        if fields.len() != 4 {
+            return Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Arity(4, fields.len() as i64),
+            ));
+        }
+        let mut iter = fields.into_iter();
+        Ok(Self(
+            <protos::Text as datomic::Datomic>::incorporate(iter.next().unwrap())
+                .map_err(|f| prepend_fault(f, 0))?,
+            <protos::Text as datomic::Datomic>::incorporate(iter.next().unwrap())
+                .map_err(|f| prepend_fault(f, 1))?,
+            <Vec<protos::Text> as datomic::Datomic>::incorporate(iter.next().unwrap())
+                .map_err(|f| prepend_fault(f, 2))?,
+            <protos::Text as datomic::Datomic>::incorporate(iter.next().unwrap())
+                .map_err(|f| prepend_fault(f, 3))?,
+        ))
+    }
+
+    fn datomize(&self) -> datomic::Datom {
+        datomic::Datom::Struct(vec![
+            datomic::Datomic::datomize(&self.0),
+            datomic::Datomic::datomize(&self.1),
+            datomic::Datomic::datomize(&self.2),
+            datomic::Datomic::datomize(&self.3),
+        ])
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Lock: struct (i64, Text, Text, Vec<Text>, Text)
+// ---------------------------------------------------------------------------
+
+impl datomic::Datomic for Lock {
+    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        let datomic::Datom::Struct(fields) = datom else {
+            return Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Shape(datomic::Expected::Struct, datom),
+            ));
+        };
+        if fields.len() != 5 {
+            return Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Arity(5, fields.len() as i64),
+            ));
+        }
+        let mut iter = fields.into_iter();
+        Ok(Self(
+            <i64 as datomic::Datomic>::incorporate(iter.next().unwrap())
+                .map_err(|f| prepend_fault(f, 0))?,
+            <protos::Text as datomic::Datomic>::incorporate(iter.next().unwrap())
+                .map_err(|f| prepend_fault(f, 1))?,
+            <protos::Text as datomic::Datomic>::incorporate(iter.next().unwrap())
+                .map_err(|f| prepend_fault(f, 2))?,
+            <Vec<protos::Text> as datomic::Datomic>::incorporate(iter.next().unwrap())
+                .map_err(|f| prepend_fault(f, 3))?,
+            <protos::Text as datomic::Datomic>::incorporate(iter.next().unwrap())
+                .map_err(|f| prepend_fault(f, 4))?,
+        ))
+    }
+
+    fn datomize(&self) -> datomic::Datom {
+        datomic::Datom::Struct(vec![
+            datomic::Datomic::datomize(&self.0),
+            datomic::Datomic::datomize(&self.1),
+            datomic::Datomic::datomize(&self.2),
+            datomic::Datomic::datomize(&self.3),
+            datomic::Datomic::datomize(&self.4),
+        ])
+    }
+}
+
+// ---------------------------------------------------------------------------
+// LockOverlap: struct (Text, Lock)
+// ---------------------------------------------------------------------------
+
+impl datomic::Datomic for LockOverlap {
+    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        let datomic::Datom::Struct(fields) = datom else {
+            return Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Shape(datomic::Expected::Struct, datom),
+            ));
+        };
+        if fields.len() != 2 {
+            return Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Arity(2, fields.len() as i64),
+            ));
+        }
+        let mut iter = fields.into_iter();
+        Ok(Self(
+            <protos::Text as datomic::Datomic>::incorporate(iter.next().unwrap())
+                .map_err(|f| prepend_fault(f, 0))?,
+            <Lock as datomic::Datomic>::incorporate(iter.next().unwrap())
+                .map_err(|f| prepend_fault(f, 1))?,
+        ))
+    }
+
+    fn datomize(&self) -> datomic::Datom {
+        datomic::Datom::Struct(vec![
+            datomic::Datomic::datomize(&self.0),
+            datomic::Datomic::datomize(&self.1),
+        ])
+    }
+}
+
+// ---------------------------------------------------------------------------
+// LockRejection: enum { DuplicateName(Lock), PathOverlap(LockOverlap) }
+// ---------------------------------------------------------------------------
+
+impl datomic::Datomic for LockRejection {
+    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        let datomic::Datom::Variant(ref head, ref sep, ref body) = datom else {
+            return Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Shape(datomic::Expected::Variant, datom),
+            ));
+        };
+        if *sep != protos::Separator::Period {
+            return Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Separator(*sep),
+            ));
+        }
+        match head.as_str() {
+            "DuplicateName" => {
+                let inner = body
+                    .as_ref()
+                    .map(|b| *b.clone())
+                    .ok_or_else(|| {
+                        datomic::Fault::Corporal(
+                            vec![],
+                            datomic::Problem::Shape(
+                                datomic::Expected::Struct,
+                                datomic::Datom::Bare(head.clone()),
+                            ),
+                        )
+                    })?;
+                Ok(Self::DuplicateName(
+                    <Lock as datomic::Datomic>::incorporate(inner)?,
+                ))
+            }
+            "PathOverlap" => {
+                let inner = body
+                    .as_ref()
+                    .map(|b| *b.clone())
+                    .ok_or_else(|| {
+                        datomic::Fault::Corporal(
+                            vec![],
+                            datomic::Problem::Shape(
+                                datomic::Expected::Struct,
+                                datomic::Datom::Bare(head.clone()),
+                            ),
+                        )
+                    })?;
+                Ok(Self::PathOverlap(
+                    <LockOverlap as datomic::Datomic>::incorporate(inner)?,
+                ))
+            }
+            _ => Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::UnknownVariant(head.clone()),
+            )),
+        }
+    }
+
+    fn datomize(&self) -> datomic::Datom {
+        match self {
+            Self::DuplicateName(v) => datomic::Datom::Variant(
+                "DuplicateName".to_owned(),
+                protos::Separator::Period,
+                Some(Box::new(datomic::Datomic::datomize(v))),
+            ),
+            Self::PathOverlap(v) => datomic::Datom::Variant(
+                "PathOverlap".to_owned(),
+                protos::Separator::Period,
+                Some(Box::new(datomic::Datomic::datomize(v))),
+            ),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// ReleaseRejection: unit-variant enum { UnknownLockId }
+// ---------------------------------------------------------------------------
+
+impl datomic::Datomic for ReleaseRejection {
+    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match &datom {
+            datomic::Datom::Bare(s) if s == "UnknownLockId" => Ok(Self::UnknownLockId),
+            _ => Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Shape(datomic::Expected::Variant, datom),
+            )),
+        }
+    }
+
+    fn datomize(&self) -> datomic::Datom {
+        match self {
+            Self::UnknownLockId => datomic::Datom::Bare("UnknownLockId".to_owned()),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// ObserveSelection: unit-variant enum { Locks }
+// ---------------------------------------------------------------------------
+
+impl datomic::Datomic for ObserveSelection {
+    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match &datom {
+            datomic::Datom::Bare(s) if s == "Locks" => Ok(Self::Locks),
+            _ => Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Shape(datomic::Expected::Variant, datom),
+            )),
+        }
+    }
+
+    fn datomize(&self) -> datomic::Datom {
+        match self {
+            Self::Locks => datomic::Datom::Bare("Locks".to_owned()),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Observation: enum { Locks(Vec<Lock>) }
+// ---------------------------------------------------------------------------
+
+impl datomic::Datomic for Observation {
+    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        let datomic::Datom::Variant(ref head, ref sep, ref body) = datom else {
+            return Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Shape(datomic::Expected::Variant, datom),
+            ));
+        };
+        if *sep != protos::Separator::Period {
+            return Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Separator(*sep),
+            ));
+        }
+        match head.as_str() {
+            "Locks" => {
+                let inner = body
+                    .as_ref()
+                    .map(|b| *b.clone())
+                    .ok_or_else(|| {
+                        datomic::Fault::Corporal(
+                            vec![],
+                            datomic::Problem::Shape(
+                                datomic::Expected::Vector,
+                                datomic::Datom::Bare(head.clone()),
+                            ),
+                        )
+                    })?;
+                Ok(Self::Locks(
+                    <Vec<Lock> as datomic::Datomic>::incorporate(inner)?,
+                ))
+            }
+            _ => Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::UnknownVariant(head.clone()),
+            )),
+        }
+    }
+
+    fn datomize(&self) -> datomic::Datom {
+        match self {
+            Self::Locks(v) => datomic::Datom::Variant(
+                "Locks".to_owned(),
+                protos::Separator::Period,
+                Some(Box::new(datomic::Datomic::datomize(v))),
+            ),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Request: mixed enum { Lock(LockRequest), Release(LockId), Observe(ObserveSelection) }
+// ---------------------------------------------------------------------------
+
+impl datomic::Datomic for Request {
+    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match &datom {
+            datomic::Datom::Variant(head, sep, body) => {
+                if *sep != protos::Separator::Period {
+                    return Err(datomic::Fault::Corporal(
+                        vec![],
+                        datomic::Problem::Separator(*sep),
+                    ));
+                }
+                match head.as_str() {
+                    "Lock" => {
+                        let inner = body
+                            .as_ref()
+                            .map(|b| *b.clone())
+                            .ok_or_else(|| {
+                                datomic::Fault::Corporal(
+                                    vec![],
+                                    datomic::Problem::Shape(
+                                        datomic::Expected::Struct,
+                                        datomic::Datom::Bare(head.clone()),
+                                    ),
+                                )
+                            })?;
+                        Ok(Self::Lock(
+                            <LockRequest as datomic::Datomic>::incorporate(inner)?,
+                        ))
+                    }
+                    "Release" => {
+                        let inner = body
+                            .as_ref()
+                            .map(|b| *b.clone())
+                            .ok_or_else(|| {
+                                datomic::Fault::Corporal(
+                                    vec![],
+                                    datomic::Problem::Shape(
+                                        datomic::Expected::Bare,
+                                        datomic::Datom::Bare(head.clone()),
+                                    ),
+                                )
+                            })?;
+                        Ok(Self::Release(
+                            <i64 as datomic::Datomic>::incorporate(inner)?,
+                        ))
+                    }
+                    "Observe" => {
+                        let inner = body
+                            .as_ref()
+                            .map(|b| *b.clone())
+                            .ok_or_else(|| {
+                                datomic::Fault::Corporal(
+                                    vec![],
+                                    datomic::Problem::Shape(
+                                        datomic::Expected::Variant,
+                                        datomic::Datom::Bare(head.clone()),
+                                    ),
+                                )
+                            })?;
+                        Ok(Self::Observe(
+                            <ObserveSelection as datomic::Datomic>::incorporate(inner)?,
+                        ))
+                    }
+                    _ => Err(datomic::Fault::Corporal(
+                        vec![],
+                        datomic::Problem::UnknownVariant(head.clone()),
+                    )),
+                }
+            }
+            _ => Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Shape(datomic::Expected::Variant, datom),
+            )),
+        }
+    }
+
+    fn datomize(&self) -> datomic::Datom {
+        match self {
+            Self::Lock(v) => datomic::Datom::Variant(
+                "Lock".to_owned(),
+                protos::Separator::Period,
+                Some(Box::new(datomic::Datomic::datomize(v))),
+            ),
+            Self::Release(v) => datomic::Datom::Variant(
+                "Release".to_owned(),
+                protos::Separator::Period,
+                Some(Box::new(datomic::Datomic::datomize(v))),
+            ),
+            Self::Observe(v) => datomic::Datom::Variant(
+                "Observe".to_owned(),
+                protos::Separator::Period,
+                Some(Box::new(datomic::Datomic::datomize(v))),
+            ),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Reply: mixed enum
+// ---------------------------------------------------------------------------
+
+impl datomic::Datomic for Reply {
+    fn incorporate(datom: datomic::Datom) -> std::result::Result<Self, datomic::Fault> {
+        match &datom {
+            datomic::Datom::Variant(head, sep, body) => {
+                if *sep != protos::Separator::Period {
+                    return Err(datomic::Fault::Corporal(
+                        vec![],
+                        datomic::Problem::Separator(*sep),
+                    ));
+                }
+                match head.as_str() {
+                    "Locked" => {
+                        let inner = body
+                            .as_ref()
+                            .map(|b| *b.clone())
+                            .ok_or_else(|| {
+                                datomic::Fault::Corporal(
+                                    vec![],
+                                    datomic::Problem::Shape(
+                                        datomic::Expected::Struct,
+                                        datomic::Datom::Bare(head.clone()),
+                                    ),
+                                )
+                            })?;
+                        Ok(Self::Locked(
+                            <Lock as datomic::Datomic>::incorporate(inner)?,
+                        ))
+                    }
+                    "Released" => {
+                        let inner = body
+                            .as_ref()
+                            .map(|b| *b.clone())
+                            .ok_or_else(|| {
+                                datomic::Fault::Corporal(
+                                    vec![],
+                                    datomic::Problem::Shape(
+                                        datomic::Expected::Struct,
+                                        datomic::Datom::Bare(head.clone()),
+                                    ),
+                                )
+                            })?;
+                        Ok(Self::Released(
+                            <Lock as datomic::Datomic>::incorporate(inner)?,
+                        ))
+                    }
+                    "Observed" => {
+                        let inner = body
+                            .as_ref()
+                            .map(|b| *b.clone())
+                            .ok_or_else(|| {
+                                datomic::Fault::Corporal(
+                                    vec![],
+                                    datomic::Problem::Shape(
+                                        datomic::Expected::Variant,
+                                        datomic::Datom::Bare(head.clone()),
+                                    ),
+                                )
+                            })?;
+                        Ok(Self::Observed(
+                            <Observation as datomic::Datomic>::incorporate(inner)?,
+                        ))
+                    }
+                    "LockRejected" => {
+                        let inner = body
+                            .as_ref()
+                            .map(|b| *b.clone())
+                            .ok_or_else(|| {
+                                datomic::Fault::Corporal(
+                                    vec![],
+                                    datomic::Problem::Shape(
+                                        datomic::Expected::Variant,
+                                        datomic::Datom::Bare(head.clone()),
+                                    ),
+                                )
+                            })?;
+                        Ok(Self::LockRejected(
+                            <LockRejection as datomic::Datomic>::incorporate(inner)?,
+                        ))
+                    }
+                    "ReleaseRejected" => {
+                        let inner = body
+                            .as_ref()
+                            .map(|b| *b.clone())
+                            .ok_or_else(|| {
+                                datomic::Fault::Corporal(
+                                    vec![],
+                                    datomic::Problem::Shape(
+                                        datomic::Expected::Variant,
+                                        datomic::Datom::Bare(head.clone()),
+                                    ),
+                                )
+                            })?;
+                        Ok(Self::ReleaseRejected(
+                            <ReleaseRejection as datomic::Datomic>::incorporate(inner)?,
+                        ))
+                    }
+                    _ => Err(datomic::Fault::Corporal(
+                        vec![],
+                        datomic::Problem::UnknownVariant(head.clone()),
+                    )),
+                }
+            }
+            _ => Err(datomic::Fault::Corporal(
+                vec![],
+                datomic::Problem::Shape(datomic::Expected::Variant, datom),
+            )),
+        }
+    }
+
+    fn datomize(&self) -> datomic::Datom {
+        match self {
+            Self::Locked(v) => datomic::Datom::Variant(
+                "Locked".to_owned(),
+                protos::Separator::Period,
+                Some(Box::new(datomic::Datomic::datomize(v))),
+            ),
+            Self::Released(v) => datomic::Datom::Variant(
+                "Released".to_owned(),
+                protos::Separator::Period,
+                Some(Box::new(datomic::Datomic::datomize(v))),
+            ),
+            Self::Observed(v) => datomic::Datom::Variant(
+                "Observed".to_owned(),
+                protos::Separator::Period,
+                Some(Box::new(datomic::Datomic::datomize(v))),
+            ),
+            Self::LockRejected(v) => datomic::Datom::Variant(
+                "LockRejected".to_owned(),
+                protos::Separator::Period,
+                Some(Box::new(datomic::Datomic::datomize(v))),
+            ),
+            Self::ReleaseRejected(v) => datomic::Datom::Variant(
+                "ReleaseRejected".to_owned(),
+                protos::Separator::Period,
+                Some(Box::new(datomic::Datomic::datomize(v))),
+            ),
+        }
+    }
 }

@@ -1,116 +1,114 @@
-use datomic::Datomic;
-use protos::PortionText;
-use signal_orchestrate::{
-    CHANNEL_CONTRACT_ID, CHANNEL_WIRE_REVISION, ChannelContractId, ChannelWireRevision, FlowId,
-    Frame, FrameBody, FrameCodecError, INTERFACE_VERSION, Lock, LockId, LockName, LockOverlap,
-    LockPath, LockPaths, LockReason, LockRejection, LockRequest, Locks, Observation,
-    ObserveSelection, ProtocolVersion, Refusal, ReleaseRejection, Reply, Request, SignalFrameCodec,
-};
-
-fn name(value: &str) -> LockName {
-    LockName::try_from(value).expect("representable name")
-}
-
-fn flow(value: &str) -> FlowId {
-    FlowId::try_from(value).expect("representable flow")
-}
-
-fn path(value: &str) -> LockPath {
-    LockPath::try_from(value).expect("representable path")
-}
-
-fn reason(value: &str) -> LockReason {
-    LockReason::try_from(value).expect("representable reason")
-}
+use datomic::{DatomicActualizable, Datomic, Textualizable};
+use signal_orchestrate::*;
 
 fn lock() -> Lock {
-    Lock {
-        lock_id: LockId(17),
-        lock_name: name("orchestrate-interfaces"),
-        flow_id: flow("01a04a30"),
-        lock_paths: LockPaths(vec![path("/git/github.com/LiGoldragon/signal-orchestrate")]),
-        lock_reason: reason("generated-contract-witness"),
-    }
+    Lock(
+        17,
+        "orchestrate-interfaces".to_owned(),
+        "01a04a30".to_owned(),
+        vec!["/git/github.com/LiGoldragon/signal-orchestrate".to_owned()],
+        "generated-contract-witness".to_owned(),
+    )
 }
 
-fn assert_datom_root<Value>(value: Value, expected: &str)
+fn assert_datom_round_trip<T>(value: T, expected_text: &str)
 where
-    Value: Datomic + Clone + std::fmt::Debug + PartialEq,
+    T: Datomic + Textualizable + Clone + std::fmt::Debug + PartialEq,
 {
-    let portion = value.portion();
-    assert_eq!(portion.canonical_text().as_ref(), expected);
-    assert_eq!(
-        Value::embody(&portion).expect("Datomic root realizes"),
-        value
-    );
+    let text = value.textualize();
+    assert_eq!(text, expected_text);
+    let potential = protos::Potential::<T>::from(text);
+    let round_tripped: T = potential.actualize().expect("round-trip actualize");
+    assert_eq!(round_tripped, value);
 }
 
 #[test]
-fn all_ordinary_datom_roots_round_trip_with_lock_release_refusal_and_observation() {
+fn all_datom_roots_round_trip() {
     let lock = lock();
-    let request = Request::Lock(LockRequest {
-        lock_name: lock.lock_name.clone(),
-        flow_id: lock.flow_id.clone(),
-        lock_paths: lock.lock_paths.clone(),
-        lock_reason: lock.lock_reason.clone(),
-    });
-    assert_datom_root(
-        request,
-        "Lock.{orchestrate-interfaces 01a04a30 [/git/github.com/LiGoldragon/signal-orchestrate] generated-contract-witness}",
+
+    assert_datom_round_trip(
+        Request::Lock(LockRequest(
+            lock.1.clone(),
+            lock.2.clone(),
+            lock.3.clone(),
+            lock.4.clone(),
+        )),
+        "Lock.{ orchestrate-interfaces 01a04a30 [ /git/github.com/LiGoldragon/signal-orchestrate ] generated-contract-witness }",
     );
-    assert_datom_root(Request::Release(LockId(-42)), "Release.-42");
-    assert_datom_root(Request::Observe(ObserveSelection::Locks), "Observe.Locks");
-    assert_datom_root(
+
+    assert_datom_round_trip(Request::Release(-42), "Release.-42");
+
+    assert_datom_round_trip(
+        Request::Observe(ObserveSelection::Locks),
+        "Observe.Locks",
+    );
+
+    assert_datom_round_trip(
         Reply::Locked(lock.clone()),
-        "Locked.{17 orchestrate-interfaces 01a04a30 [/git/github.com/LiGoldragon/signal-orchestrate] generated-contract-witness}",
+        "Locked.{ 17 orchestrate-interfaces 01a04a30 [ /git/github.com/LiGoldragon/signal-orchestrate ] generated-contract-witness }",
     );
-    assert_datom_root(
+
+    assert_datom_round_trip(
         Reply::Released(lock.clone()),
-        "Released.{17 orchestrate-interfaces 01a04a30 [/git/github.com/LiGoldragon/signal-orchestrate] generated-contract-witness}",
+        "Released.{ 17 orchestrate-interfaces 01a04a30 [ /git/github.com/LiGoldragon/signal-orchestrate ] generated-contract-witness }",
     );
-    assert_datom_root(
-        Reply::Observed(Observation::Locks(Locks(vec![]))),
+
+    assert_datom_round_trip(
+        Reply::Observed(Observation::Locks(vec![])),
         "Observed.Locks.[]",
     );
-    assert_datom_root(
-        Refusal::LockRejected(LockRejection::DuplicateName(lock.clone())),
-        "LockRejected.DuplicateName.{17 orchestrate-interfaces 01a04a30 [/git/github.com/LiGoldragon/signal-orchestrate] generated-contract-witness}",
+
+    assert_datom_round_trip(
+        Reply::LockRejected(LockRejection::DuplicateName(lock.clone())),
+        "LockRejected.DuplicateName.{ 17 orchestrate-interfaces 01a04a30 [ /git/github.com/LiGoldragon/signal-orchestrate ] generated-contract-witness }",
     );
-    assert_datom_root(
-        Refusal::LockRejected(LockRejection::PathOverlap(LockOverlap {
-            lock_path: path("/git/github.com/LiGoldragon/overlap"),
+
+    assert_datom_round_trip(
+        Reply::LockRejected(LockRejection::PathOverlap(LockOverlap(
+            "/git/github.com/LiGoldragon/overlap".to_owned(),
             lock,
-        })),
-        "LockRejected.PathOverlap.{/git/github.com/LiGoldragon/overlap {17 orchestrate-interfaces 01a04a30 [/git/github.com/LiGoldragon/signal-orchestrate] generated-contract-witness}}",
+        ))),
+        "LockRejected.PathOverlap.{ /git/github.com/LiGoldragon/overlap { 17 orchestrate-interfaces 01a04a30 [ /git/github.com/LiGoldragon/signal-orchestrate ] generated-contract-witness } }",
     );
-    assert_datom_root(
-        Refusal::ReleaseRejected(ReleaseRejection::UnknownLockId),
+
+    assert_datom_round_trip(
+        Reply::ReleaseRejected(ReleaseRejection::UnknownLockId),
         "ReleaseRejected.UnknownLockId",
     );
 }
 
 #[test]
-fn rkyv_frame_is_length_prefixed_validated_and_bound_to_ordinary_constants() {
-    assert_eq!(CHANNEL_CONTRACT_ID, ChannelContractId(1));
-    assert_eq!(CHANNEL_WIRE_REVISION, ChannelWireRevision(6));
-    assert_eq!(INTERFACE_VERSION, ProtocolVersion::new(0, 3, 0));
-    let frame = Frame {
-        channel_contract_id: CHANNEL_CONTRACT_ID,
-        channel_wire_revision: CHANNEL_WIRE_REVISION,
-        protocol_version: INTERFACE_VERSION,
-        body: FrameBody::Request(Request::Observe(ObserveSelection::Locks)),
-    };
+fn spaced_reason_uses_curly_quotes() {
+    let request = Request::Lock(LockRequest(
+        "orchestrate-interfaces".to_owned(),
+        "01a04a30".to_owned(),
+        vec!["/git/github.com/LiGoldragon/signal-orchestrate".to_owned()],
+        "create isolated workspace for one authorized witness".to_owned(),
+    ));
+    assert_datom_round_trip(
+        request,
+        "Lock.{ orchestrate-interfaces 01a04a30 [ /git/github.com/LiGoldragon/signal-orchestrate ] \u{201C}create isolated workspace for one authorized witness\u{201D} }",
+    );
+}
+
+#[test]
+fn rkyv_frame_round_trips_with_version_validation() {
+    let frame = Frame(
+        SIGNAL_VERSION,
+        Body::Request(Request::Observe(ObserveSelection::Locks)),
+    );
     let bytes = frame.encode_length_prefixed().expect("rkyv frame encodes");
     assert_eq!(
-        Frame::decode_length_prefixed(&bytes).expect("rkyv frame validates"),
-        frame
+        Frame::decode_length_prefixed(&bytes).expect("rkyv frame decodes"),
+        frame,
     );
-    let wrong_channel = Frame {
-        channel_contract_id: ChannelContractId(99),
-        ..frame
-    };
+
+    let wrong_version = Frame(
+        Version(99, 0, 0),
+        Body::Request(Request::Observe(ObserveSelection::Locks)),
+    );
     assert!(matches!(
-        wrong_channel.encode_length_prefixed(),
-        Err(FrameCodecError::WrongChannelContract { .. })
+        wrong_version.encode_length_prefixed(),
+        Err(FrameCodecError::VersionMismatch { .. })
     ));
 }

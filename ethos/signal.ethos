@@ -1,30 +1,36 @@
-Interface.{0 3 0}
-Channel.{Orchestrate 1 6}
+; Orchestrate Lock signal — the ordinary wire contract.
+;
+; The Lock family: acquire, release, observe coordination locks.
+; Every lock carries an integer id, a name, a flow, absolute paths,
+; and a reason.
+;
+; Target Rust (each line is the generated type):
+;   pub type LockId = i64;
+;   pub struct LockRequest(pub protos::Text, pub protos::Text, pub Vec<protos::Text>, pub protos::Text);
+;   pub struct Lock(pub i64, pub protos::Text, pub protos::Text, pub Vec<protos::Text>, pub protos::Text);
+;   pub struct LockOverlap(pub protos::Text, pub Lock);
+;   pub enum LockRejection { DuplicateName(Lock), PathOverlap(LockOverlap) }
+;   pub enum ReleaseRejection { UnknownLockId }
+;   pub enum ObserveSelection { Locks }
+;   pub enum Observation { Locks(Vec<Lock>) }
+;   pub enum Request { Lock(LockRequest), Release(LockId), Observe(ObserveSelection) }
+;   pub enum Reply { Locked(Lock), Released(Lock), Observed(Observation),
+;                    LockRejected(LockRejection), ReleaseRejected(ReleaseRejection) }
+
+Signal.{ 1 0 0 }
+
 []
-{
-  [Lock.LockRequest Release.LockId Observe.ObserveSelection]
-  [Locked.Lock Released.Lock Observed.Observation]
-  [LockRejected.LockRejection ReleaseRejected.ReleaseRejection]
-  []
-  [
-    LockName.String
-    FlowId.String
-    LockPath.String
-    LockPaths.Vector<LockPath>
-    LockReason.String
-    LockRequest.{LockName FlowId LockPaths LockReason}
 
-    LockId.Integer
-    Lock.{LockId LockName FlowId LockPaths LockReason}
+[ Lock.LockRequest  Release.LockId  Observe.ObserveSelection ]
 
-    DuplicateName.Lock
-    LockOverlap.{LockPath Lock}
-    LockRejection.[DuplicateName.Lock PathOverlap.LockOverlap]
-    ReleaseRejection.[UnknownLockId]
+[ Locked.Lock  Released.Lock  Observed.Observation
+  LockRejected.LockRejection  ReleaseRejected.ReleaseRejection ]
 
-    ObserveSelection.[Locks]
-
-    Locks.Vector<Lock>
-    Observation.[Locks.Locks]
-  ]
-}
+[ LockId.Integer
+  LockRequest.{ Text Text Vector<Text> Text }
+  Lock.{ LockId Text Text Vector<Text> Text }
+  LockOverlap.{ Text Lock }
+  LockRejection.[ DuplicateName.Lock  PathOverlap.LockOverlap ]
+  ReleaseRejection.[ UnknownLockId ]
+  ObserveSelection.[ Locks ]
+  Observation.[ Locks.Vector<Lock> ] ]
