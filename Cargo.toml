@@ -14,11 +14,11 @@ path = "src/lib.rs"
 
 [dependencies]
 protos = { git = "https://github.com/LiGoldragon/protos", rev = "56c683ec8d1e" }
-datomic = { git = "https://github.com/LiGoldragon/datomic", rev = "768426ea5f34" }
+datomic = { git = "https://github.com/LiGoldragon/datomic", rev = "a27f9b8e7789" }
 rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 
 [dev-dependencies]
-ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "f2211ac6eae5d645a87a3c06a77e2b17387e3ad5" }
+ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "185f13a90354" }
 
 [lints.rust]
 unsafe_code = "forbid"
