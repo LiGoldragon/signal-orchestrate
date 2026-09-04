@@ -3,31 +3,24 @@
 ; The Lock family: acquire, release, observe coordination locks.
 ; Every lock carries an integer id, a name, a flow, absolute paths,
 ; and a reason.
-;
-; Target Rust:
-;   pub struct LockRequest(pub protos::Text, pub protos::Text, pub Vec<protos::Text>, pub protos::Text);
-;   pub struct Lock(pub protos::Integer, pub protos::Text, pub protos::Text, pub Vec<protos::Text>, pub protos::Text);
-;   pub struct LockOverlap(pub protos::Text, pub Lock);
-;   pub enum LockRejection { DuplicateName(Lock), PathOverlap(LockOverlap) }
-;   pub enum ReleaseRejection { UnknownLockId }
-;   pub enum ObserveSelection { Locks }
-;   pub enum Observation { Locks(Vec<Lock>) }
-;   pub enum Request { Lock(LockRequest), Release(protos::Integer), Observe(ObserveSelection) }
-;   pub enum Reply { Locked(Lock), Released(Lock), Observed(Observation),
-;                    LockRejected(LockRejection), ReleaseRejected(ReleaseRejection) }
 
 Signal.{ 1 0 0 }
 
 []
 
-[ Lock.LockRequest  Release.Integer  Observe.ObserveSelection ]
+[ Lock.LockRequest  Release.LockId  Observe.ObserveSelection ]
 
 [ Locked.Lock  Released.Lock  Observed.Observation
   LockRejected.LockRejection  ReleaseRejected.ReleaseRejection ]
 
-[ LockRequest.{ Text Text Vector<Text> Text }
-  Lock.{ Integer Text Text Vector<Text> Text }
-  LockOverlap.{ Text Lock }
+[ LockId.Integer
+  LockName.Text
+  FlowId.Text
+  LockPath.Text
+  LockReason.Text
+  LockRequest.{ LockName FlowId Vector<LockPath> LockReason }
+  Lock.{ LockId LockName FlowId Vector<LockPath> LockReason }
+  LockOverlap.{ LockPath Lock }
   LockRejection.[ DuplicateName.Lock  PathOverlap.LockOverlap ]
   ReleaseRejection.[ UnknownLockId ]
   ObserveSelection.[ Locks ]

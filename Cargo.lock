@@ -76,7 +76,7 @@ dependencies = [
 [[package]]
 name = "ethos-zero"
 version = "1.0.0"
-source = "git+https://github.com/LiGoldragon/ethos-zero?rev=b869598d13d220b8566170ed716017f42a840fad#b869598d13d220b8566170ed716017f42a840fad"
+source = "git+https://github.com/LiGoldragon/ethos-zero?rev=f2211ac6eae5d645a87a3c06a77e2b17387e3ad5#f2211ac6eae5d645a87a3c06a77e2b17387e3ad5"
 dependencies = [
  "datomic",
  "proc-macro2",
