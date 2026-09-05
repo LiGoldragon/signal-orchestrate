@@ -13,12 +13,12 @@ name = "signal_orchestrate"
 path = "src/lib.rs"
 
 [dependencies]
-protos = { git = "https://github.com/LiGoldragon/protos", rev = "48061367872b" }
-datomic = { git = "https://github.com/LiGoldragon/datomic", rev = "4712361c0194" }
+protos = { git = "https://github.com/LiGoldragon/protos", rev = "2d999f173334" }
+datom-codec = { git = "https://github.com/LiGoldragon/datom-codec", rev = "41a3c073d5c5cdcb3ebb1a5c842e8c068145fdb2" }
 rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 
 [dev-dependencies]
-ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "0f198968d208" }
+ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "a0c0548a73f1b6350d4267416b4109304888d67e" }
 
 [lints.rust]
 unsafe_code = "forbid"

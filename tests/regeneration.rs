@@ -8,7 +8,8 @@ use std::{
     process::{Command, Stdio},
 };
 
-use ethos_zero::{Actualizing, Emitting, Potential};
+use ethos_zero::{File, Generating};
+use protos::{Actualizable, Potential};
 
 fn project_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -41,10 +42,10 @@ fn committed_module_matches_ethos_zero_generation() {
     let committed = fs::read_to_string(root.join("src/generated/signal.rs"))
         .expect("read committed generated module");
 
-    let concept = Potential::from(source.as_str())
-        .actualize()
+    let concept = Potential::<File>::from(source.as_str())
+        .actualize(())
         .expect("actualize ethos source");
-    let emitted = concept.emit().expect("emit Rust from concept");
+    let emitted = concept.generate().expect("generate Rust from concept");
     let generated = format_rust(&emitted);
 
     assert_eq!(

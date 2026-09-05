@@ -1,9 +1,7 @@
-//! Generated ordinary Orchestrate Signal contract and hand-owned frame codec.
+//! Generated ordinary Orchestrate Signal contract.
 
-pub mod codec;
 pub mod generated;
 
-pub use codec::*;
 pub use generated::signal::*;
 
 /// The authored ethos source for this signal contract.

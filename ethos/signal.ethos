@@ -4,7 +4,7 @@
 ; Every lock carries an integer id, a name, a flow, absolute paths,
 ; and a reason.
 
-Signal.{ 1 0 0 }
+Signal
 
 []
 
