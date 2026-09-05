@@ -8,7 +8,7 @@ fn text(value: &str) -> Text {
 
 fn lock() -> Lock {
     Lock(
-        17.try_into().expect("fixture integer"),
+        17.into(),
         text("orchestrate-interfaces"),
         text("01a04a30"),
         vec![text("/git/github.com/LiGoldragon/signal-orchestrate")],
@@ -47,10 +47,7 @@ fn all_datom_roots_round_trip() {
         "Lock.{ orchestrate-interfaces 01a04a30 [ /git/github.com/LiGoldragon/signal-orchestrate ] generated-contract-witness }",
     );
 
-    assert_datom_round_trip(
-        Request::Release((-42).try_into().expect("fixture integer")),
-        "Release.-42",
-    );
+    assert_datom_round_trip(Request::Release((-42).into()), "Release.-42");
 
     assert_datom_round_trip(Request::Observe(ObserveSelection::Locks), "Observe.Locks");
 
