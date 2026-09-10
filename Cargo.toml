@@ -1,6 +1,6 @@
 [package]
 name = "signal-orchestrate"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 rust-version = "1.89"
 description = "Signal contract for Orchestrate Lock coordination."
@@ -8,9 +8,10 @@ publish = false
 build = "build.rs"
 [features]
 default = []
-datom = ["dep:datom-codec"]
+datom = ["dep:datom-codec", "dep:protos"]
 [dependencies]
 datom-codec = { git = "https://github.com/LiGoldragon/datom-codec", rev = "2dad91afce6237d772767bd4ab19f31276e6999e", optional = true }
+protos = { git = "https://github.com/LiGoldragon/protos", rev = "aac95b0d08a4c7eb7f73c8ea18309f9e2e89315f", optional = true }
 rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 [build-dependencies]
 ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "6e5ad400c2aed197c5daadf9a8bb6abf183b1439" }

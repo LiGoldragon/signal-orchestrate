@@ -36,6 +36,10 @@
             inherit cargoArtifacts;
             cargoTestExtraArgs = "--test generated_contract";
           });
+          test-datom-contract = craneLib.cargoTest (commonArgs // {
+            inherit cargoArtifacts;
+            cargoTestExtraArgs = "--features datom --test generated_contract";
+          });
           test-doc = craneLib.cargoTest (commonArgs // {
             inherit cargoArtifacts;
             cargoTestExtraArgs = "--doc";
@@ -45,6 +49,12 @@
             RUSTDOCFLAGS = "-D warnings";
           });
           fmt = craneLib.cargoFmt { inherit src; };
+          no-free-functions = pkgs.runCommand "signal-orchestrate-no-free-functions" { inherit src; } ''
+            ${builtins.readFile ./checks/no-free-functions.sh}
+          '';
+          no-inherent-methods = pkgs.runCommand "signal-orchestrate-no-inherent-methods" { inherit src; } ''
+            ${builtins.readFile ./checks/no-inherent-methods.sh}
+          '';
           clippy = craneLib.cargoClippy (commonArgs // {
             inherit cargoArtifacts;
             cargoClippyExtraArgs = "--all-targets -- -D warnings";
