@@ -1,6 +1,5 @@
 use signal_orchestrate::{
-    ByteViewable, LockRequest, Query, Receiving, ReleaseRejection, Response, Restorable, Signal,
-    Signalizable,
+    ByteViewable, LockRequest, Query, ReleaseRejection, Response, Restorable, Signal, Signalizable,
 };
 #[cfg(feature = "datom")]
 use signal_orchestrate::{Observation, ObserveSelection};
@@ -19,7 +18,7 @@ fn query_and_response_round_trip_as_portable_frames() {
     let query = lock_query();
     let query_frame = query.signalize().expect("signalize");
     assert!(!query_frame.bytes().is_empty());
-    let received = <Signal<Query> as Receiving<Query>>::receive(query_frame.bytes().to_vec());
+    let received = Signal::<Query>::from(query_frame.bytes().to_vec());
     assert_eq!(received.restore().expect("restore query"), query);
 
     let response = Response::ReleaseRejected(ReleaseRejection::UnknownLockId);

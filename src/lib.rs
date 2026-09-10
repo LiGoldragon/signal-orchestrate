@@ -21,11 +21,6 @@ pub trait ByteViewable {
     fn bytes(&self) -> &[u8];
 }
 
-/// Raw peer-wire bytes can become a typed Signal before restoration.
-pub trait Receiving<T> {
-    fn receive(bytes: Vec<u8>) -> Self;
-}
-
 /// A typed portable Signal can restore the contract value it carries.
 pub trait Restorable<T> {
     fn restore(&self) -> Result<T, rkyv::rancor::Error>;
@@ -49,8 +44,8 @@ impl Signalizable for Response {
     }
 }
 
-impl<T> Receiving<T> for Signal<T> {
-    fn receive(bytes: Vec<u8>) -> Self {
+impl<T> From<Vec<u8>> for Signal<T> {
+    fn from(bytes: Vec<u8>) -> Self {
         Self {
             bytes,
             target: PhantomData,
