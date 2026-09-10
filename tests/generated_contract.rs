@@ -1,4 +1,8 @@
-use signal_orchestrate::{LockRequest, Query, ReleaseRejection, Response, SignalArchive};
+use signal_orchestrate::{
+    ByteViewing, LockRequest, Query, ReleaseRejection, Response, Restoring, SignalFraming,
+};
+#[cfg(feature = "datom")]
+use signal_orchestrate::{Observation, ObserveSelection};
 
 fn lock_query() -> Query {
     Query::Lock(LockRequest {
@@ -12,13 +16,15 @@ fn lock_query() -> Query {
 #[test]
 fn query_and_response_round_trip_as_portable_frames() {
     let query = lock_query();
-    assert_eq!(
-        Query::restore(&query.archive()).expect("restore query"),
-        query
-    );
+    let query_frame = query.frame();
+    assert!(!query_frame.bytes().is_empty());
+    assert_eq!(query_frame.restore().expect("restore query"), query);
+
     let response = Response::ReleaseRejected(ReleaseRejection::UnknownLockId);
+    let response_frame = response.frame();
+    assert!(!response_frame.bytes().is_empty());
     assert_eq!(
-        Response::restore(&response.archive()).expect("restore response"),
+        response_frame.restore().expect("restore response"),
         response
     );
 }
@@ -41,4 +47,22 @@ fn query_round_trips_as_datom_text() {
         })
         .expect("restore datom query");
     assert_eq!(decoded, query);
+}
+
+#[cfg(feature = "datom")]
+#[test]
+fn observe_public_datom_shape_is_bare_selection_and_carried_observation() {
+    use datom_codec::Datomizable;
+    use protos::{Protosizable, Textualizable};
+
+    let selection = Query::Observe(ObserveSelection::Locks);
+    let observation = Response::Observed(Observation::Locks(vec![]));
+    assert_eq!(
+        selection.datomize(vec![]).protosize().textualize(),
+        "Observe.Locks"
+    );
+    assert_eq!(
+        observation.datomize(vec![]).protosize().textualize(),
+        "Observed.Locks.[]"
+    );
 }
