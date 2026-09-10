@@ -28,3 +28,10 @@ The generated Datom surface requires Datom 0.5.0
 source identity (`3b190f9fc2c2a074ceeb6ababfea89e3dd504996`). `LockId.Integer`
 is bare canonical decimal `i64`; `ObserveSelection.[Locks]` projects exactly
 as `Observe.Locks`. The old nested `LocksSelection`/`Current` form rejects.
+# 1.0.4 to 1.1.0
+
+The ordinary contract gains `Configure.OrchestrateNexusConfiguration` while
+the persistent meta-Configure marker is unset. Accepted and refused
+configuration replies report the typed lifecycle state. `Observe.Locks`
+remains the subscription request whose `Observed` response is emitted first
+on open and after every successful Lock mutation.

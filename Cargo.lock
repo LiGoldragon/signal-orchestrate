@@ -45,36 +45,17 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
 name = "datom-codec"
-version = "0.25.4"
-source = "git+https://github.com/LiGoldragon/datom-codec?rev=2dad91afce6237d772767bd4ab19f31276e6999e#2dad91afce6237d772767bd4ab19f31276e6999e"
+version = "0.25.6"
+source = "git+https://github.com/LiGoldragon/datom-codec?rev=f2cc06858d38a4028c928d33323a6d682e7c222f#f2cc06858d38a4028c928d33323a6d682e7c222f"
 dependencies = [
- "datom-codec-derive 0.25.4 (git+https://github.com/LiGoldragon/datom-codec?rev=2dad91afce6237d772767bd4ab19f31276e6999e)",
- "protos",
-]
-
-[[package]]
-name = "datom-codec"
-version = "0.25.4"
-source = "git+https://github.com/LiGoldragon/datom-codec?rev=35d26d822870356af9b04cacfec40d85600b541d#35d26d822870356af9b04cacfec40d85600b541d"
-dependencies = [
- "datom-codec-derive 0.25.4 (git+https://github.com/LiGoldragon/datom-codec?rev=35d26d822870356af9b04cacfec40d85600b541d)",
+ "datom-codec-derive",
  "protos",
 ]
 
 [[package]]
 name = "datom-codec-derive"
-version = "0.25.4"
-source = "git+https://github.com/LiGoldragon/datom-codec?rev=2dad91afce6237d772767bd4ab19f31276e6999e#2dad91afce6237d772767bd4ab19f31276e6999e"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
-name = "datom-codec-derive"
-version = "0.25.4"
-source = "git+https://github.com/LiGoldragon/datom-codec?rev=35d26d822870356af9b04cacfec40d85600b541d#35d26d822870356af9b04cacfec40d85600b541d"
+version = "0.25.6"
+source = "git+https://github.com/LiGoldragon/datom-codec?rev=f2cc06858d38a4028c928d33323a6d682e7c222f#f2cc06858d38a4028c928d33323a6d682e7c222f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -89,10 +70,10 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "ethos-zero"
-version = "6.1.0"
-source = "git+https://github.com/LiGoldragon/ethos-zero?rev=6e5ad400c2aed197c5daadf9a8bb6abf183b1439#6e5ad400c2aed197c5daadf9a8bb6abf183b1439"
+version = "6.1.6"
+source = "git+https://github.com/LiGoldragon/ethos-zero?rev=4695ee0c1f5d00dcf5cceba08f5fa00412b92184#4695ee0c1f5d00dcf5cceba08f5fa00412b92184"
 dependencies = [
- "datom-codec 0.25.4 (git+https://github.com/LiGoldragon/datom-codec?rev=35d26d822870356af9b04cacfec40d85600b541d)",
+ "datom-codec",
  "prettyplease",
  "proc-macro2",
  "protos",
@@ -205,8 +186,8 @@ dependencies = [
 
 [[package]]
 name = "protos"
-version = "0.29.0"
-source = "git+https://github.com/LiGoldragon/protos?rev=aac95b0d08a4c7eb7f73c8ea18309f9e2e89315f#aac95b0d08a4c7eb7f73c8ea18309f9e2e89315f"
+version = "0.29.1"
+source = "git+https://github.com/LiGoldragon/protos?rev=b543678cfc8609529cea7174eb4af8a64daa54ad#b543678cfc8609529cea7174eb4af8a64daa54ad"
 
 [[package]]
 name = "ptr_meta"
@@ -293,9 +274,9 @@ checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
 name = "signal-orchestrate"
-version = "1.0.4"
+version = "1.1.0"
 dependencies = [
- "datom-codec 0.25.4 (git+https://github.com/LiGoldragon/datom-codec?rev=2dad91afce6237d772767bd4ab19f31276e6999e)",
+ "datom-codec",
  "ethos-zero",
  "protos",
  "rkyv",
