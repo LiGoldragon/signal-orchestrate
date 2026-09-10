@@ -8,12 +8,21 @@ Signal
 
 []
 
-[ Lock.LockRequest  Release.LockId  Observe.ObserveSelection ]
+[ Configure.OrchestrateNexusConfiguration  Lock.LockRequest  Release.LockId  Observe.ObserveSelection ]
 
-[ Locked.Lock  Released.Lock  Observed.Observation
+[ ConfigurationAccepted.ConfigurationReceipt  ConfigurationRefused.ConfigurationRejection
+  Locked.Lock  Released.Lock  Observed.Observation
   LockRejected.LockRejection  ReleaseRejected.ReleaseRejection ]
 
-[ LockId.Integer
+[ ConfigurationPath.String
+  OrdinarySocketPath.ConfigurationPath
+  MetaSocketPath.ConfigurationPath
+  OrchestrateNexusConfiguration.{ OrdinarySocketPath MetaSocketPath }
+  MetaConfigureDone.Boolean
+  ConfigurationReceipt.{ OrchestrateNexusConfiguration MetaConfigureDone }
+  ConfigurationRejectionReason.[ MetaConfigureOccurred InvalidConfiguration ]
+  ConfigurationRejection.{ ConfigurationRejectionReason }
+  LockId.Integer
   LockName.String
   FlowId.String
   LockPath.String

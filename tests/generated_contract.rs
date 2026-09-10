@@ -1,5 +1,6 @@
 use signal_orchestrate::{
-    ByteViewable, LockRequest, Query, ReleaseRejection, Response, Restorable, Signal, Signalizable,
+    ByteViewable, ConfigurationReceipt, LockRequest, OrchestrateNexusConfiguration, Query,
+    ReleaseRejection, Response, Restorable, Signal, Signalizable,
 };
 #[cfg(feature = "datom")]
 use signal_orchestrate::{Observation, ObserveSelection};
@@ -11,6 +12,13 @@ fn lock_query() -> Query {
         lock_path_vector: vec!["/tmp/path".into()],
         lock_reason: "test".into(),
     })
+}
+
+fn configuration() -> OrchestrateNexusConfiguration {
+    OrchestrateNexusConfiguration {
+        ordinary_socket_path: "/tmp/orchestrate.sock".into(),
+        meta_socket_path: "/tmp/orchestrate-meta.sock".into(),
+    }
 }
 
 #[test]
@@ -28,6 +36,24 @@ fn query_and_response_round_trip_as_portable_frames() {
         response_frame.restore().expect("restore response"),
         response
     );
+}
+
+#[test]
+fn configuration_and_subscription_responses_use_portable_contract_values() {
+    let query = Query::Configure(configuration());
+    let received = Signal::<Query>::from(
+        query.signalize().expect("signalize Configure").bytes().to_vec(),
+    );
+    assert_eq!(received.restore().expect("restore Configure"), query);
+
+    let response = Response::ConfigurationAccepted(ConfigurationReceipt {
+        orchestrate_nexus_configuration: configuration(),
+        meta_configure_done: false,
+    });
+    let received = Signal::<Response>::from(
+        response.signalize().expect("signalize receipt").bytes().to_vec(),
+    );
+    assert_eq!(received.restore().expect("restore receipt"), response);
 }
 
 #[cfg(feature = "datom")]
