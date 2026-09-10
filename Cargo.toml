@@ -1,26 +1,17 @@
 [package]
-name         = "signal-orchestrate"
-version      = "0.20.1"
-edition      = "2024"
+name = "signal-orchestrate"
+version = "1.0.0"
+edition = "2024"
 rust-version = "1.89"
-license      = "MIT OR Apache-2.0"
-repository   = "https://github.com/LiGoldragon/signal-orchestrate"
-description  = "Signal contract for Orchestrate Lock coordination."
-publish      = false
-
-[lib]
-name = "signal_orchestrate"
-path = "src/lib.rs"
-
+description = "Signal contract for Orchestrate Lock coordination."
+publish = false
+build = "build.rs"
+[features]
+default = []
+datom = ["dep:datom-codec"]
 [dependencies]
-protos = { git = "https://github.com/LiGoldragon/protos", rev = "2d999f173334" }
-datom-codec = { git = "https://github.com/LiGoldragon/datom-codec", rev = "41a3c073d5c5cdcb3ebb1a5c842e8c068145fdb2" }
+datom-codec = { git = "https://github.com/LiGoldragon/datom-codec", rev = "2dad91afce6237d772767bd4ab19f31276e6999e", optional = true }
 rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
+[build-dependencies]
+ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "6e5ad400c2aed197c5daadf9a8bb6abf183b1439" }
 
-[dev-dependencies]
-ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "a0c0548a73f1b6350d4267416b4109304888d67e" }
-
-[lints.rust]
-unsafe_code = "forbid"
-unused      = { level = "warn", priority = -1 }
-dead_code   = "warn"

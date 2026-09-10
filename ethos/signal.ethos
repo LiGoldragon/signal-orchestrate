@@ -14,10 +14,10 @@ Signal
   LockRejected.LockRejection  ReleaseRejected.ReleaseRejection ]
 
 [ LockId.Integer
-  LockName.Text
-  FlowId.Text
-  LockPath.Text
-  LockReason.Text
+  LockName.String
+  FlowId.String
+  LockPath.String
+  LockReason.String
   LockRequest.{ LockName FlowId Vector<LockPath> LockReason }
   Lock.{ LockId LockName FlowId Vector<LockPath> LockReason }
   LockOverlap.{ LockPath Lock }
