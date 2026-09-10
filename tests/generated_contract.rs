@@ -1,5 +1,5 @@
 use signal_orchestrate::{
-    ByteViewing, LockRequest, Query, ReleaseRejection, Response, Restoring, SignalFraming,
+    ByteViewable, LockRequest, Query, ReleaseRejection, Response, Restorable, Signalizable,
 };
 #[cfg(feature = "datom")]
 use signal_orchestrate::{Observation, ObserveSelection};
@@ -16,12 +16,12 @@ fn lock_query() -> Query {
 #[test]
 fn query_and_response_round_trip_as_portable_frames() {
     let query = lock_query();
-    let query_frame = query.frame();
+    let query_frame = query.signalize().expect("signalize");
     assert!(!query_frame.bytes().is_empty());
     assert_eq!(query_frame.restore().expect("restore query"), query);
 
     let response = Response::ReleaseRejected(ReleaseRejection::UnknownLockId);
-    let response_frame = response.frame();
+    let response_frame = response.signalize().expect("signalize");
     assert!(!response_frame.bytes().is_empty());
     assert_eq!(
         response_frame.restore().expect("restore response"),

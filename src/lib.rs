@@ -6,68 +6,58 @@ use std::marker::PhantomData;
 pub const ETHOS: &str = include_str!("../ethos/signal.ethos");
 
 /// A portable rkyv Signal frame whose target contract is carried in its type.
-pub struct SignalFrame<T> {
+pub struct Signal<T> {
     bytes: Vec<u8>,
     target: PhantomData<fn() -> T>,
 }
 
 /// Data that can form a portable Signal frame.
-pub trait SignalFraming: Sized {
-    fn frame(&self) -> SignalFrame<Self>;
+pub trait Signalizable: Sized {
+    fn signalize(&self) -> Result<Signal<Self>, rkyv::rancor::Error>;
 }
 
 /// A frame exposes its peer-wire bytes for transport framing.
-pub trait ByteViewing {
+pub trait ByteViewable {
     fn bytes(&self) -> &[u8];
 }
 
 /// A typed portable frame can restore the contract value it carries.
-pub trait Restoring {
-    type Restored;
-
-    fn restore(&self) -> Result<Self::Restored, rkyv::rancor::Error>;
+pub trait Restorable<T> {
+    fn restore(&self) -> Result<T, rkyv::rancor::Error>;
 }
 
-impl SignalFraming for Query {
-    fn frame(&self) -> SignalFrame<Self> {
-        SignalFrame {
-            bytes: rkyv::to_bytes::<rkyv::rancor::Error>(self)
-                .expect("archive query")
-                .to_vec(),
+impl Signalizable for Query {
+    fn signalize(&self) -> Result<Signal<Self>, rkyv::rancor::Error> {
+        Ok(Signal {
+            bytes: rkyv::to_bytes::<rkyv::rancor::Error>(self)?.to_vec(),
             target: PhantomData,
-        }
+        })
     }
 }
 
-impl SignalFraming for Response {
-    fn frame(&self) -> SignalFrame<Self> {
-        SignalFrame {
-            bytes: rkyv::to_bytes::<rkyv::rancor::Error>(self)
-                .expect("archive response")
-                .to_vec(),
+impl Signalizable for Response {
+    fn signalize(&self) -> Result<Signal<Self>, rkyv::rancor::Error> {
+        Ok(Signal {
+            bytes: rkyv::to_bytes::<rkyv::rancor::Error>(self)?.to_vec(),
             target: PhantomData,
-        }
+        })
     }
 }
 
-impl<T> ByteViewing for SignalFrame<T> {
+impl<T> ByteViewable for Signal<T> {
     fn bytes(&self) -> &[u8] {
         &self.bytes
     }
 }
 
-impl Restoring for SignalFrame<Query> {
-    type Restored = Query;
-
-    fn restore(&self) -> Result<Self::Restored, rkyv::rancor::Error> {
+impl Restorable<Query> for Signal<Query> {
+    fn restore(&self) -> Result<Query, rkyv::rancor::Error> {
         rkyv::from_bytes(self.bytes())
     }
 }
 
-impl Restoring for SignalFrame<Response> {
-    type Restored = Response;
-
-    fn restore(&self) -> Result<Self::Restored, rkyv::rancor::Error> {
+impl Restorable<Response> for Signal<Response> {
+    fn restore(&self) -> Result<Response, rkyv::rancor::Error> {
         rkyv::from_bytes(self.bytes())
     }
 }
