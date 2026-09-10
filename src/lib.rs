@@ -21,7 +21,12 @@ pub trait ByteViewable {
     fn bytes(&self) -> &[u8];
 }
 
-/// A typed portable frame can restore the contract value it carries.
+/// Raw peer-wire bytes can become a typed Signal before restoration.
+pub trait Receiving<T> {
+    fn receive(bytes: Vec<u8>) -> Self;
+}
+
+/// A typed portable Signal can restore the contract value it carries.
 pub trait Restorable<T> {
     fn restore(&self) -> Result<T, rkyv::rancor::Error>;
 }
@@ -41,6 +46,15 @@ impl Signalizable for Response {
             bytes: rkyv::to_bytes::<rkyv::rancor::Error>(self)?.to_vec(),
             target: PhantomData,
         })
+    }
+}
+
+impl<T> Receiving<T> for Signal<T> {
+    fn receive(bytes: Vec<u8>) -> Self {
+        Self {
+            bytes,
+            target: PhantomData,
+        }
     }
 }
 
