@@ -4,12 +4,27 @@
 ; Every lock carries an integer id, a name, a flow, absolute paths,
 ; and a reason.
 ;
-; Observe opens a subscription rather than answering once. The Nexus
-; writes one Observed frame carrying the state on open and one more
-; for every later change, on the same connection, until the peer
-; closes it. The subscription is the connection, so there is no token
-; and no Unwatch: a peer that stops reading has unsubscribed. Every
-; other query is answered with exactly one frame.
+; The connection carries signal's exchange layer. A peer greets once,
+; settling this contract by the digest of this file; after that every
+; query opens an exchange the peer names, and every answer names the
+; exchange it belongs to.
+;
+; Observe opens an exchange that goes on answering rather than one
+; that ends: the first Observed frame carries the state on open and
+; one more follows for every later change, until the peer abandons
+; the exchange or closes the connection. Nothing on the wire says
+; which queries stream — this text does, and both sides read it.
+;
+; The obligation that shape places on this contract: the first
+; Observed frame is sent even when there are no Locks, because a peer
+; that must tell an empty state from a state not yet sent has only
+; position to tell them apart. Observed.Locks.[] is that frame.
+;
+; A subscriber the Nexus could not keep current is not silently
+; re-sent the whole state: its exchange ends with signal's
+; ExchangeFault.Lagged, and opening Observe again delivers the state
+; on open. Every other query is answered with exactly one frame and
+; its exchange then ends.
 ;
 ; Configure is accepted here only while the meta Configure has never
 ; been done. The receipt carries that fact, and once it is set this

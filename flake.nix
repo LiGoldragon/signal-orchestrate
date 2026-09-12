@@ -36,6 +36,14 @@
             inherit cargoArtifacts;
             cargoTestExtraArgs = "--test generated_contract";
           });
+          # The contract inside signal's exchange envelope: the greeting
+          # digest, the query on the exchange it opens, the state on open as
+          # an answer, and the Lagged ending. Its own check because the
+          # envelope is its own failure.
+          test-exchange-envelope = craneLib.cargoTest (commonArgs // {
+            inherit cargoArtifacts;
+            cargoTestExtraArgs = "--test exchange_envelope";
+          });
           test-datom-contract = craneLib.cargoTest (commonArgs // {
             inherit cargoArtifacts;
             cargoTestExtraArgs = "--features datom --test generated_contract";

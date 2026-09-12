@@ -1,5 +1,45 @@
 # Upgrades
 
+## 4.0.0 — signal 7.0.0's exchange layer
+
+This is a clean breaking wire deployment with no compatibility path. Every
+peer of the ordinary Orchestrate socket must be rebuilt from this revision.
+
+`signal` moves to 7.0.0 `66e7b153`, whose exchange layer now owns the
+protocol above the archive. A connection is greeted once with
+`Dispatch::Greet(Query::greeting())` and settled by
+`Delivery::Greeted(HandshakeReceipt)`; after that a query travels as
+`Dispatch::Open(Opening { exchange, query })` and an answer as
+`Delivery::Answer(Answer { exchange, response })`. A bare `Query` archive on
+the socket is no longer a request and a bare `Response` archive is no longer
+a reply.
+
+`impl signal::Contracted for Query` is the one addition to this crate's own
+surface: it names `ETHOS` as the contract's source, so the digest of that file
+is the contract's identity. Because `ethos/signal.ethos` gained the paragraphs
+describing the exchange layer, the digest changed; that is the point of a
+digest, and a peer built against 3.0.2's source is refused with
+`ContractMismatch`.
+
+Two obligations the layer places on this contract, now written into its
+source. `Observe`'s first answer is sent even when no Lock is held, so a peer
+can tell an empty state from a state not yet sent. And a subscriber the Nexus
+could not keep current has its exchange ended with `ExchangeFault::Lagged`
+rather than being silently re-sent the whole observation; the recovery is to
+open `Observe` again.
+
+`Abandon(exchange)` retracts one subscription without closing the connection,
+which replaces "the connection is the subscription" as the only way to
+unsubscribe. Closing the connection still retracts every exchange on it.
+
+Producers repinned: protos 0.31.0 `1febca78`, datom-codec 0.31.0 `09e2a9d5`,
+ethos-zero 10.0.0 `4bf73cae`. Ethos-zero 10.0.0 changes the generated derive
+list — every root now derives `Eq` and `Hash` unconditionally and
+`datom_codec::Composing` replaces `datom_codec::Compositional` — so
+`src/generated/signal.rs` is regenerated. `Eq` is not incidental: `signal`'s
+`Dispatch<Q>` and `Delivery<R>` derive it, so a contract root that is not `Eq`
+cannot ride the envelope.
+
 ## 0.18.0 — Ethos-zero WireContract
 
 This is a clean breaking wire deployment. The contract now has interface
