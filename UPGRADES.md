@@ -61,3 +61,37 @@ signal = { git = "https://github.com/LiGoldragon/signal", rev = "626e407be520a7a
 The behavior is unchanged: the same rkyv bytes, the same validation on
 restore. `Signalizable` and `Restorable<T>` are blanket implementations now,
 so every contract type has them without the crate writing anything.
+
+---
+
+# 2.0.0 to 3.0.1 — what shipped, and the wire that did not move
+
+The released version is **3.0.1**, revision
+`c783b72706575451fe4416d1598b2adf9859d333`. There is no 3.0.0 entry above this
+one because 3.0.0 carried nothing this entry does not: it and the 3.0.1
+follow-up differ from 2.0.0 only in dependency revisions and in one comment.
+
+**The wire did not change.** `git diff 7408fb6 c783b72 -- src/` is empty:
+`Query`, `Response`, every payload type, every rkyv archive and the frame are
+byte-for-byte what 2.0.0 declared. The only change under `ethos/` is a comment
+recording that `Observe` opens a subscription and that ordinary `Configure` is
+open only while the meta `Configure` has never been done — both facts about the
+Nexus's behaviour, neither a change to the vocabulary. A consumer pinned at
+2.0.0 speaks to a Nexus built against 3.0.1 without changing a byte.
+
+**The number does not mean what semver says it means, and this is the record of
+that.** 3.0.x was chosen to match the number `signal` carried, not because
+anything here broke. The `nexus` skill says *"the crate's semver is the wire's
+semver, and consumers pin it"*; a version that mirrors a dependency's number
+breaks that rule, and it costs every consumer a migration it does not need.
+The numbers are not rewritten — they are pushed and pinned — so this entry is
+the correction. The next change to the vocabulary takes the next major for its
+own reason.
+
+**What a consumer of the `datom` feature must check.** The Datom projection is
+regenerated against protos `e8701521` (0.30.0), where an opaque string is
+bounded by guillemets, `«like this»`. The protos revision deployed alongside
+Orchestrate 0.30.0, `2d999f17`, bounded it with curly quotes, `“like this”`.
+Nothing in this crate's own text changed, but a client built at this pin
+refuses a curly-quoted string, and every text handed to one must use
+guillemets.
