@@ -1,6 +1,7 @@
+use signal::{ByteViewable, Restorable, Signal, Signalizable};
 use signal_orchestrate::{
-    ByteViewable, ConfigurationReceipt, LockRequest, OrchestrateNexusConfiguration, Query,
-    ReleaseRejection, Response, Restorable, Signal, Signalizable,
+    ConfigurationReceipt, LockRequest, OrchestrateNexusConfiguration, Query, ReleaseRejection,
+    Response,
 };
 #[cfg(feature = "datom")]
 use signal_orchestrate::{Observation, ObserveSelection};
@@ -42,7 +43,11 @@ fn query_and_response_round_trip_as_portable_frames() {
 fn configuration_and_subscription_responses_use_portable_contract_values() {
     let query = Query::Configure(configuration());
     let received = Signal::<Query>::from(
-        query.signalize().expect("signalize Configure").bytes().to_vec(),
+        query
+            .signalize()
+            .expect("signalize Configure")
+            .bytes()
+            .to_vec(),
     );
     assert_eq!(received.restore().expect("restore Configure"), query);
 
@@ -51,7 +56,11 @@ fn configuration_and_subscription_responses_use_portable_contract_values() {
         meta_configure_done: false,
     });
     let received = Signal::<Response>::from(
-        response.signalize().expect("signalize receipt").bytes().to_vec(),
+        response
+            .signalize()
+            .expect("signalize receipt")
+            .bytes()
+            .to_vec(),
     );
     assert_eq!(received.restore().expect("restore receipt"), response);
 }
