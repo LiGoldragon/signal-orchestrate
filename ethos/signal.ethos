@@ -3,6 +3,17 @@
 ; The Lock family: acquire, release, observe coordination locks.
 ; Every lock carries an integer id, a name, a flow, absolute paths,
 ; and a reason.
+;
+; Observe opens a subscription rather than answering once. The Nexus
+; writes one Observed frame carrying the state on open and one more
+; for every later change, on the same connection, until the peer
+; closes it. The subscription is the connection, so there is no token
+; and no Unwatch: a peer that stops reading has unsubscribed. Every
+; other query is answered with exactly one frame.
+;
+; Configure is accepted here only while the meta Configure has never
+; been done. The receipt carries that fact, and once it is set this
+; surface answers ConfigurationRefused.MetaConfigureOccurred.
 
 Signal
 
