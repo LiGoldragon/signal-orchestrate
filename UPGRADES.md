@@ -1,5 +1,21 @@
 # Upgrades
 
+## 5.0.0 — signal 8.0.0, protos and datom-codec 0.32.2, ethos-zero 16.0.0
+
+`signal` moves to 8.0.0 `f35460de`, `protos` and `datom-codec` to 0.32.2
+(`15b41da8`, `4dff16b4`), and the build reads `ethos/signal.ethos` with
+ethos-zero 16.0.0 (`c2653dd8`). The generated module and `ethos/signal.ethos`
+are byte-identical, so the contract digest and the archived layout are
+unchanged and a 4.0.0 peer is not refused by the greeting. What breaks is
+compile-time: under `datom` every type now implements datom-codec 0.32.2's
+`Datomizable` and `Composing`, and the crate rides signal 8.0.0's types.
+
+Deploy in one step, with no compatibility path: repin `signal-orchestrate`
+together with `signal` 8.0.0, `protos` and `datom-codec` 0.32.2 and
+`ethos-zero` 16.0.0, then rebuild. Consumers: meta-signal-orchestrate,
+orchestrate (its Nexus and both clients), orchestrate-test through
+orchestrate.
+
 ## 4.0.0 — signal 7.0.0's exchange layer
 
 This is a clean breaking wire deployment with no compatibility path. Every
