@@ -15,4 +15,4 @@ protos = { git = "https://github.com/LiGoldragon/protos", rev = "1febca7836bf8d5
 rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 signal = { git = "https://github.com/LiGoldragon/signal", rev = "66e7b153706696c2cfbb2abcf931a5e83aec91af", default-features = false }
 [build-dependencies]
-ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "4bf73cae8d4f5a2072c76a11cd2f00aa3fe9f8e3" }
+ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "cf7dd128bcaead69e03ce1c2e6ac20c0c19a6823" }

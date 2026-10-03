@@ -84,6 +84,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethos-zero"
+version = "13.0.0"
+source = "git+https://github.com/LiGoldragon/ethos-zero?rev=cf7dd128bcaead69e03ce1c2e6ac20c0c19a6823#cf7dd128bcaead69e03ce1c2e6ac20c0c19a6823"
+dependencies = [
+ "datom-codec",
+ "prettyplease",
+ "proc-macro2",
+ "protos",
+ "quote",
+ "rkyv",
+ "syn 3.0.5",
+]
+
+[[package]]
 name = "futures-core"
 version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -278,7 +292,7 @@ name = "signal"
 version = "7.0.0"
 source = "git+https://github.com/LiGoldragon/signal?rev=66e7b153706696c2cfbb2abcf931a5e83aec91af#66e7b153706696c2cfbb2abcf931a5e83aec91af"
 dependencies = [
- "ethos-zero",
+ "ethos-zero 10.0.0",
  "rkyv",
  "thiserror",
 ]
@@ -288,7 +302,7 @@ name = "signal-orchestrate"
 version = "4.0.0"
 dependencies = [
  "datom-codec",
- "ethos-zero",
+ "ethos-zero 13.0.0",
  "protos",
  "rkyv",
  "signal",

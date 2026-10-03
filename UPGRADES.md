@@ -33,7 +33,8 @@ which replaces "the connection is the subscription" as the only way to
 unsubscribe. Closing the connection still retracts every exchange on it.
 
 Producers repinned: protos 0.31.0 `1febca78`, datom-codec 0.31.0 `09e2a9d5`,
-ethos-zero 10.0.0 `4bf73cae`. Ethos-zero 10.0.0 changes the generated derive
+ethos-zero 13.0.0 `cf7dd128` (its generated output for this file is
+byte-identical to 10.0.0's). Ethos-zero 10.0.0 changed the generated derive
 list — every root now derives `Eq` and `Hash` unconditionally and
 `datom_codec::Composing` replaces `datom_codec::Compositional` — so
 `src/generated/signal.rs` is regenerated. `Eq` is not incidental: `signal`'s
