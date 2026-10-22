@@ -48,7 +48,7 @@ If your change adds a new request or reply variant, edit
   `orchestrate`.
 - The activity log retention policy — that's
   `orchestrate`.
-- Storage tables — those live in `orchestrate`'s SEMA engine integration.
-- Public Sema-operation mirrors — no `SemaObservation`, `signal-sema`,
+- Storage tables — those live in `orchestrate`'s MEMORY engine integration.
+- Public Memory-operation mirrors — no `MemoryObservation`, `signal-memory`,
   `Assert`, `Mutate`, `Retract`, `Match`, `Subscribe`, or `Validate`
   request roots belong in this contract.
