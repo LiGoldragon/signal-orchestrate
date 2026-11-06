@@ -13,13 +13,16 @@ use signal::{
     FrameReading, FrameWriting, Greeted, Handshake, HandshakeReceipt, HandshakeRejection, Opening,
     Restorable, Signal, Signalizable,
 };
-use signal_orchestrate::{ETHOS, Lock, LockRequest, Observation, Query, Response};
+use signal_orchestrate::{
+    ETHOS, FlowId, Lock, LockId, LockName, LockPath, LockReason, LockRequest, Observation, Query,
+    Response,
+};
 
 /// FNV-1a over exactly the bytes of `ethos/signal.ethos`, taken as a signed
 /// 64-bit integer and computed in Python from the published algorithm. It
 /// changes when and only when the authored contract changes, which is what a
 /// contract digest is for.
-const ORDINARY_DIGEST: ContractDigest = 8_912_638_139_974_146_909;
+const ORDINARY_DIGEST: ContractDigest = ContractDigest(8_912_638_139_974_146_909);
 
 /// A peer built from another source: the same envelope, a different contract.
 struct OtherContract;
@@ -59,11 +62,13 @@ trait Holds {
 impl Holds for Lock {
     fn held(name: &str) -> Self {
         Self {
-            lock_id: 7,
-            lock_name: name.to_owned(),
-            flow_id: "f6db8d".to_owned(),
-            lock_path_vector: vec!["/git/github.com/LiGoldragon/orchestrate".to_owned()],
-            lock_reason: "ExchangeEnvelope".to_owned(),
+            lock_id: LockId(7),
+            lock_name: LockName(name.to_owned()),
+            flow_id: FlowId("f6db8d".to_owned()),
+            lock_path_vector: vec![LockPath(
+                "/git/github.com/LiGoldragon/orchestrate".to_owned(),
+            )],
+            lock_reason: LockReason("ExchangeEnvelope".to_owned()),
         }
     }
 }
@@ -75,10 +80,12 @@ trait Requests {
 impl Requests for LockRequest {
     fn requested(name: &str) -> Self {
         Self {
-            lock_name: name.to_owned(),
-            flow_id: "f6db8d".to_owned(),
-            lock_path_vector: vec!["/git/github.com/LiGoldragon/orchestrate".to_owned()],
-            lock_reason: "ExchangeEnvelope".to_owned(),
+            lock_name: LockName(name.to_owned()),
+            flow_id: FlowId("f6db8d".to_owned()),
+            lock_path_vector: vec![LockPath(
+                "/git/github.com/LiGoldragon/orchestrate".to_owned(),
+            )],
+            lock_reason: LockReason("ExchangeEnvelope".to_owned()),
         }
     }
 }
@@ -157,7 +164,7 @@ fn abandoning_a_subscription_crosses_the_wire_naming_only_its_exchange() {
 
 #[test]
 fn the_state_on_open_is_an_answer_even_when_no_lock_is_held() {
-    let exchange: ExchangeId = 1;
+    let exchange = ExchangeId(1);
     let opening = Delivery::Answer(Answer {
         exchange,
         response: Response::Observed(Observation::Locks(Vec::new())),
@@ -236,7 +243,7 @@ fn an_observation_and_a_one_answer_reply_are_told_apart_by_exchange_alone() {
 
 #[test]
 fn a_subscriber_the_answering_side_could_not_keep_current_ends_lagged() {
-    let watching: ExchangeId = 3;
+    let watching = ExchangeId(3);
     let lagged: Delivery<Response> =
         Delivery::End(Ending::faulted(watching, ExchangeFault::Lagged));
     let received = lagged.across();

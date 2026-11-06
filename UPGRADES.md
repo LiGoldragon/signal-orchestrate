@@ -1,5 +1,27 @@
 # Upgrades
 
+## 5.1.0 — signal 10.3.0, protos 0.33.0, datom-codec 0.33.0, ethos-zero 19.2.0
+
+`signal` moves to 10.3.0 (`7afb`), `protos` and `datom-codec` to 0.33.0 (`3c7a`,
+`eabe`), and the build reads `ethos/signal.ethos` with ethos-zero 19.2.0 (`5a5d`).
+`ethos/signal.ethos` is unchanged, so the contract digest is unchanged. The
+archived layout and the Datom text are unchanged too, which `tests/representation.rs`
+shows: a `Lock` and a `LockRequest` archive to the bytes, and write the Datom text,
+of a mirror built from plain scalars, and text written from the mirror reads as the
+contract value.
+
+What changes is the Rust API. Each scalar declaration is now a newtype struct in
+place of a type alias: `ConfigurationPath`, `OrdinarySocketPath`, `MetaSocketPath`,
+`MetaConfigureDone`, `LockId`, `LockName`, `FlowId`, `LockPath` and `LockReason`.
+A consumer wraps a scalar where it built one, `LockName("name".into())`, and reads
+the scalar from the field `.0`. The integer and `String` newtypes derive ordering,
+the integers also `Copy`, and `MetaConfigureDone` derives what the generator gives
+a `bool`. The greeting, in `signal` 10.3.0, wraps `ContractDigest` and `ExchangeId`
+in newtypes as well; a consumer wraps those where it builds them.
+
+Deploy in one step with `signal` 10.3.0, `protos` and `datom-codec` 0.33.0 and
+`meta-signal-orchestrate` 5.1.0, which repins this crate.
+
 ## 5.0.0 — signal 8.0.0, protos and datom-codec 0.32.2, ethos-zero 16.0.0
 
 `signal` moves to 8.0.0 `f35460de`, `protos` and `datom-codec` to 0.32.2

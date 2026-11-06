@@ -1,24 +1,25 @@
 use signal::{ByteViewable, Restorable, Signal, Signalizable};
 use signal_orchestrate::{
-    ConfigurationReceipt, LockRequest, OrchestrateNexusConfiguration, Query, ReleaseRejection,
-    Response,
+    ConfigurationPath, ConfigurationReceipt, FlowId, LockName, LockPath, LockReason, LockRequest,
+    MetaConfigureDone, MetaSocketPath, OrchestrateNexusConfiguration, OrdinarySocketPath, Query,
+    ReleaseRejection, Response,
 };
 #[cfg(feature = "datom")]
 use signal_orchestrate::{Observation, ObserveSelection};
 
 fn lock_query() -> Query {
     Query::Lock(LockRequest {
-        lock_name: "lock".into(),
-        flow_id: "flow".into(),
-        lock_path_vector: vec!["/tmp/path".into()],
-        lock_reason: "test".into(),
+        lock_name: LockName("lock".into()),
+        flow_id: FlowId("flow".into()),
+        lock_path_vector: vec![LockPath("/tmp/path".into())],
+        lock_reason: LockReason("test".into()),
     })
 }
 
 fn configuration() -> OrchestrateNexusConfiguration {
     OrchestrateNexusConfiguration {
-        ordinary_socket_path: "/tmp/orchestrate.sock".into(),
-        meta_socket_path: "/tmp/orchestrate-meta.sock".into(),
+        ordinary_socket_path: OrdinarySocketPath(ConfigurationPath("/tmp/orchestrate.sock".into())),
+        meta_socket_path: MetaSocketPath(ConfigurationPath("/tmp/orchestrate-meta.sock".into())),
     }
 }
 
@@ -53,7 +54,7 @@ fn configuration_and_subscription_responses_use_portable_contract_values() {
 
     let response = Response::ConfigurationAccepted(ConfigurationReceipt {
         orchestrate_nexus_configuration: configuration(),
-        meta_configure_done: false,
+        meta_configure_done: MetaConfigureDone(false),
     });
     let received = Signal::<Response>::from(
         response
@@ -77,7 +78,7 @@ fn query_round_trips_as_datom_text() {
     let decoded = pending
         .actualize(&mut Budget {
             remaining: 1_024,
-            reader: ReaderBudget { remaining: 1_024 },
+            reader: ReaderBudget::try_from(1_024usize).unwrap(),
             depth: 0,
             maximum_depth: 1_024,
         })
