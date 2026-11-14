@@ -22,7 +22,7 @@ use signal_orchestrate::{
 /// 64-bit integer and computed in Python from the published algorithm. It
 /// changes when and only when the authored contract changes, which is what a
 /// contract digest is for.
-const ORDINARY_DIGEST: ContractDigest = ContractDigest(5_340_723_165_906_021_863);
+const ORDINARY_DIGEST: ContractDigest = ContractDigest(-3_784_715_512_862_853_597);
 
 /// A peer built from another source: the same envelope, a different contract.
 struct OtherContract;
