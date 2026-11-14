@@ -29,6 +29,11 @@
 ; Configure is accepted here only while the meta Configure has never
 ; been done. The receipt carries that fact, and once it is set this
 ; surface answers ConfigurationRefused.MetaConfigureOccurred.
+;
+; Each input's own output is named in its past tense and stands at its
+; position: Configured, Locked, Released, Observed. The refusals follow.
+; Refused.Store answers any input the Nexus's store could not carry
+; out, a commit that failed among them, with the store's own words.
 
 Signal
 
@@ -36,8 +41,9 @@ Signal
 
 [ Configure.OrchestrateNexusConfiguration  Lock.LockRequest  Release.LockId  Observe.ObserveSelection ]
 
-[ ConfigurationAccepted.ConfigurationReceipt  Locked.HeldLock  Released.HeldLock  Observed.Observation
-  ConfigurationRefused.ConfigurationRejection  LockRejected.LockRejection  ReleaseRejected.ReleaseRejection ]
+[ Configured.ConfigurationReceipt  Locked.Lock  Released.Lock  Observed.Observation
+  ConfigurationRefused.ConfigurationRejection  LockRejected.LockRejection  ReleaseRejected.ReleaseRejection
+  Refused.Refusal ]
 
 [ ConfigurationPath.String
   OrdinarySocketPath.ConfigurationPath
@@ -53,9 +59,10 @@ Signal
   LockPath.String
   LockReason.String
   LockRequest.{ LockName FlowId Vector<LockPath> LockReason }
-  HeldLock.{ LockId LockName FlowId Vector<LockPath> LockReason }
-  LockOverlap.{ LockPath HeldLock }
-  LockRejection.[ DuplicateName.HeldLock  PathOverlap.LockOverlap ]
+  Lock.{ LockId LockName FlowId Vector<LockPath> LockReason }
+  LockOverlap.{ LockPath Lock }
+  LockRejection.[ DuplicateName.Lock  PathOverlap.LockOverlap ]
   ReleaseRejection.[ UnknownLockId ]
   ObserveSelection.[ Locks ]
-  Observation.[ Locks.Vector<HeldLock> ] ]
+  Observation.[ Locks.Vector<Lock> ]
+  Refusal.[ Store.String ] ]

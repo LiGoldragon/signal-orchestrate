@@ -1,26 +1,31 @@
 # Upgrades
 
-## 6.0.0 — ethos-zero 27: Input, Output, Answering; the held Lock is HeldLock
+## 6.0.0 — ethos-zero 28: Input, Output, Answering; Configured; Refused.Store
 
-The build reads `ethos/signal.ethos` with ethos-zero 27.0.0 (`8c95310`), which
+The build reads `ethos/signal.ethos` with ethos-zero 28.0.0 (`970459d`), which
 reads a Signal's first two sections as `Input` and `Output` and pairs them by
-position. Three changes follow, and the contract digest changes with the file
-(`4_020_875_787_160_854_601`), so every peer moves in one step.
+position. The contract digest changes with the file
+(`5_340_723_165_906_021_863`), so every peer moves in one step.
 
 - `Query` is `Input` and `Response` is `Output`. `impl signal::Contracted` is
   on `Input`.
 - `Output` is ordered so the n-th output answers the n-th input:
-  `ConfigurationAccepted`, `Locked`, `Released`, `Observed`, then the
-  refusals `ConfigurationRefused`, `LockRejected`, `ReleaseRejected`.
+  `Configured`, `Locked`, `Released`, `Observed`, then the refusals
+  `ConfigurationRefused`, `LockRejected`, `ReleaseRejected` and `Refused`.
   `ConfigurationRefused` moves from the second variant to the fifth, so the
-  archived tag of every output but `ConfigurationAccepted`, `LockRejected` and
-  `ReleaseRejected` changes.
-- The struct `Lock` is `HeldLock`. ethos-zero 27 reads a variant named as a
-  declared type as carrying that type, so an input `Lock` beside a type `Lock`
-  is refused; naming the held Lock `HeldLock` keeps the input `Lock`, and with
-  it the Datom text a CLI reads, `Lock.{ … }`. `LockOverlap.lock` is
-  `LockOverlap.held_lock`. A struct's name is not in its Datom text or its
-  archive, so `Locked.{ 1 … }` reads and writes as before.
+  archived tag of `Locked`, `Released`, `Observed` and `ConfigurationRefused`
+  changes; `Refused` is new, after every other output.
+- `ConfigurationAccepted` is `Configured`: each input's own output is named
+  in its past tense. Its Datom text is `Configured.{ … }`.
+- `Refused.Refusal`, with `Refusal.[ Store.String ]`, answers an input the
+  Nexus store could not carry out, a commit that failed among them, with the
+  store's own words. Before, such an input had no output and the Nexus ended
+  the connection.
+- The held Lock is the struct `Lock`, as before. ethos-zero 28 takes a
+  variant that declares its own payload, the input `Lock.LockRequest`, beside
+  a type of the same name, so the input keeps its Datom text `Lock.{ … }`.
+  A struct's name is not in its Datom text or its archive, so
+  `Locked.{ 1 … }` reads and writes as in 5.1.0.
 
 The file now also generates `Answering`, one capability per input, and
 `impl Answerable for Input`: a Nexus answers an input with

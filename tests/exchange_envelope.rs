@@ -14,15 +14,15 @@ use signal::{
     Restorable, Signal, Signalizable,
 };
 use signal_orchestrate::{
-    ETHOS, FlowId, HeldLock, Input, LockId, LockName, LockPath, LockReason, LockRequest,
-    Observation, Output,
+    ETHOS, FlowId, Input, Lock, LockId, LockName, LockPath, LockReason, LockRequest, Observation,
+    Output,
 };
 
 /// FNV-1a over exactly the bytes of `ethos/signal.ethos`, taken as a signed
 /// 64-bit integer and computed in Python from the published algorithm. It
 /// changes when and only when the authored contract changes, which is what a
 /// contract digest is for.
-const ORDINARY_DIGEST: ContractDigest = ContractDigest(4_020_875_787_160_854_601);
+const ORDINARY_DIGEST: ContractDigest = ContractDigest(5_340_723_165_906_021_863);
 
 /// A peer built from another source: the same envelope, a different contract.
 struct OtherContract;
@@ -59,7 +59,7 @@ trait Holds {
     fn held(name: &str) -> Self;
 }
 
-impl Holds for HeldLock {
+impl Holds for Lock {
     fn held(name: &str) -> Self {
         Self {
             lock_id: LockId(7),
@@ -183,7 +183,7 @@ fn an_observation_and_a_one_answer_reply_are_told_apart_by_exchange_alone() {
     let mut ledger = ExchangeLedger::greeted();
     let watching = ledger.open().expect("open the subscription");
     let acquiring = ledger.open().expect("open the Lock exchange");
-    let held = HeldLock::held("alpha");
+    let held = Lock::held("alpha");
 
     // Exactly the order the answering side writes them in: the state on open,
     // then the Lock's own answer, then the Lock exchange's end, then the change

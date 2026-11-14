@@ -2,7 +2,7 @@ use signal::{ByteViewable, Restorable, Signal, Signalizable};
 use signal_orchestrate::{
     ConfigurationPath, ConfigurationReceipt, FlowId, Input, LockName, LockPath, LockReason,
     LockRequest, MetaConfigureDone, MetaSocketPath, OrchestrateNexusConfiguration,
-    OrdinarySocketPath, Output, ReleaseRejection,
+    OrdinarySocketPath, Output, Refusal, ReleaseRejection,
 };
 #[cfg(feature = "datom")]
 use signal_orchestrate::{Observation, ObserveSelection};
@@ -52,7 +52,7 @@ fn configuration_and_subscription_responses_use_portable_contract_values() {
     );
     assert_eq!(received.restore().expect("restore Configure"), query);
 
-    let response = Output::ConfigurationAccepted(ConfigurationReceipt {
+    let response = Output::Configured(ConfigurationReceipt {
         orchestrate_nexus_configuration: configuration(),
         meta_configure_done: MetaConfigureDone(false),
     });
@@ -101,5 +101,42 @@ fn observe_public_datom_shape_is_bare_selection_and_carried_observation() {
     assert_eq!(
         observation.datomize(vec![]).protosize().textualize(),
         "Observed.Locks.[]"
+    );
+}
+
+#[test]
+fn a_store_refusal_is_an_output_of_the_contract() {
+    let refusal = Output::Refused(Refusal::Store("the commit failed".into()));
+    let received = Signal::<Output>::from(
+        refusal
+            .signalize()
+            .expect("signalize refusal")
+            .bytes()
+            .to_vec(),
+    );
+    assert_eq!(received.restore().expect("restore refusal"), refusal);
+}
+
+#[cfg(feature = "datom")]
+#[test]
+fn configured_and_refused_are_written_by_their_names() {
+    use datom_codec::Datomizable;
+    use protos::{Protosizable, Textualizable};
+
+    let configured = Output::Configured(ConfigurationReceipt {
+        orchestrate_nexus_configuration: configuration(),
+        meta_configure_done: MetaConfigureDone(false),
+    });
+    assert!(
+        configured
+            .datomize(vec![])
+            .protosize()
+            .textualize()
+            .starts_with("Configured.{ ")
+    );
+    let refused = Output::Refused(Refusal::Store("the commit failed".into()));
+    assert_eq!(
+        refused.datomize(vec![]).protosize().textualize(),
+        "Refused.Store.«the commit failed»"
     );
 }

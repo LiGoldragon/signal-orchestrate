@@ -15,19 +15,22 @@ either — both come from `signal`.
 `Input` is closed as `Configure(OrchestrateNexusConfiguration)`,
 `Lock(LockRequest)`, `Release(LockId)` and `Observe(ObserveSelection)`.
 
-`Output` is closed as `ConfigurationAccepted(ConfigurationReceipt)`,
-`Locked(HeldLock)`, `Released(HeldLock)`, `Observed(Observation)`,
-`ConfigurationRefused`, `LockRejected(LockRejection)` and
-`ReleaseRejected(ReleaseRejection)`. The sections pair by position: the n-th
-output answers the n-th input, and an output past the last input is a
-refusal. A refusal is an output variant of this contract, because a frame
-written on a socket must be readable by the peer on it.
+`Output` is closed as `Configured(ConfigurationReceipt)`, `Locked(Lock)`,
+`Released(Lock)`, `Observed(Observation)`, `ConfigurationRefused`,
+`LockRejected(LockRejection)`, `ReleaseRejected(ReleaseRejection)` and
+`Refused(Refusal)`. The sections pair by position: the n-th output answers
+the n-th input and is named in that input's past tense, and an output past
+the last input is a refusal. A refusal is an output variant of this
+contract, because a frame written on a socket must be readable by the peer
+on it. `Refusal::Store` is the Nexus store's own account of an input it
+could not carry out, a commit that failed among them: the error is
+vocabulary of this contract, so the dispatch's answer already carries it.
 
 The generator also writes `Answering`, one capability per input yielding its
 output's payload or any refusal, and `impl Answerable for Input`, the
 dispatch: a Nexus answers an input with `input.answer(&nexus)`.
 
-A `HeldLock` value is nominal and complete: `LockId`, `LockName`, `FlowId`, the
+A `Lock` value is nominal and complete: `LockId`, `LockName`, `FlowId`, the
 vector of `LockPath`, and `LockReason`. `LockId` is assigned by the Nexus and
 is the sole release target. `ObserveSelection` is a unit selection, textually
 `Observe.Locks`; its answer is `Observed(Observation::Locks(_))`, and the

@@ -6,15 +6,17 @@ projection of that file, held byte-identical by `build.rs`.
 
 - `Input::{Configure(OrchestrateNexusConfiguration), Lock(LockRequest),
   Release(LockId), Observe(ObserveSelection)}`
-- `Output::{ConfigurationAccepted(ConfigurationReceipt), Locked(HeldLock),
-  Released(HeldLock), Observed(Observation),
-  ConfigurationRefused(ConfigurationRejection), LockRejected(LockRejection),
-  ReleaseRejected(ReleaseRejection)}`: the n-th output answers the n-th input,
-  and the three past the last input are refusals.
+- `Output::{Configured(ConfigurationReceipt), Locked(Lock), Released(Lock),
+  Observed(Observation), ConfigurationRefused(ConfigurationRejection),
+  LockRejected(LockRejection), ReleaseRejected(ReleaseRejection),
+  Refused(Refusal)}`: the n-th output answers the n-th input, each named in
+  its input's past tense, and the four past the last input are refusals.
+  `Refused.Store` carries the Nexus store's words when it could not carry an
+  input out, a commit that failed among them.
 - `Answering`, one capability per input, and `impl Answerable for Input`, the
   dispatch a Nexus answers through: `input.answer(&nexus)`.
 
-A `HeldLock`, the Lock the Nexus holds, always carries `LockId`, `LockName`, `FlowId`, its vector of
+A `Lock`, the Lock the Nexus holds, always carries `LockId`, `LockName`, `FlowId`, its vector of
 `LockPath`, and `LockReason`. `Observe.Locks` is the canonical selection text
 and an empty observation is exactly `Observed.Locks.[]`.
 
