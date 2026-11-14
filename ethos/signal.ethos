@@ -34,6 +34,14 @@
 ; position: Configured, Locked, Released, Observed. The refusals follow.
 ; Refused.Store answers any input the Nexus's store could not carry
 ; out, a commit that failed among them, with the store's own words.
+;
+; A Lock request the Nexus will not take is LockRejected, naming why:
+; a name a held Lock already bears, a path a held Lock overlaps, or a
+; fault in the request's own paths. A Lock names at least one path
+; (NoPath); each is absolute (RelativePath), has no parent component
+; (ParentComponent) and no NUL character (NulCharacter), and no two
+; are the same path once normalized (DuplicatePath, which carries the
+; normalized path). Each path fault carries the path at fault.
 
 Signal
 
@@ -61,7 +69,9 @@ Signal
   LockRequest.{ LockName FlowId Vector<LockPath> LockReason }
   Lock.{ LockId LockName FlowId Vector<LockPath> LockReason }
   LockOverlap.{ LockPath Lock }
-  LockRejection.[ DuplicateName.Lock  PathOverlap.LockOverlap ]
+  LockRejection.[ DuplicateName.Lock  PathOverlap.LockOverlap
+                  NoPath  RelativePath.LockPath  ParentComponent.LockPath
+                  NulCharacter.LockPath  DuplicatePath.LockPath ]
   ReleaseRejection.[ UnknownLockId ]
   ObserveSelection.[ Locks ]
   Observation.[ Locks.Vector<Lock> ]

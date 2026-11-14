@@ -12,7 +12,9 @@ projection of that file, held byte-identical by `build.rs`.
   Refused(Refusal)}`: the n-th output answers the n-th input, each named in
   its input's past tense, and the four past the last input are refusals.
   `Refused.Store` carries the Nexus store's words when it could not carry an
-  input out, a commit that failed among them.
+  input out, a commit that failed among them. A Lock request whose own paths
+  are at fault is `LockRejected`: `NoPath`, `RelativePath`, `ParentComponent`,
+  `NulCharacter` or `DuplicatePath`, beside `DuplicateName` and `PathOverlap`.
 - `Answering`, one capability per input, and `impl Answerable for Input`, the
   dispatch a Nexus answers through: `input.answer(&nexus)`.
 

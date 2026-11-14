@@ -26,6 +26,12 @@ on it. `Refusal::Store` is the Nexus store's own account of an input it
 could not carry out, a commit that failed among them: the error is
 vocabulary of this contract, so the dispatch's answer already carries it.
 
+`LockRejection` names why a Lock request was not taken: `DuplicateName` and
+`PathOverlap` against a held Lock, and the faults of the request's own paths,
+`NoPath`, `RelativePath`, `ParentComponent`, `NulCharacter` and
+`DuplicatePath`, each path fault carrying the path at fault. A fault in the
+request is its rejection; `Refusal::Store` is only for a store that fails.
+
 The generator also writes `Answering`, one capability per input yielding its
 output's payload or any refusal, and `impl Answerable for Input`, the
 dispatch: a Nexus answers an input with `input.answer(&nexus)`.

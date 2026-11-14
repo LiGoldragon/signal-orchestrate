@@ -1,7 +1,7 @@
 use signal::{ByteViewable, Restorable, Signal, Signalizable};
 use signal_orchestrate::{
     ConfigurationPath, ConfigurationReceipt, FlowId, Input, LockName, LockPath, LockReason,
-    LockRequest, MetaConfigureDone, MetaSocketPath, OrchestrateNexusConfiguration,
+    LockRejection, LockRequest, MetaConfigureDone, MetaSocketPath, OrchestrateNexusConfiguration,
     OrdinarySocketPath, Output, Refusal, ReleaseRejection,
 };
 #[cfg(feature = "datom")]
@@ -138,5 +138,58 @@ fn configured_and_refused_are_written_by_their_names() {
     assert_eq!(
         refused.datomize(vec![]).protosize().textualize(),
         "Refused.Store.«the commit failed»"
+    );
+}
+
+/// Every fault a Lock request's paths can carry, each with the path at fault.
+fn path_rejections() -> Vec<LockRejection> {
+    vec![
+        LockRejection::NoPath,
+        LockRejection::RelativePath(LockPath("relative/path".into())),
+        LockRejection::ParentComponent(LockPath("/a/../b".into())),
+        LockRejection::NulCharacter(LockPath("/held\0phantom".into())),
+        LockRejection::DuplicatePath(LockPath("/a/b".into())),
+    ]
+}
+
+#[test]
+fn a_path_fault_is_a_lock_rejection_of_the_contract() {
+    for rejection in path_rejections() {
+        let rejected = Output::LockRejected(rejection);
+        let received = Signal::<Output>::from(
+            rejected
+                .signalize()
+                .expect("signalize rejection")
+                .bytes()
+                .to_vec(),
+        );
+        assert_eq!(received.restore().expect("restore rejection"), rejected);
+    }
+}
+
+#[cfg(feature = "datom")]
+#[test]
+fn a_path_fault_is_written_by_its_name() {
+    use datom_codec::Datomizable;
+    use protos::{Protosizable, Textualizable};
+
+    let written: Vec<String> = path_rejections()
+        .into_iter()
+        .filter(|rejection| !matches!(rejection, LockRejection::NulCharacter(_)))
+        .map(|rejection| {
+            Output::LockRejected(rejection)
+                .datomize(vec![])
+                .protosize()
+                .textualize()
+        })
+        .collect();
+    assert_eq!(
+        written,
+        [
+            "LockRejected.NoPath",
+            "LockRejected.RelativePath.relative/path",
+            "LockRejected.ParentComponent./a/../b",
+            "LockRejected.DuplicatePath./a/b",
+        ]
     );
 }

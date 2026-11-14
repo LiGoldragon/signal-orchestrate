@@ -1,11 +1,11 @@
 # Upgrades
 
-## 6.0.0 — ethos-zero 28: Input, Output, Answering; Configured; Refused.Store
+## 6.0.0 — ethos-zero 28: Input, Output, Answering; Configured; Refused.Store; path faults are Lock rejections
 
 The build reads `ethos/signal.ethos` with ethos-zero 28.0.0 (`970459d`), which
 reads a Signal's first two sections as `Input` and `Output` and pairs them by
 position. The contract digest changes with the file
-(`5_340_723_165_906_021_863`), so every peer moves in one step.
+(`-3_784_715_512_862_853_597`), so every peer moves in one step.
 
 - `Query` is `Input` and `Response` is `Output`. `impl signal::Contracted` is
   on `Input`.
@@ -21,6 +21,13 @@ position. The contract digest changes with the file
   Nexus store could not carry out, a commit that failed among them, with the
   store's own words. Before, such an input had no output and the Nexus ended
   the connection.
+- `LockRejection` gains the faults of a request's own paths, after
+  `DuplicateName` and `PathOverlap`, whose archived tags stay: `NoPath`,
+  `RelativePath.LockPath`, `ParentComponent.LockPath`,
+  `NulCharacter.LockPath` and `DuplicatePath.LockPath` (the path repeated
+  once normalized). Before, a Lock with such a path had no output and the
+  Nexus ended the connection; its Datom text is now, for one,
+  `LockRejected.RelativePath.relative/path`.
 - The held Lock is the struct `Lock`, as before. ethos-zero 28 takes a
   variant that declares its own payload, the input `Lock.LockRequest`, beside
   a type of the same name, so the input keeps its Datom text `Lock.{ … }`.

@@ -99,6 +99,11 @@ pub struct LockOverlap {
 pub enum LockRejection {
     DuplicateName(Lock),
     PathOverlap(LockOverlap),
+    NoPath,
+    RelativePath(LockPath),
+    ParentComponent(LockPath),
+    NulCharacter(LockPath),
+    DuplicatePath(LockPath),
 }
 #[rustfmt::skip]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
