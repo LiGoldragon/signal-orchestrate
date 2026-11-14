@@ -295,7 +295,9 @@ name = "signal"
 version = "11.0.0"
 source = "git+https://github.com/LiGoldragon/signal?rev=6d4eb74#6d4eb74a238ea4a6149bd12c42a8c06aec01b154"
 dependencies = [
+ "datom-codec",
  "ethos-zero 22.0.0",
+ "protos",
  "rkyv",
  "thiserror",
 ]

@@ -8,7 +8,7 @@ publish = false
 build = "build.rs"
 [features]
 default = []
-datom = ["dep:datom-codec", "dep:protos"]
+datom = ["dep:datom-codec", "dep:protos", "signal/datom"]
 [dependencies]
 datom-codec = { git = "https://github.com/LiGoldragon/datom-codec", rev = "09a0526", optional = true }
 protos = { git = "https://github.com/LiGoldragon/protos", rev = "c93b598", optional = true }
