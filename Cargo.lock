@@ -332,9 +332,9 @@ dependencies = [
 name = "signal-orchestrate"
 version = "6.0.0"
 dependencies = [
- "datom-codec 0.33.0",
+ "datom-codec 0.33.1",
  "ethos-zero 28.0.0",
- "protos 0.33.0 (git+https://github.com/LiGoldragon/protos?rev=3c7ade3)",
+ "protos 0.33.0 (git+https://github.com/LiGoldragon/protos?rev=c93b598)",
  "rkyv",
  "signal",
 ]

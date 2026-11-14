@@ -1088,12 +1088,12 @@ rec {
         dependencies = [
           {
             name = "datom-codec";
-            packageId = "datom-codec 0.33.0";
+            packageId = "datom-codec 0.33.1";
             optional = true;
           }
           {
             name = "protos";
-            packageId = "git+https://github.com/LiGoldragon/protos?rev=3c7ade3#0.33.0";
+            packageId = "git+https://github.com/LiGoldragon/protos?rev=c93b598#0.33.0";
             optional = true;
           }
           {
