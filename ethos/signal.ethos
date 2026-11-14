@@ -36,9 +36,8 @@ Signal
 
 [ Configure.OrchestrateNexusConfiguration  Lock.LockRequest  Release.LockId  Observe.ObserveSelection ]
 
-[ ConfigurationAccepted.ConfigurationReceipt  ConfigurationRefused.ConfigurationRejection
-  Locked.Lock  Released.Lock  Observed.Observation
-  LockRejected.LockRejection  ReleaseRejected.ReleaseRejection ]
+[ ConfigurationAccepted.ConfigurationReceipt  Locked.HeldLock  Released.HeldLock  Observed.Observation
+  ConfigurationRefused.ConfigurationRejection  LockRejected.LockRejection  ReleaseRejected.ReleaseRejection ]
 
 [ ConfigurationPath.String
   OrdinarySocketPath.ConfigurationPath
@@ -54,9 +53,9 @@ Signal
   LockPath.String
   LockReason.String
   LockRequest.{ LockName FlowId Vector<LockPath> LockReason }
-  Lock.{ LockId LockName FlowId Vector<LockPath> LockReason }
-  LockOverlap.{ LockPath Lock }
-  LockRejection.[ DuplicateName.Lock  PathOverlap.LockOverlap ]
+  HeldLock.{ LockId LockName FlowId Vector<LockPath> LockReason }
+  LockOverlap.{ LockPath HeldLock }
+  LockRejection.[ DuplicateName.HeldLock  PathOverlap.LockOverlap ]
   ReleaseRejection.[ UnknownLockId ]
   ObserveSelection.[ Locks ]
-  Observation.[ Locks.Vector<Lock> ] ]
+  Observation.[ Locks.Vector<HeldLock> ] ]

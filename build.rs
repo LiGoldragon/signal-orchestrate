@@ -13,6 +13,7 @@ fn main() {
         .unwrap_or_else(|_| panic!("generate Signal"));
     assert_eq!(
         generated,
-        std::fs::read_to_string(root.join("src/generated/signal.rs")).expect("generated")
+        std::fs::read_to_string(root.join("src/generated/signal.rs")).expect("generated"),
+        "src/generated/signal.rs is stale; regenerate it from ethos/signal.ethos"
     );
 }

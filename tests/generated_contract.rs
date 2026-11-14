@@ -1,14 +1,14 @@
 use signal::{ByteViewable, Restorable, Signal, Signalizable};
 use signal_orchestrate::{
-    ConfigurationPath, ConfigurationReceipt, FlowId, LockName, LockPath, LockReason, LockRequest,
-    MetaConfigureDone, MetaSocketPath, OrchestrateNexusConfiguration, OrdinarySocketPath, Query,
-    ReleaseRejection, Response,
+    ConfigurationPath, ConfigurationReceipt, FlowId, Input, LockName, LockPath, LockReason,
+    LockRequest, MetaConfigureDone, MetaSocketPath, OrchestrateNexusConfiguration,
+    OrdinarySocketPath, Output, ReleaseRejection,
 };
 #[cfg(feature = "datom")]
 use signal_orchestrate::{Observation, ObserveSelection};
 
-fn lock_query() -> Query {
-    Query::Lock(LockRequest {
+fn lock_query() -> Input {
+    Input::Lock(LockRequest {
         lock_name: LockName("lock".into()),
         flow_id: FlowId("flow".into()),
         lock_path_vector: vec![LockPath("/tmp/path".into())],
@@ -28,10 +28,10 @@ fn query_and_response_round_trip_as_portable_frames() {
     let query = lock_query();
     let query_frame = query.signalize().expect("signalize");
     assert!(!query_frame.bytes().is_empty());
-    let received = Signal::<Query>::from(query_frame.bytes().to_vec());
+    let received = Signal::<Input>::from(query_frame.bytes().to_vec());
     assert_eq!(received.restore().expect("restore query"), query);
 
-    let response = Response::ReleaseRejected(ReleaseRejection::UnknownLockId);
+    let response = Output::ReleaseRejected(ReleaseRejection::UnknownLockId);
     let response_frame = response.signalize().expect("signalize");
     assert!(!response_frame.bytes().is_empty());
     assert_eq!(
@@ -42,8 +42,8 @@ fn query_and_response_round_trip_as_portable_frames() {
 
 #[test]
 fn configuration_and_subscription_responses_use_portable_contract_values() {
-    let query = Query::Configure(configuration());
-    let received = Signal::<Query>::from(
+    let query = Input::Configure(configuration());
+    let received = Signal::<Input>::from(
         query
             .signalize()
             .expect("signalize Configure")
@@ -52,11 +52,11 @@ fn configuration_and_subscription_responses_use_portable_contract_values() {
     );
     assert_eq!(received.restore().expect("restore Configure"), query);
 
-    let response = Response::ConfigurationAccepted(ConfigurationReceipt {
+    let response = Output::ConfigurationAccepted(ConfigurationReceipt {
         orchestrate_nexus_configuration: configuration(),
         meta_configure_done: MetaConfigureDone(false),
     });
-    let received = Signal::<Response>::from(
+    let received = Signal::<Output>::from(
         response
             .signalize()
             .expect("signalize receipt")
@@ -74,7 +74,7 @@ fn query_round_trips_as_datom_text() {
 
     let query = lock_query();
     let rendered = query.clone().datomize(vec![]).protosize().textualize();
-    let mut pending = Potential::<Query>::from(rendered);
+    let mut pending = Potential::<Input>::from(rendered);
     let decoded = pending
         .actualize(&mut Budget {
             remaining: 1_024,
@@ -92,8 +92,8 @@ fn observe_public_datom_shape_is_bare_selection_and_carried_observation() {
     use datom_codec::Datomizable;
     use protos::{Protosizable, Textualizable};
 
-    let selection = Query::Observe(ObserveSelection::Locks);
-    let observation = Response::Observed(Observation::Locks(vec![]));
+    let selection = Input::Observe(ObserveSelection::Locks);
+    let observation = Output::Observed(Observation::Locks(vec![]));
     assert_eq!(
         selection.datomize(vec![]).protosize().textualize(),
         "Observe.Locks"

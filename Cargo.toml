@@ -1,6 +1,6 @@
 [package]
 name = "signal-orchestrate"
-version = "5.1.0"
+version = "6.0.0"
 edition = "2024"
 rust-version = "1.89"
 description = "Signal contract for Orchestrate Lock coordination."
@@ -15,4 +15,4 @@ protos = { git = "https://github.com/LiGoldragon/protos", rev = "3c7ade3", optio
 rkyv = { version = "0.8", default-features = false, features = ["std", "bytecheck", "little_endian", "pointer_width_32", "unaligned"] }
 signal = { git = "https://github.com/LiGoldragon/signal", rev = "7afb68b", default-features = false }
 [build-dependencies]
-ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "5a5daca" }
+ethos-zero = { git = "https://github.com/LiGoldragon/ethos-zero", rev = "8c95310" }

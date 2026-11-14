@@ -12,16 +12,22 @@ either — both come from `signal`.
 
 ## The roots
 
-`Query` is closed as `Configure(OrchestrateNexusConfiguration)`,
+`Input` is closed as `Configure(OrchestrateNexusConfiguration)`,
 `Lock(LockRequest)`, `Release(LockId)` and `Observe(ObserveSelection)`.
 
-`Response` is closed as `ConfigurationAccepted`, `ConfigurationRefused`,
-`Locked(Lock)`, `Released(Lock)`, `Observed(Observation)`,
-`LockRejected(LockRejection)` and `ReleaseRejected(ReleaseRejection)`. A
-refusal is a response variant of this contract, because a frame written on a
-socket must be readable by the peer on it.
+`Output` is closed as `ConfigurationAccepted(ConfigurationReceipt)`,
+`Locked(HeldLock)`, `Released(HeldLock)`, `Observed(Observation)`,
+`ConfigurationRefused`, `LockRejected(LockRejection)` and
+`ReleaseRejected(ReleaseRejection)`. The sections pair by position: the n-th
+output answers the n-th input, and an output past the last input is a
+refusal. A refusal is an output variant of this contract, because a frame
+written on a socket must be readable by the peer on it.
 
-A `Lock` value is nominal and complete: `LockId`, `LockName`, `FlowId`, the
+The generator also writes `Answering`, one capability per input yielding its
+output's payload or any refusal, and `impl Answerable for Input`, the
+dispatch: a Nexus answers an input with `input.answer(&nexus)`.
+
+A `HeldLock` value is nominal and complete: `LockId`, `LockName`, `FlowId`, the
 vector of `LockPath`, and `LockReason`. `LockId` is assigned by the Nexus and
 is the sole release target. `ObserveSelection` is a unit selection, textually
 `Observe.Locks`; its answer is `Observed(Observation::Locks(_))`, and the
@@ -29,15 +35,15 @@ empty state is exactly `Observed.Locks.[]`.
 
 ## Identity on the wire
 
-`ETHOS` is the authored source, and `impl signal::Contracted for Query` makes
-that source the contract's identity: `Query::contract_digest()` is the FNV-1a
-digest of those bytes, and `Query::greeting()` is the `Handshake` a peer opens
+`ETHOS` is the authored source, and `impl signal::Contracted for Input` makes
+that source the contract's identity: `Input::contract_digest()` is the FNV-1a
+digest of those bytes, and `Input::greeting()` is the `Handshake` a peer opens
 a connection with. Two peers built from different sources refuse each other
 with `HandshakeReceipt::GreetingRefused(ContractMismatch(_))`. There is no
 version range and no negotiation.
 
-The identity is borne by `Query` rather than by `Response` because the
-querying side is the side that greets.
+The identity is borne by `Input` rather than by `Output` because the side
+that sends inputs is the side that greets.
 
 ## What rides above and below
 
@@ -45,8 +51,8 @@ Below: `signal`'s four-byte big-endian length prefix and one validated rkyv
 archive per frame.
 
 Above: `signal`'s exchange layer. The querying side sends
-`Dispatch<Query>` — `Greet`, `Open(Opening { exchange, query })`, or
-`Abandon(exchange)`. The answering side sends `Delivery<Response>` —
+`Dispatch<Input>` — `Greet`, `Open(Opening { exchange, query })`, or
+`Abandon(exchange)`. The answering side sends `Delivery<Output>` —
 `Greeted(receipt)`, `Answer(Answer { exchange, response })`, or
 `End(Ending { exchange, conclusion })`. Nothing on the wire says whether an
 exchange takes one answer or many; this contract's source says, and both

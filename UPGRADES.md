@@ -1,5 +1,31 @@
 # Upgrades
 
+## 6.0.0 — ethos-zero 27: Input, Output, Answering; the held Lock is HeldLock
+
+The build reads `ethos/signal.ethos` with ethos-zero 27.0.0 (`8c95310`), which
+reads a Signal's first two sections as `Input` and `Output` and pairs them by
+position. Three changes follow, and the contract digest changes with the file
+(`4_020_875_787_160_854_601`), so every peer moves in one step.
+
+- `Query` is `Input` and `Response` is `Output`. `impl signal::Contracted` is
+  on `Input`.
+- `Output` is ordered so the n-th output answers the n-th input:
+  `ConfigurationAccepted`, `Locked`, `Released`, `Observed`, then the
+  refusals `ConfigurationRefused`, `LockRejected`, `ReleaseRejected`.
+  `ConfigurationRefused` moves from the second variant to the fifth, so the
+  archived tag of every output but `ConfigurationAccepted`, `LockRejected` and
+  `ReleaseRejected` changes.
+- The struct `Lock` is `HeldLock`. ethos-zero 27 reads a variant named as a
+  declared type as carrying that type, so an input `Lock` beside a type `Lock`
+  is refused; naming the held Lock `HeldLock` keeps the input `Lock`, and with
+  it the Datom text a CLI reads, `Lock.{ … }`. `LockOverlap.lock` is
+  `LockOverlap.held_lock`. A struct's name is not in its Datom text or its
+  archive, so `Locked.{ 1 … }` reads and writes as before.
+
+The file now also generates `Answering`, one capability per input, and
+`impl Answerable for Input`: a Nexus answers an input with
+`input.answer(&nexus)`.
+
 ## 5.1.0 — signal 10.3.0, protos 0.33.0, datom-codec 0.33.0, ethos-zero 19.2.0
 
 `signal` moves to 10.3.0 (`7afb`), `protos` and `datom-codec` to 0.33.0 (`3c7a`,

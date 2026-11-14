@@ -79,7 +79,7 @@ pub struct LockRequest {
 #[rustfmt::skip]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "datom", derive(datom_codec::Datomizable, datom_codec::Composing))]
-pub struct Lock {
+pub struct HeldLock {
     pub lock_id: LockId,
     pub lock_name: LockName,
     pub flow_id: FlowId,
@@ -91,13 +91,13 @@ pub struct Lock {
 #[cfg_attr(feature = "datom", derive(datom_codec::Datomizable, datom_codec::Composing))]
 pub struct LockOverlap {
     pub lock_path: LockPath,
-    pub lock: Lock,
+    pub held_lock: HeldLock,
 }
 #[rustfmt::skip]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "datom", derive(datom_codec::Datomizable, datom_codec::Composing))]
 pub enum LockRejection {
-    DuplicateName(Lock),
+    DuplicateName(HeldLock),
     PathOverlap(LockOverlap),
 }
 #[rustfmt::skip]
@@ -116,12 +116,12 @@ pub enum ObserveSelection {
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "datom", derive(datom_codec::Datomizable, datom_codec::Composing))]
 pub enum Observation {
-    Locks(std::vec::Vec<Lock>),
+    Locks(std::vec::Vec<HeldLock>),
 }
 #[rustfmt::skip]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "datom", derive(datom_codec::Datomizable, datom_codec::Composing))]
-pub enum Query {
+pub enum Input {
     Configure(OrchestrateNexusConfiguration),
     Lock(LockRequest),
     Release(LockId),
@@ -130,12 +130,51 @@ pub enum Query {
 #[rustfmt::skip]
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "datom", derive(datom_codec::Datomizable, datom_codec::Composing))]
-pub enum Response {
+pub enum Output {
     ConfigurationAccepted(ConfigurationReceipt),
-    ConfigurationRefused(ConfigurationRejection),
-    Locked(Lock),
-    Released(Lock),
+    Locked(HeldLock),
+    Released(HeldLock),
     Observed(Observation),
+    ConfigurationRefused(ConfigurationRejection),
     LockRejected(LockRejection),
     ReleaseRejected(ReleaseRejection),
+}
+#[rustfmt::skip]
+#[allow(clippy::result_large_err, clippy::ptr_arg, clippy::borrowed_box)]
+pub trait Answering {
+    fn configure(
+        &self,
+        orchestrate_nexus_configuration: &OrchestrateNexusConfiguration,
+    ) -> std::result::Result<ConfigurationReceipt, Output>;
+    fn lock(&self, lock_request: &LockRequest) -> std::result::Result<HeldLock, Output>;
+    fn release(&self, lock_id: &LockId) -> std::result::Result<HeldLock, Output>;
+    fn observe(
+        &self,
+        observe_selection: &ObserveSelection,
+    ) -> std::result::Result<Observation, Output>;
+}
+#[rustfmt::skip]
+pub trait Answerable {
+    fn answer<Nexus: Answering>(&self, nexus: &Nexus) -> Output;
+}
+#[rustfmt::skip]
+impl Answerable for Input {
+    fn answer<Nexus: Answering>(&self, nexus: &Nexus) -> Output {
+        match self {
+            Input::Configure(carried) => {
+                nexus
+                    .configure(carried)
+                    .map_or_else(|refusal| refusal, Output::ConfigurationAccepted)
+            }
+            Input::Lock(carried) => {
+                nexus.lock(carried).map_or_else(|refusal| refusal, Output::Locked)
+            }
+            Input::Release(carried) => {
+                nexus.release(carried).map_or_else(|refusal| refusal, Output::Released)
+            }
+            Input::Observe(carried) => {
+                nexus.observe(carried).map_or_else(|refusal| refusal, Output::Observed)
+            }
+        }
+    }
 }

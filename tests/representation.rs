@@ -3,7 +3,7 @@
 //! mirror of it built from plain scalars.
 
 use rkyv::rancor::Error;
-use signal_orchestrate::{FlowId, Lock, LockId, LockName, LockPath, LockReason, LockRequest};
+use signal_orchestrate::{FlowId, HeldLock, LockId, LockName, LockPath, LockReason, LockRequest};
 
 #[cfg_attr(
     feature = "datom",
@@ -30,8 +30,8 @@ struct PlainRequest {
     lock_reason: String,
 }
 
-fn lock() -> Lock {
-    Lock {
+fn lock() -> HeldLock {
+    HeldLock {
         lock_id: LockId(7),
         lock_name: LockName("name".into()),
         flow_id: FlowId("flow".into()),
@@ -108,7 +108,7 @@ mod text {
 
     #[test]
     fn text_written_from_plain_scalars_reads_as_the_newtype_values() {
-        assert_eq!(read::<Lock>(&written(&plain_lock())), lock());
+        assert_eq!(read::<HeldLock>(&written(&plain_lock())), lock());
         assert_eq!(read::<LockRequest>(&written(&plain_request())), request());
     }
 }
